@@ -1,0 +1,56 @@
+/* Minimalis: Swal custom styling */
+.swal2-popup-minimal {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    font-family: 'Poppins', sans-serif;
+    background-color: #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    max-width: 460px;
+    align-content: center;
+}
+
+.swal2-title-minimal {
+    font-size: 2;
+    font-weight: 600;
+    color: #333;
+}
+
+.swal2-html-container {
+    text-align: center;
+    padding: 1rem 0;
+    line-height: 1.5;
+    color: #535353;
+}
+
+.swal2-content-minimal {
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.swal2-confirm-minimal {
+    background-color: #2563eb;
+    color: white;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    border: none;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.swal2-confirm-minimal:hover {
+    background-color: #1e40af;
+}
+
+.swal2-cancel-minimal {
+    background-color: #f3f4f6;
+    color: #111827;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    border: none;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.swal2-cancel-minimal:hover {
+    background-color: #e5e7eb;
+}

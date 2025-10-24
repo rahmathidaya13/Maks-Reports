@@ -1,0 +1,31 @@
+.btn-app {
+    border: 1px solid #000000;
+    color: #161616;
+    font-weight: 500;
+}
+.btn-app:hover {
+    color: #fff;
+    background-color: #383838;
+    border-color: #383838;
+}
+.btn-app.focus,
+.btn-app:focus {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.5);
+}
+.btn-app.disabled,
+.btn-app:disabled {
+    color: #383838;
+    background-color: transparent;
+}
+.btn-app:not(:disabled):not(.disabled).active,
+.btn-app:not(:disabled):not(.disabled):active,
+.show > .btn-app.dropdown-toggle {
+    color: #fff;
+    background-color: #383838;
+    border-color:  #383838;
+}
+.btn-app:not(:disabled):not(.disabled).active:focus,
+.btn-app:not(:disabled):not(.disabled):active:focus,
+.show > .btn-app.dropdown-toggle:focus {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.5);
+}

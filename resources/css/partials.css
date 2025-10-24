@@ -1,0 +1,384 @@
+body {
+    font-family: "Poppins", sans-serif;
+    font-size: 1rem;
+    color: #212529;
+    line-height: 1.5;
+    background-color: #ececec;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    overflow-y: auto;
+}
+
+.highlight {
+    background-color: #ffee00;
+    color: #16181b;
+}
+
+.input-fixed-height {
+    height: auto;
+    line-height: 1.5;
+    transition: border 0.2s ease-in-out, padding-right 0.2s ease-in-out;
+    padding-left: 45px;
+    padding-right: 45px;
+}
+
+/* --- Select Box --- */
+.input-fixed-select {
+    height: 42px;
+    line-height: 1.5;
+    padding-left: 45px;
+    /* memberi ruang untuk icon kiri */
+    padding-right: 45px;
+    /* opsional kalau nanti ada icon kanan */
+    transition: border 0.2s ease-in-out;
+}
+
+/* --- Style khusus untuk opsi dropdown --- */
+.input-fixed-select option {
+    padding: 8px 10px;
+    /* normal, tanpa padding kiri besar */
+}
+
+.input-height-1 {
+    height: 45px;
+}
+
+.input-height-2 {
+    height: 50px;
+}
+
+.input-height-3 {
+    height: 55px;
+}
+
+.input-height-4 {
+    height: 60px;
+}
+
+.input-height-5 {
+    height: 65px;
+}
+
+/* for button height */
+.btn.btn-height-1 {
+    height: 45px;
+}
+
+.btn.btn-height-2 {
+    height: 50px;
+}
+
+.btn.btn-height-3 {
+    height: 55px;
+}
+
+.btn.btn-height-4 {
+    height: 60px;
+}
+
+.btn.btn-height-5 {
+    height: 65px;
+}
+
+.input-icon-left {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    color: #aaa;
+    pointer-events: none;
+    font-size: 1.2rem;
+}
+
+.input-icon-right {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    color: #aaa;
+    font-size: 1.2rem;
+    transition: right 0.2s ease-in-out;
+}
+
+/* Hanya input yang punya icon right yang diberi padding ekstra saat valid/invalid */
+.input-fixed-height.has-icon-right.is-valid,
+.input-fixed-height.has-icon-right.is-invalid {
+    padding-right: 4rem;
+}
+
+/* Hanya geser icon jika input sebelumnya adalah input dengan class .has-icon-right */
+.input-fixed-height.has-icon-right.is-valid ~ .input-icon-right,
+.input-fixed-height.has-icon-right.is-invalid ~ .input-icon-right {
+    right: 36px;
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+    /* padding-left: 10px;
+    padding-right: 10px; */
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.form-control,
+.datatable-input {
+    background-color: #ffffff;
+    background-clip: padding-box;
+}
+
+.form-control:read-only,
+.datatable-input:read-only {
+    background-color: #eeeeee;
+}
+
+.form-control:focus:read-only {
+    background-color: #e6e6e6;
+}
+
+.form-control:focus,
+.datatable-input:focus {
+    color: #212529;
+    background-color: #ffffff;
+    border: 1px solid #000000;
+    outline: 0;
+    box-shadow: 0 0 0 0;
+}
+
+.was-validated .form-control:valid:focus,
+.was-validated .datatable-input:valid:focus,
+.form-control.is-valid:focus,
+.is-valid.datatable-input:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0;
+}
+
+.was-validated .form-select:valid:focus,
+.was-validated .datatable-selector:valid:focus,
+.form-select.is-valid:focus,
+.is-valid.datatable-selector:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0;
+}
+
+.was-validated .form-control:invalid:focus,
+.was-validated .datatable-input:invalid:focus,
+.form-control.is-invalid:focus,
+.is-invalid.datatable-input:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0;
+}
+
+.form-select:focus,
+.datatable-selector:focus {
+    border-color: #000000;
+    outline: 0;
+    box-shadow: 0 0 0 0;
+}
+
+.form-check-input:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.25);
+}
+
+.sosmed {
+    width: 50px;
+    height: 50px;
+    padding: 1px;
+    font-size: 1.9em;
+    color: #172d5c;
+}
+
+.sosmed:hover {
+    color: #2297c5;
+    /* border: 1px solid #dfdfdf; */
+    transform: scale(1.2);
+    transition: transform 0.1s ease-in-out;
+}
+
+@media only screen and (max-width: 651px) {
+    .sosmed {
+        width: 35px;
+        height: 35px;
+        padding: 0px;
+        font-size: 1.5em;
+    }
+}
+
+.page-link:focus,
+.datatable-pagination a:focus {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.25);
+}
+
+.file-upload {
+    position: relative;
+    overflow: hidden;
+    /* Tambahkan display: inline-block agar lebar span tidak penuh */
+    display: inline-block;
+}
+
+.file-upload span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Mengatur warna latar belakang dan teks agar terlihat jelas saat hover */
+    background-color: rgba(0, 0, 0, 0.6);
+    /* Latar belakang semi-transparan hitam */
+    color: white;
+    display: flex;
+    /* Menggunakan flexbox untuk memposisikan teks di tengah */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    /* Menunjukkan bahwa area ini dapat diklik */
+
+    /* Properti Kunci: Mengatur opasitas ke 0 (tersembunyi) */
+    opacity: 0;
+    /* Transisi untuk efek animasi yang halus */
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Properti Kunci: Saat elemen .file-upload di-hover, atur opasitas span menjadi 1 */
+
+.file-upload {
+    position: relative;
+    overflow: hidden;
+    /* Penting agar div hanya selebar kontennya */
+    display: inline-block;
+}
+
+.file-upload span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    /* Styling untuk visual */
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-weight: bold;
+
+    /* Menyembunyikan secara default */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+
+    /* PROPERTI KUNCI: Mencegah elemen menerima event klik */
+    pointer-events: none;
+}
+
+/* Saat elemen .file-upload di-hover, teks overlay muncul */
+.file-upload:hover span {
+    opacity: 1;
+    /* Tidak perlu mengubah pointer-events di sini, biarkan tetap 'none' */
+}
+
+.product-details {
+    width: 100%;
+    height: 550px;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
+}
+
+.img-preview {
+    width: 400px;
+    height: 350px !important;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 10px;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: normal;
+    /* padding: 0; */
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.img-thumbnail {
+    padding: 0.2rem;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    max-width: 100%;
+    height: auto;
+}
+
+.img-circle {
+    border-radius: 50%;
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    object-position: center;
+}
+
+.nav-link.active-link {
+    background-color: #1bbef0;
+}
+
+.nav-link.active-sub-link {
+    background-color: #f0f0f0;
+    color: #272727 !important;
+    font-weight: 500;
+    border: 5px solid #3b3b3b;
+    border-right: 0;
+
+    /* Hanya lengkung di sisi kiri */
+    border-top-left-radius: 5rem;
+    border-bottom-left-radius: 5rem;
+
+    /* Pastikan sisi kanan tidak melengkung */
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    line-height: 1.5;
+    transition: border 0.2s ease-in-out, padding-right 0.2s ease-in-out;
+}
+
+.nav-link.active-sub-link:hover {
+    background-color: #ffffff;
+    border: 5px solid #696969;
+    border-right: 0;
+    transition: border 0.2s ease-in-out, padding-right 0.2s ease-in-out;
+}
+
+.select-error {
+    border: 1px solid red !important;
+    color: red !important;
+    border-radius: 5px !important;
+}
+
+.select-success {
+    border: 2px solid #198754 !important;
+    color: green !important;
+    border-radius: 5px !important;
+}
+
+

@@ -1,0 +1,185 @@
+/* === Base Width (tanpa breakpoint) === */
+.w-10 {
+    width: 10%;
+}
+
+.w-20 {
+    width: 20%;
+}
+
+.w-25 {
+    width: 25%;
+}
+
+.w-30 {
+    width: 30%;
+}
+
+.w-40 {
+    width: 40%;
+}
+
+.w-50 {
+    width: 50%;
+}
+
+.w-60 {
+    width: 60%;
+}
+
+.w-70 {
+    width: 70%;
+}
+
+.w-75 {
+    width: 75%;
+}
+
+.w-80 {
+    width: 80%;
+}
+
+.w-90 {
+    width: 90%;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+/* === Breakpoint SM (≥576px) === */
+@media (min-width: 576px) {
+    .w-sm-25 {
+        width: 25%;
+    }
+
+    .w-sm-30 {
+        width: 30%;
+    }
+
+    .w-sm-50 {
+        width: 50%;
+    }
+
+    .w-sm-75 {
+        width: 75%;
+    }
+
+    .w-sm-100 {
+        width: 100%;
+    }
+}
+
+/* === Breakpoint MD (≥768px) === */
+@media (min-width: 768px) {
+    .w-md-25 {
+        width: 25%;
+    }
+
+    .w-md-30 {
+        width: 30%;
+    }
+
+    .w-md-40 {
+        width: 40%;
+    }
+
+    .w-md-50 {
+        width: 50%;
+    }
+
+    .w-md-60 {
+        width: 60%;
+    }
+
+    .w-md-75 {
+        width: 75%;
+    }
+
+    .w-md-100 {
+        width: 100%;
+    }
+}
+
+/* === Breakpoint LG (≥992px) === */
+@media (min-width: 992px) {
+    .w-lg-20 {
+        width: 20%;
+    }
+
+    .w-lg-25 {
+        width: 25%;
+    }
+
+    .w-lg-30 {
+        width: 30%;
+    }
+
+    .w-lg-40 {
+        width: 40%;
+    }
+
+    .w-lg-50 {
+        width: 50%;
+    }
+}
+
+/* === Breakpoint XL (≥1200px) === */
+@media (min-width: 1200px) {
+    .w-xl-16 {
+        width: 16.6666667%;
+    }
+
+    /* mirip col-2 */
+    .w-xl-20 {
+        width: 20%;
+    }
+
+    .w-xl-25 {
+        width: 25%;
+    }
+
+    .w-xl-30 {
+        width: 30%;
+    }
+
+    .w-xl-40 {
+        width: 40%;
+    }
+
+    .w-xl-50 {
+        width: 50%;
+    }
+
+    .w-xl-100 {
+        width: 100%;
+    }
+
+}
+
+/* === Breakpoint XXL (≥1400px) === */
+@media (min-width: 1400px) {
+    .w-xxl-15 {
+        width: 15%;
+    }
+
+    .w-xxl-20 {
+        width: 20%;
+    }
+
+    .w-xxl-25 {
+        width: 25%;
+    }
+
+    .w-xxl-30 {
+        width: 30%;
+    }
+
+    .w-xxl-40 {
+        width: 40%;
+    }
+
+    .w-xxl-50 {
+        width: 50%;
+    }
+}
