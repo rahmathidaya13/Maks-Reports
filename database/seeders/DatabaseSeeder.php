@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Rahmat Hidayah',
                 'email_verified_at' => now(),
                 'password' => bcrypt('@Rahmad12345'),
-                'role' => 'developer',
+                'level' => 'developer',
             ]
         );
         $user->profile()->updateOrCreate(

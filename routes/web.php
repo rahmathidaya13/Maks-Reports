@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\AuthGoogle\GoogleAuthController;
+use App\Http\Controllers\Authority\AuthorityController;
 use App\Http\Controllers\Branches\BranchesController;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Profile\ProfileController;
@@ -54,11 +55,12 @@ Route::middleware(['guest'])->group(function () {
 });
 
 // Akun yang sudah diverfikasi
-Route::middleware(['auth', 'role:develop,admin,user', 'verified', 'profile.completed'])->group(function () {
+Route::middleware(['auth', 'level:develop,admin,user', 'verified', 'profile.completed'])->group(function () {
     Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::controller(HomeController::class)->group(function () {
         Route::get('/home', 'index')->name('home');
     });
+
     Route::controller(RolesController::class)->group(function () {
         Route::get('/roles/list', 'index')->name('roles')->middleware('can:view');
         Route::get('/roles/create', 'create')->name('roles.create')->middleware('can:add');
@@ -85,4 +87,10 @@ Route::controller(VerificationController::class)->group(function () {
     Route::get('/email/verify', 'notice')->name('verification.notice')->middleware('auth');
     Route::get('/email/verify/{id}/{hash}', 'verify')->middleware(['signed'])->name('verification.verify');
     Route::post('/email/verification-notification', 'resend')->middleware(['throttle:6,1'])->name('verification.send');
+});
+
+Route::controller(AuthorityController::class)->group(function () {
+    Route::get('/authorities', [AuthorityController::class,'index'])->name('authorities');
+    Route::get('/authorities/{user}', [AuthorityController::class,'show'])->name('authorities.show');
+    Route::put('/authorities/{user}', [AuthorityController::class,'update'])->name('authorities.update');
 });

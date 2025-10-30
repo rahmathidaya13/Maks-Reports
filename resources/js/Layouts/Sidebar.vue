@@ -20,11 +20,19 @@ const is = (pattern) => {
                     </div>
                     Dashboard
                     </Link>
+
                     <Link class="nav-link" :class="{ 'active active-link': is('roles*') }" :href="route('roles')">
                     <div class="sb-nav-link-icon">
                         <i class="fas fa-briefcase"></i>
                     </div>
                     Jabatan
+                    </Link>
+
+                    <Link class="nav-link" :class="{ 'active active-link': is('roles*') }" :href="route('roles')">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    Otoritas
                     </Link>
 
 

@@ -29,11 +29,19 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'email_verified_at',
         'password',
-        'role',
+        'level',
         'is_active',
         'remember_token',
         'created_at',
         'updated_at',
+        'can_view',
+        'can_add',
+        'can_edit',
+        'can_delete',
+        'can_share',
+        'can_upload',
+        'can_import',
+        'can_export',
     ];
 
     /**
@@ -73,5 +81,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function profile()
     {
         return $this->hasOne(ProfileModel::class, 'users_id', 'id');
+    }
+    public function pagePermissions()
+    {
+        return $this->hasMany(UserPagePermission::class, 'users_id', 'id');
+    }
+
+    public function hasPagePermission(string $pageSlug, string $action = 'can_view'): bool
+    {
+        $perm = $this->pagePermissions()
+            ->whereHas('page', function ($q) use ($pageSlug) {
+                $q->where('slug', $pageSlug);
+            })->first();
+
+        if (!$perm) {
+            // fallback: if user has global boolean columns (can_view, can_add...) use that
+            if (isset($this->{$action})) {
+                return (bool) $this->{$action};
+            }
+            return false;
+        }
+
+        return (bool) ($perm->{$action} ?? false);
     }
 }

@@ -29,4 +29,8 @@ class RolesModel extends Model
     {
         return $this->hasMany(ProfileModel::class, 'roles_id', 'roles_id');
     }
+    public function permission()
+    {
+        return $this->hasMany(RolePermissions::class, 'roles_id', 'roles_id');
+    }
 }
