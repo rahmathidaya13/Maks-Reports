@@ -6,23 +6,30 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RolePermissions extends Model
+class PagePermissionModel extends Model
 {
     use HasFactory, HasUuids;
-    protected $table = 'role_permissions';
-    protected $primaryKey = 'role_permissions_id';
+
+    protected $table = 'page_permissions';
+    protected $primaryKey = 'page_permissions_id';
     public $incrementing = false; // Karena pakai UUID
     protected $keyType = 'string';
+
     protected $fillable = [
+        'created_by',
         'roles_id',
-        'permission_key',
-        'value',
+        'name',
+        'slug',
+        'can_view',
+        'can_add',
+        'can_edit',
+        'can_delete',
+        'can_export',
+        'can_import',
+        'can_share',
     ];
-    protected $hidden = [
-        'created_at',
-        'deleted_at',
-    ];
-    public function roles()
+
+    public function role()
     {
         return $this->belongsTo(RolesModel::class, 'roles_id', 'roles_id');
     }

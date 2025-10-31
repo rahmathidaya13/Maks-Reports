@@ -307,22 +307,6 @@ body {
     object-position: center;
     border-radius: 10px;
 }
-
-.input-group-text {
-    display: flex;
-    align-items: normal;
-    /* padding: 0; */
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #212529;
-    text-align: center;
-    white-space: nowrap;
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-}
-
 .img-thumbnail {
     padding: 0.2rem;
     background-color: #fff;
@@ -380,5 +364,3 @@ body {
     color: green !important;
     border-radius: 5px !important;
 }
-
-

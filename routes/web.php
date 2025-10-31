@@ -57,17 +57,18 @@ Route::middleware(['guest'])->group(function () {
 // Akun yang sudah diverfikasi
 Route::middleware(['auth', 'level:develop,admin,user', 'verified', 'profile.completed'])->group(function () {
     Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
+
     Route::controller(HomeController::class)->group(function () {
         Route::get('/home', 'index')->name('home');
     });
 
     Route::controller(RolesController::class)->group(function () {
-        Route::get('/roles/list', 'index')->name('roles')->middleware('can:view');
-        Route::get('/roles/create', 'create')->name('roles.create')->middleware('can:add');
-        Route::post('/roles/store', 'store')->name('roles.store')->middleware('can:add');
-        Route::get('/roles/edit/{id}', 'edit')->name('roles.edit')->middleware('can:edit');
-        Route::put('/roles/update/{id}', 'update')->name('roles.update')->middleware('can:edit');
-        Route::get('/roles/destroy/{id}', 'destroy')->name('roles.destroy')->middleware('can:delete,onlyDeveloper');
+        Route::get('/roles-list', 'index')->name('roles')->middleware('check.page.permission:roles-list,can_view');
+        Route::get('/roles/create', 'create');
+        Route::post('/roles/store', 'store')->name('roles.store');
+        Route::get('/roles/edit/{id}', 'edit')->name('roles.edit');
+        Route::put('/roles/update/{id}', 'update')->name('roles.update');
+        Route::get('/roles/destroy/{id}', 'destroy')->name('roles.destroy');
     });
     Route::controller(BranchesController::class)->group(function () {
         Route::get('/branches/list', 'index')->name('branches');
@@ -87,10 +88,4 @@ Route::controller(VerificationController::class)->group(function () {
     Route::get('/email/verify', 'notice')->name('verification.notice')->middleware('auth');
     Route::get('/email/verify/{id}/{hash}', 'verify')->middleware(['signed'])->name('verification.verify');
     Route::post('/email/verification-notification', 'resend')->middleware(['throttle:6,1'])->name('verification.send');
-});
-
-Route::controller(AuthorityController::class)->group(function () {
-    Route::get('/authorities', [AuthorityController::class,'index'])->name('authorities');
-    Route::get('/authorities/{user}', [AuthorityController::class,'show'])->name('authorities.show');
-    Route::put('/authorities/{user}', [AuthorityController::class,'update'])->name('authorities.update');
 });
