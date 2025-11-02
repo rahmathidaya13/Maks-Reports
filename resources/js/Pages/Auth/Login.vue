@@ -5,7 +5,7 @@ const form = useForm({
     email: "",
     password: "",
     remember: false,
-    'g-recaptcha-response': '', // reCAPTCHA token
+    // 'g-recaptcha-response': '', // reCAPTCHA token
 });
 const isSubmit = () => {
     form['g-recaptcha-response'] = document.querySelector(
@@ -87,11 +87,11 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="mb-4">
+                            <!-- <div class="mb-4">
                                 <div id="recaptcha-box" class="g-recaptcha"
                                     :data-sitekey="$page.props.recaptcha_site_key"></div>
                                 <input-error :message="form.errors['g-recaptcha-response'] || form.errors.recaptcha" />
-                            </div>
+                            </div> -->
 
                             <div class="mb-3 d-grid">
                                 <base-button :loading="form.processing" class="bg-gradient btn-height-1"

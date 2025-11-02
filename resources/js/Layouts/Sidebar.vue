@@ -28,12 +28,7 @@ const is = (pattern) => {
                     Jabatan
                     </Link>
 
-                    <Link class="nav-link" :class="{ 'active active-link': is('roles*') }" :href="route('roles')">
-                    <div class="sb-nav-link-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    Otoritas
-                    </Link>
+
 
 
                     <Link class="nav-link" :href="route('logout')">

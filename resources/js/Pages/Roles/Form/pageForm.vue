@@ -3,14 +3,26 @@ import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 const props = defineProps({
     roles: {
-        type: Object,
-        default: () => ({})
+        type: Array,
+        default: () => [{}]
     },
-
+    uniqCode: {
+        type: String,
+        default: ""
+    },
 })
 const form = useForm({
+    position_code: props.roles?.position_code ?? props.uniqCode,
     name: props.roles?.name ?? '',
+    short_name: props.roles?.short_name ?? '',
     description: props.roles?.description ?? '',
+    view: props.roles?.view ?? true,
+    add: props.roles?.add ?? false,
+    edit: props.roles?.edit ?? false,
+    delete: props.roles?.delete ?? false,
+    export: props.roles?.export ?? false,
+    import: props.roles?.import ?? false,
+    share: props.roles?.share ?? false,
 });
 const isSubmit = () => {
     if (props.roles?.id) {
@@ -83,11 +95,42 @@ const breadcrumbItems = computed(() => {
                 <div class="card-body">
                     <form-wrapper @submit="isSubmit">
                         <div class="mb-3">
+                            <input-label class="fw-bold" for="position_code" value="Kode Jabatan" />
+                            <text-input disabled v-model="form.position_code" name="position_code" />
+                        </div>
+                        <div class="mb-3">
                             <input-label class="fw-bold" for="name" value="Nama jabatan" />
-                            <text-input :is-valid="!form.errors.name" v-model="form.name" name="name"
-                                label="Nama Jabatan" placeholder="Masukkan nama jabatan..." />
+                            <text-input v-model="form.name" name="name" placeholder="exp: Admin" />
                             <input-error :message="form.errors.name" />
                         </div>
+                        <div class="mb-3">
+                            <input-label class="fw-bold" for="short_name" value="Nama Singkatan" />
+                            <text-input v-model="form.short_name" name="short_name" placeholder="exp: Adm" />
+                            <input-error :message="form.errors.short_name" />
+                        </div>
+
+                        <div class="mb-3">
+                            <input-label class="fw-bold" value="Otoritas" />
+                            <div
+                                class="d-xl-flex d-block border border-secondary bg-light p-3 rounded-3 justify-content-start gap-3">
+                                <check-box :value="form.view" v-model:checked="form.view" name="view"
+                                    label="Dapat Melihat" />
+                                <check-box :value="form.add" v-model:checked="form.add" name="add"
+                                    label="Dapat Menambah" />
+                                <check-box :value="form.edit" v-model:checked="form.edit" name="edit"
+                                    label="Dapat Mengubah" />
+                                <check-box :value="form.delete" v-model:checked="form.delete" name="delete"
+                                    label="Dapat Menghapus" />
+                                <check-box :value="form.export" v-model:checked="form.export" name="export"
+                                    label="Dapat Mengekspor" />
+                                <check-box :value="form.import" v-model:checked="form.import" name="import"
+                                    label="Dapat Mengimpor" />
+                                <check-box :value="form.share" v-model:checked="form.share" name="share"
+                                    label="Dapat Membagikan" />
+
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <input-label class="fw-bold" for="description" value="Deskripsi jabatan" />
                             <text-area :rows="10" :cols="10" :is-valid="!form.errors.description"

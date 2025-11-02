@@ -17,8 +17,17 @@ class RolesModel extends Model
 
     protected $fillable = [
         'created_by',
+        'position_code',
         'name',
+        'shortname',
         'description',
+        'can_view',
+        'can_add',
+        'can_edit',
+        'can_delete',
+        'can_export',
+        'can_import',
+        'can_share',
     ];
     protected $hidden = [
         'created_at',
@@ -26,16 +35,27 @@ class RolesModel extends Model
         'deleted_at',
     ];
 
+    public static function boot()
+    {
+        parent::boot();
+        static::creating(function ($roles) {
+            $roles->position_code    = self::generateUniqueCode();
+        });
+    }
+    public static function generateUniqueCode()
+    {
+        $prefix = "EMP-";
+        do {
+            $randomNumber = str_pad(mt_rand(0, 9999999), 7, '0', STR_PAD_LEFT);
+            $code = $prefix . $randomNumber;
+        } while (self::where('position_code', $code)->exists());
+        // Kembalikan kode yang sudah dipastikan unik
+        return $code;
+    }
     public function profile()
     {
         return $this->hasMany(ProfileModel::class, 'roles_id', 'roles_id');
     }
-
-    public function permissions()
-    {
-        return $this->hasMany(PagePermissionModel::class, 'roles_id', 'roles_id');
-    }
-
     public function users()
     {
         return $this->hasMany(User::class);

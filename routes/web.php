@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Auth\ConfirmPasswordController;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
@@ -63,8 +64,8 @@ Route::middleware(['auth', 'level:develop,admin,user', 'verified', 'profile.comp
     });
 
     Route::controller(RolesController::class)->group(function () {
-        Route::get('/roles-list', 'index')->name('roles')->middleware('check.page.permission:roles-list,can_view');
-        Route::get('/roles/create', 'create');
+        Route::get('/roles-list', 'index')->name('roles');
+        Route::get('/roles/create', 'create')->name('roles.create');
         Route::post('/roles/store', 'store')->name('roles.store');
         Route::get('/roles/edit/{id}', 'edit')->name('roles.edit');
         Route::put('/roles/update/{id}', 'update')->name('roles.update');

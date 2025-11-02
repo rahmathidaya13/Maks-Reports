@@ -25,7 +25,7 @@ class LoginController extends Controller
         $request->validate([
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:8|max:50',
-            'g-recaptcha-response' => 'required',
+            // 'g-recaptcha-response' => 'required',
         ], [
             'email.required' => 'Email tidak boleh kosong.',
             'email.email' => 'Format email tidak valid.',
@@ -36,11 +36,11 @@ class LoginController extends Controller
             'password.min' => 'Password minimal 8 karakter.',
             'password.max' => 'Password maksimal 50 karakter.',
 
-            'g-recaptcha-response.required' => 'Harap centang kotak reCAPTCHA terlebih dahulu.',
+            // 'g-recaptcha-response.required' => 'Harap centang kotak reCAPTCHA terlebih dahulu.',
         ]);
-        if (!RecaptchaService::verify($request->input('g-recaptcha-response'))) {
-            return back()->withErrors(['recaptcha' => 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.']);
-        }
+        // if (!RecaptchaService::verify($request->input('g-recaptcha-response'))) {
+        //     return back()->withErrors(['recaptcha' => 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.']);
+        // }
 
         $this->authenticate($request);
         $request->session()->regenerate();

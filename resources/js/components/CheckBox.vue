@@ -35,7 +35,7 @@ const proxyChecked = computed({
 });
 </script>
 <template>
-    <div class="form-check d-flex justify-content-center gap-2">
+    <div class="form-check">
         <input type="checkbox" :class="['form-check-input', inputClass]" v-model="proxyChecked" :value="value"
             :name="name" :id="name" />
         <label v-if="label" class="form-check-label fw-semibold" :for="name">

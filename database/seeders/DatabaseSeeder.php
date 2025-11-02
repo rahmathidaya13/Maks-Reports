@@ -4,11 +4,12 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-use App\Models\BranchesModel;
-use App\Models\RolesModel;
 use App\Models\User;
+use App\Models\RolesModel;
 use Illuminate\Support\Str;
+use App\Models\BranchesModel;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,8 +20,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             BranchSeeder::class,
-            RoleSeeder::class
+            // RoleSeeder::class
         ]);
+        // $manager = Role::create(['name' => 'Manager']);
+        // $teknisi = Role::create(['name' => 'Teknisi']);
+
+
         $user = User::firstOrCreate(
             ['email' => 'rahmadlawrent6@gmail.com'],
             [
@@ -28,7 +33,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Rahmat Hidayah',
                 'email_verified_at' => now(),
                 'password' => bcrypt('@Rahmad12345'),
-                'level' => 'developer',
+                'role' => 'developer',
             ]
         );
         $user->profile()->updateOrCreate(

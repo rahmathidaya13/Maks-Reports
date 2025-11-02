@@ -10,10 +10,11 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuids;
+    use HasApiTokens, HasFactory, Notifiable, HasUuids, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -30,19 +31,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'email_verified_at',
         'password',
-        'level',
+        'role',
         'is_active',
         'remember_token',
         'created_at',
         'updated_at',
-        'can_view',
-        'can_add',
-        'can_edit',
-        'can_delete',
-        'can_share',
-        'can_upload',
-        'can_import',
-        'can_export',
     ];
 
     /**

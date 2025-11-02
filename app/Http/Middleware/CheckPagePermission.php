@@ -31,11 +31,11 @@ class CheckPagePermission
                     ->where($action, true)
             )
             ->exists();
-        // dd($hasPermission, $request->user()->id);
+        dd($hasPermission, $request->user()->id);
         if (!$hasPermission) {
             return redirect()->route('home')->with('error', 'Anda belum memiliki akses!');
         }
 
-        return $next($request);
+        // return $next($request);
     }
 }

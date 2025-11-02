@@ -15,11 +15,12 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         $roles = [
-            ['roles_id' => Str::uuid(), 'name' => 'manager', 'description' => 'Memantau laporan semua cabang'],
-            ['roles_id' => Str::uuid(), 'name' => 'spv', 'description' => 'Membimbing tim cabang dan validasi laporan'],
-            ['roles_id' => Str::uuid(), 'name' => 'admin', 'description' => 'Mengelola data dan laporan harian'],
-            ['roles_id' => Str::uuid(), 'name' => 'sales', 'description' => 'Membuat laporan leads dan status story harian'],
-            ['roles_id' => Str::uuid(), 'name' => 'teknisi', 'description' => 'Menangani layanan purna jual dan servis pelanggan'],
+            ['roles_id' => Str::uuid(), 'name' => 'manager', 'short_name' => 'mgr', 'position_code' => RolesModel::generateUniqueCode(), 'description' => 'Memantau laporan semua cabang'],
+            ['roles_id' => Str::uuid(), 'name' => 'spv', 'short_name' => 'spv', 'position_code' => RolesModel::generateUniqueCode(), 'description' => 'Memantau laporan cabang'],
+            ['roles_id' => Str::uuid(), 'name' => 'admin', 'short_name' => 'admin', 'position_code' => RolesModel::generateUniqueCode(), 'description' => 'Memantau laporan cabang'],
+            ['roles_id' => Str::uuid(), 'name' => 'sales', 'short_name' => 'sales', 'position_code' => RolesModel::generateUniqueCode(), 'description' => 'Memantau laporan cabang'],
+            ['roles_id' => Str::uuid(), 'name' => 'teknisi', 'short_name' => 'teknisi', 'position_code' => RolesModel::generateUniqueCode(), 'description' => 'Memantau laporan cabang'],
+
         ];
 
         foreach ($roles as $role) {
