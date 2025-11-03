@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignUuid('created_by')->nullable()->constrained('users', 'id')->onDelete('cascade');
             $table->string('name'); // nama cabang, contoh: Pekanbaru
             $table->text('address');
-            $table->string('phone', 20)->nullable();
+            $table->string('phone', 13)->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->softDeletes();
             $table->timestamps();

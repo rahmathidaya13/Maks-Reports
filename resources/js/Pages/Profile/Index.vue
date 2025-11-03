@@ -41,8 +41,8 @@ const branchOptions = computed(() => {
 const roleOptions = computed(() => {
     return props.roles?.map(item => {
         return {
-            id: item.roles_id,
-            name: (item.name).replace(/\b\w/g, l => l.toUpperCase())
+            id: item.job_title_id,
+            name: (item.title).replace(/\b\w/g, l => l.toUpperCase())
         }
     })
 })

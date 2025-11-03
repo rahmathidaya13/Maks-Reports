@@ -18,13 +18,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            BranchSeeder::class,
-            // RoleSeeder::class
-        ]);
-        // $manager = Role::create(['name' => 'Manager']);
-        // $teknisi = Role::create(['name' => 'Teknisi']);
-
 
         $user = User::firstOrCreate(
             ['email' => 'rahmadlawrent6@gmail.com'],
@@ -39,6 +32,11 @@ class DatabaseSeeder extends Seeder
         $user->profile()->updateOrCreate(
             ['users_id' => $user->id],
         );
+
+        $this->call([
+            BranchSeeder::class,
+            JobTitle::class,
+        ]);
         // \App\Models\User::factory(10)->create();
 
         // \App\Models\User::factory()->create([

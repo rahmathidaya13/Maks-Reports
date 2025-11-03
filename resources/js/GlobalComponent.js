@@ -21,7 +21,6 @@ import RadioBox from "./components/RadioBox.vue";
 import Pagination from "./components/Pagination.vue";
 import InputDecimal from "./components/InputDecimal.vue";
 import ButtonDeleteAll from "./components/ButtonDeleteAll.vue";
-// import Select2 from 'vue3-select2-component';
 import Selects2 from "./components/Selects2.vue";
 import InputQuantity from "./components/InputQuantity.vue";
 import FileUpload from "./components/FileUpload.vue";

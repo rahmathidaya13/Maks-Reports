@@ -17,6 +17,7 @@ body {
 .highlight {
     background-color: #ffee00;
     color: #16181b;
+    font-weight: 600;
 }
 
 .input-fixed-height {

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Profile;
 
 use Inertia\Inertia;
-use App\Models\RolesModel;
 use App\Models\ProfileModel;
 use Illuminate\Http\Request;
 use App\Models\BranchesModel;
 use App\Http\Controllers\Controller;
+use App\Models\JobTitleModel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,7 +24,7 @@ class ProfileController extends Controller
     public function edit(ProfileModel $profileModel)
     {
         $branches = BranchesModel::select('branches_id', 'name')->get();
-        $roles = RolesModel::select('roles_id', 'name')->get();
+        $roles = JobTitleModel::select('job_title_id', 'title')->get();
         $profile = $profileModel->with('user')->where('users_id',  auth()->user()->id)->first();
         return Inertia::render('Profile/Index', compact('profile', 'branches', 'roles'));
     }
@@ -32,8 +32,8 @@ class ProfileController extends Controller
     public function validation($request)
     {
         return Validator::make($request, [
-            'roles' => 'required|exists:roles,roles_id',
-            'branches' => 'required|exists:branches,branches_id',
+            'roles' => 'nullable|exists:job_title,job_title_id',
+            'branches' => 'nullable|exists:branches,branches_id',
             'date_of_entry' => 'required|date',
             'birthdate' => 'required|date|before:today',
             'education' => 'required|string|max:25',
@@ -84,7 +84,7 @@ class ProfileController extends Controller
             unset($profile->images);
         }
         $profile->users_id = auth()->user()->id;
-        $profile->roles_id = $request->input('roles');
+        $profile->job_title_id = $request->input('roles');
         $profile->branches_id = $request->input('branches');
         $profile->date_of_entry = $request->input('date_of_entry');
         $profile->birthdate = $request->input('birthdate');

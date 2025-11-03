@@ -12,5 +12,6 @@ class HomeController extends Controller
     {
         // dd(auth()->user()->profile->role->name === 'teknisi');
         return Inertia::render('Home/Index');
+        // dd(auth()->user()->getRoleNames());
     }
 }

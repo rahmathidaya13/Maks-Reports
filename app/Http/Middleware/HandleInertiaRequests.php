@@ -36,8 +36,14 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         return array_merge(parent::share($request), [
-            'auth' => ['user' => $request->user()],
-            'recaptcha_site_key' => config('services.recaptcha.sitekey'),
+            'auth' => fn() => [
+                'user' => auth()->user() ? [
+                    'id' => auth()->user()->id,
+                    'name' => auth()->user()->name,
+                    'roles' => auth()->user()->getRoleNames(),
+                    'permissions' => auth()->user()?->getAllPermissions()->pluck('name')
+                ] : null,
+            ],
             'flash' => fn() => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),

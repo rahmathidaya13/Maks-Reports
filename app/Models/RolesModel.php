@@ -21,13 +21,6 @@ class RolesModel extends Model
         'name',
         'shortname',
         'description',
-        'can_view',
-        'can_add',
-        'can_edit',
-        'can_delete',
-        'can_export',
-        'can_import',
-        'can_share',
     ];
     protected $hidden = [
         'created_at',

@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\RolesModel;
+use App\Models\JobTitleModel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 
@@ -31,12 +31,13 @@ class RolesRepository
             }
 
             // Ambil data dari database
-            $query = RolesModel::with(['profile'])
-                ->where('created_by', $userId)
+            $query = JobTitleModel::where('created_by', $userId)
                 ->when(!empty($filters['keyword']), function ($q) use ($filters) {
                     $search = $filters['keyword'];
                     $q->where(function ($sub) use ($search) {
-                        $sub->where('name', 'like', "%{$search}%");
+                        $sub->where('title', 'like', "%{$search}%");
+                        $sub->where('job_title_code', 'like', "%{$search}%");
+                        $sub->where('title_alias', 'like', "%{$search}%");
                     });
                 });
             $result = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
@@ -50,7 +51,7 @@ class RolesRepository
 
             return $result;
         } catch (LockTimeoutException $e) {
-            return RolesModel::where('created_by', $userId)->paginate($filters['limit'] ?? 10);
+            return JobTitleModel::where('created_by', $userId)->paginate($filters['limit'] ?? 10);
         } finally {
             optional($lock)->release();
         }

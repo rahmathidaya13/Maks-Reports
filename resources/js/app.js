@@ -5,6 +5,7 @@ import { createApp, h } from "vue";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import GlobalComponent from "./GlobalComponent";
+import registerHelpers from "./helpers/autoLoadHelpers";
 const appName = import.meta.env.VITE_APP_NAME || "";
 import select2 from 'select2';
 select2()
@@ -18,6 +19,7 @@ createInertiaApp({
         ),
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });
+        registerHelpers(app);
         app.use(plugin);
         app.use(GlobalComponent);
         app.use(ZiggyVue);

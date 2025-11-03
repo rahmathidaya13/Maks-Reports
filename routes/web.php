@@ -13,6 +13,7 @@ use App\Http\Controllers\AuthGoogle\GoogleAuthController;
 use App\Http\Controllers\Authority\AuthorityController;
 use App\Http\Controllers\Branches\BranchesController;
 use App\Http\Controllers\Home\HomeController;
+use App\Http\Controllers\Job\JobTitleController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Roles\RolesController;
 
@@ -63,13 +64,14 @@ Route::middleware(['auth', 'level:develop,admin,user', 'verified', 'profile.comp
         Route::get('/home', 'index')->name('home');
     });
 
-    Route::controller(RolesController::class)->group(function () {
-        Route::get('/roles-list', 'index')->name('roles');
-        Route::get('/roles/create', 'create')->name('roles.create');
-        Route::post('/roles/store', 'store')->name('roles.store');
-        Route::get('/roles/edit/{id}', 'edit')->name('roles.edit');
-        Route::put('/roles/update/{id}', 'update')->name('roles.update');
-        Route::get('/roles/destroy/{id}', 'destroy')->name('roles.destroy');
+    Route::controller(JobTitleController::class)->group(function () {
+        Route::get('/job_title/list', 'index')->name('job_title');
+        Route::get('/job_title/create', 'create')->name('job_title.create');
+        Route::post('/job_title/store', 'store')->name('job_title.store');
+        Route::get('/job_title/edit/{id}', 'edit')->name('job_title.edit');
+        Route::put('/job_title/update/{id}', 'update')->name('job_title.update');
+        Route::delete('/job_title/destroy/{id}', 'destroy')->name('job_title.deleted');
+        Route::post('/job_title/delete_all', 'destroy_all')->name('job_title.destroy_all');
     });
     Route::controller(BranchesController::class)->group(function () {
         Route::get('/branches/list', 'index')->name('branches');

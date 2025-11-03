@@ -2,11 +2,13 @@
 import { computed, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
-import Swal from "sweetalert2";
+import { swalAlert, swalConfirmDelete } from "../../helpers/swalHelpers";
+import { highlight } from "../../helpers/highlight";
+import { formatText } from "../../helpers/formatText";
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
-    roles: Object,
+    jobTitle: Object,
     filters: Object,
 });
 const filters = reactive({
@@ -16,30 +18,24 @@ const filters = reactive({
     page: props.filters?.page ?? 1,
 })
 const routes = {
-    edit: "roles.edit",
-    delete: "roles.delete",
+    edit: "job_title.edit",
+    delete: "job_title.deleted",
 };
 const liveSearch = debounce((e) => {
-    router.get(route("brand"), filters, {
+    router.get(route("job_title"), filters, {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["roles", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
+        only: ["job_title", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
     });
 }, 1000);
 const header = [
     { label: "No", key: "__index" },
-    { label: "Kode Jabatan", key: "position_code" },
-    { label: "Nama Jabatan", key: "name" },
-    { label: "Nama Singkatan", key: "short_name" },
+    { label: "Kode Jabatan", key: "job_title_code" },
+    { label: "Nama Jabatan", key: "title" },
+    { label: "Jabatan Alias", key: "title_alias" },
     { label: "Deskripsi", key: "description" },
 ];
-const highlight = (text, keyword) => {
-    if (!keyword || !text) return text;
-    const regex = new RegExp(`(${keyword})`, "gi");
-    return text.toString().replace(regex, `<mark class="highlight">$1</mark>`);
-};
-
 watch(
     () => [
         filters.keyword,
@@ -47,31 +43,23 @@ watch(
         filters.order_by,],
     () => liveSearch()
 );
-console.log(props.roles);
 const selectedRow = ref([]);
 const isVisible = ref(false);
 function deleteSelected() {
     if (!selectedRow.value.length) {
-        Swal.fire("Peringatan", "Tidak ada data yang dipilih.", "warning");
-        return;
+        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
     }
-
-    Swal.fire({
-        title: "Hapus Data Terpilih",
+    swalConfirmDelete({
+        title: 'Hapus Data Terpilih',
         text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Ya, Hapus Semua!",
-        cancelButtonText: "Batal",
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // kirim ke route mass delete
-            router.post(route('roles.destroy_all'), { all_id: selectedRow.value }, {
+        confirmText: 'Ya, Hapus Semua!',
+        onConfirm: () => {
+            router.post(route('job_title.destroy_all'), { all_id: selectedRow.value }, {
                 preserveScroll: true,
                 preserveState: false,
-            });
-        }
-    });
+            })
+        },
+    })
 }
 
 watch(selectedRow, (val) => {
@@ -87,7 +75,8 @@ watch(selectedRow, (val) => {
     <Head title="Halaman Jabatan" />
     <app-layout>
         <template #content>
-            <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar Jabatan" :items="[{ text: 'Daftar Jabatan' }]" />
+            <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar Jabatan"
+                :items="[{ text: 'Daftar Jabatan' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12">
@@ -123,7 +112,7 @@ watch(selectedRow, (val) => {
                                 </div>
                             </div>
                             <div class="col-xl-2 col-4 mb-xl-0 mb-3 d-flex justify-content-xl-end">
-                                <Link :href="route('roles.create')" class="btn btn-primary">
+                                <Link :href="route('job_title.create')" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Tambah
                                 </Link>
                             </div>
@@ -135,11 +124,22 @@ watch(selectedRow, (val) => {
                     <div class="card mb-4 overflow-hidden rounded-4">
                         <div class="table-responsive">
                             <base-table @update:selected="selectedRow = $event" :routes="routes"
-                                :attributes="{ id: 'roles_id', name: 'name' }" :data="props.roles" :headers="header">
-
+                                :attributes="{ id: 'job_title_id', name: 'title' }" :data="props.jobTitle"
+                                :headers="header">
+                                <template #cell="{ row, keyName }">
+                                    <template v-if="keyName === 'job_title_code'">
+                                        <span v-html="highlight(row.job_title_code, filters.keyword)" />
+                                    </template>
+                                    <template v-if="keyName === 'title'">
+                                        <span v-html="highlight(formatText(row.title), filters.keyword)" />
+                                    </template>
+                                    <template v-if="keyName === 'title_alias'">
+                                        <span
+                                            v-html="highlight(formatText(row.title_alias, 'uppercase'), filters.keyword)" />
+                                    </template>
+                                </template>
                             </base-table>
                         </div>
-
                     </div>
                 </div>
             </div>

@@ -16,8 +16,8 @@ class ProfileModel extends Model
 
     protected $fillable = [
         'users_id',
-        'roles_id',
         'branches_id',
+        'job_title_id',
         'date_of_entry',
         'birthdate',
         'education',
@@ -27,17 +27,28 @@ class ProfileModel extends Model
         'images',
     ];
 
+    public static function booted()
+    {
+        static::saved(function ($profile) {
+            if ($profile->jobTitle && $profile->user) {
+                $profile->user->syncRoles([$profile->jobTitle->title]);
+            }
+        });
+    }
+
     // 🔹 Relasi ke User
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id', 'id');
     }
+
+    public function jobTitle()
+    {
+        return $this->belongsTo(JobTitleModel::class, 'job_title_id', 'job_title_id');
+    }
+
     public function branch()
     {
         return $this->belongsTo(BranchesModel::class, 'branches_id', 'branches_id');
-    }
-    public function role()
-    {
-        return $this->belongsTo(RolesModel::class, 'roles_id', 'roles_id');
     }
 }

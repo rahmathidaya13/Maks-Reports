@@ -24,14 +24,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public $incrementing = false;
     protected $dates     = ["deleted_at"];
     public $keyType      = 'string';
-
+    protected $guard_name = 'web';
     protected $fillable = [
         'name',
         'google_id',
         'email',
         'email_verified_at',
         'password',
-        'role',
         'is_active',
         'remember_token',
         'created_at',
@@ -49,7 +48,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'remember_token',
         'is_active',
-        'role',
         'created_at',
         'updated_at',
         'deleted_at',

@@ -21,7 +21,8 @@ const is = (pattern) => {
                     Dashboard
                     </Link>
 
-                    <Link class="nav-link" :class="{ 'active active-link': is('roles*') }" :href="route('roles')">
+                    <Link class="nav-link" :class="{ 'active active-link': is('job_title*') }"
+                        :href="route('job_title')">
                     <div class="sb-nav-link-icon">
                         <i class="fas fa-briefcase"></i>
                     </div>

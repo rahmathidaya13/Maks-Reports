@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Permission\Models\Role;
+
+class JobTitleModel extends Model
+{
+    use HasFactory, HasUuids;
+    protected $table = 'job_title';
+    protected $primaryKey = 'job_title_id';
+    protected $keyType = 'string';
+    public $incrementing = false;
+    protected $dates    = ["deleted_at"];
+    protected $fillable = [
+        'created_by',
+        'role_id',
+        'job_title_code',
+        'title',
+        'title_alias',
+        'description',
+    ];
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
+    public static function boot()
+    {
+        parent::boot();
+        static::creating(function ($job) {
+            $job->job_title_code    = self::generateUniqueCode();
+        });
+    }
+    public static function generateUniqueCode()
+    {
+        $prefix = "EMP-";
+        do {
+            $randomNumber = str_pad(mt_rand(0, 9999999), 7, '0', STR_PAD_LEFT);
+            $code = $prefix . $randomNumber;
+        } while (self::where('job_title_code', $code)->exists());
+        // Kembalikan kode yang sudah dipastikan unik
+        return $code;
+    }
+
+    // spatie permission
+    protected static function booted()
+    {
+        // Sinkron otomatis ke Spatie roles
+        static::created(function ($job) {
+            $role = Role::firstOrCreate([
+                'name' => $job->title,
+                'guard_name' => 'web',
+            ]);
+
+            $job->update(['role_id' =>  $role->id]);
+        });
+
+        static::updated(function ($job) {
+            if ($job->role_id) {
+                $role = Role::find($job->role_id);
+                if ($role) {
+                    $role->update(['name' => $job->title]);
+                }
+            } else {
+                // fallback jika belum ada role_id
+                $role = Role::firstOrCreate([
+                    'name' => $job->title,
+                    'guard_name' => 'web',
+                ]);
+                $job->update(['role_id' => $role->id]);
+            }
+        });
+
+        static::deleted(function ($job) {
+            if ($job->role_id) {
+                Role::where('id', $job->role_id)->delete();
+            }
+        });
+    }
+
+    public function profile()
+    {
+        return $this->hasMany(ProfileModel::class, 'job_title_id', 'job_title_id');
+    }
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+}

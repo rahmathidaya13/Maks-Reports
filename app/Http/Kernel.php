@@ -69,5 +69,9 @@ class Kernel extends HttpKernel
         'profile.completed' => \App\Http\Middleware\ProfileMiddleware::class,
         'profile.uncompleted' => \App\Http\Middleware\profileUncompleted::class,
         'check.page.permission' => \App\Http\Middleware\CheckPagePermission::class,
+        // spatie
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
     ];
 }
