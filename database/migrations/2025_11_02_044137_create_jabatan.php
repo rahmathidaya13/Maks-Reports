@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignUuid('created_by')->constrained('users', 'id')->cascadeOnDelete();
             $table->string('job_title_code', 25)->unique();
             $table->string('title', 50)->unique();
+            $table->string('slug', 50)->unique();
             $table->string('title_alias', 15)->unique();
             $table->text('description');
             $table->softDeletes();

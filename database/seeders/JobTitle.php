@@ -21,10 +21,11 @@ class JobTitle extends Seeder
         }
 
         $defaults = [
-            ['created_by' => $develop, 'title' => 'sales', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'sls', 'description' => 'Bertugas menjual produk dan melapor harian.'],
-            ['created_by' => $develop, 'title' => 'manager', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'mgr', 'description' => 'Bertugas mengarahkan dan memantau.'],
-            ['created_by' => $develop, 'title' => 'teknisi', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'tkn', 'description' => 'Bertugas melakukan perbaikan.'],
-            ['created_by' => $develop, 'title' => 'developer', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'dev', 'description' => 'Bertugas melakukan perbaikan.'],
+            ['created_by' => $develop, 'title' => 'Sales', 'slug' => 'sales', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'SLS', 'description' => 'Bertugas menjual produk dan melapor harian.'],
+            ['created_by' => $develop, 'title' => 'Manager', 'slug' => 'manager', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'MGR', 'description' => 'Bertugas mengarahkan dan memantau.'],
+            ['created_by' => $develop, 'title' => 'Teknisi', 'slug' => 'teknisi', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'TKN', 'description' => 'Bertugas melakukan perbaikan.'],
+            ['created_by' => $develop, 'title' => 'Developer', 'slug' => 'developer', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'DEV', 'description' => 'Bertugas melakukan perbaikan.'],
+            ['created_by' => $develop, 'title' => 'Admin', 'slug' => 'admin', 'job_title_code' => JobTitleModel::generateUniqueCode(), 'title_alias' => 'ADM', 'description' => 'Bertugas mengelola administrasi.'],
         ];
 
         foreach ($defaults as $data) {

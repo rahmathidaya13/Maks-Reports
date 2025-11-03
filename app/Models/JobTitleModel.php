@@ -6,11 +6,12 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Models\Role;
 
 class JobTitleModel extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
     protected $table = 'job_title';
     protected $primaryKey = 'job_title_id';
     protected $keyType = 'string';
@@ -21,6 +22,7 @@ class JobTitleModel extends Model
         'role_id',
         'job_title_code',
         'title',
+        'slug',
         'title_alias',
         'description',
     ];

@@ -36,8 +36,8 @@ class RolesRepository
                     $search = $filters['keyword'];
                     $q->where(function ($sub) use ($search) {
                         $sub->where('title', 'like', "%{$search}%");
-                        $sub->where('job_title_code', 'like', "%{$search}%");
-                        $sub->where('title_alias', 'like', "%{$search}%");
+                        $sub->orWhere('title_alias', 'like', "%{$search}%");
+                        $sub->orWhere('job_title_code', 'like', "%{$search}%");
                     });
                 });
             $result = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')

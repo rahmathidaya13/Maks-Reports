@@ -13,7 +13,7 @@ trait JobTitleValidation
             'title' => [
                 'required',
                 'string',
-                'max:100',
+                'max:50',
                 Rule::unique('job_title', 'title')
                     ->ignore($id, 'job_title_id'),
             ],

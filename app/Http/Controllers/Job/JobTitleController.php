@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Job;
 
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\JobTitleModel;
 use App\Traits\JobTitleValidation;
@@ -39,6 +40,7 @@ class JobTitleController extends Controller
      */
     public function create()
     {
+        $this->rolesRepos->clearCache(auth()->id());
         $uniqCode = JobTitleModel::generateUniqueCode();
         return Inertia::render('Roles/Form/pageForm', compact('uniqCode'));
     }
@@ -52,8 +54,8 @@ class JobTitleController extends Controller
         $this->validationText($request->all());
         $roles = new JobTitleModel();
         $roles->created_by = auth()->id();
-        $roles->job_title_code = JobTitleModel::generateUniqueCode();
         $roles->title = $request->input('title');
+        $roles->slug = Str::slug($request->input('title'));
         $roles->title_alias = $request->input('title_alias');
         $roles->description = $request->input('description');
         $roles->save();
@@ -88,8 +90,8 @@ class JobTitleController extends Controller
         $this->validationText($request->all(), $id);
         $roles = $jobTitleModel::findOrFail($id);
         $roles->created_by = auth()->id();
-        $roles->job_title_code = JobTitleModel::generateUniqueCode();
         $roles->title = $request->input('title');
+        $roles->slug = Str::slug($request->input('title'));
         $roles->title_alias = $request->input('title_alias');
         $roles->description = $request->input('description');
         $roles->update();

@@ -94,7 +94,7 @@ watch(selected, (val) => {
                 <th class="text-center" v-for="(header, index) in headers" :key="index">
                     {{ header.label }}
                 </th>
-                <th class="text-center" v-if="routes.edit && routes.delete">Aksi</th>
+                <th class="text-center" v-if="routes.edit && routes.delete"></th>
             </tr>
         </thead>
         <tbody>
@@ -121,15 +121,18 @@ watch(selected, (val) => {
                     </template>
                 </td>
                 <td class="text-center align-middle" v-if="routes.edit && routes.delete">
-                    <div class="dropdown">
-                        <button class="btn btn-outline-dark" type="button" data-bs-toggle="dropdown"
+                    <div class="dropdown dropstart">
+                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
-                            <i class="fas fa-eye"></i>
+                            <i class="fas fa-cog"></i>
                         </button>
-                        <ul class="dropdown-menu">
+                        <ul class="dropdown-menu overflow-hidden">
+                            <div class="dropdown-header">
+                                Aksi
+                            </div>
                             <li>
                                 <button class="dropdown-item fw-bold" @click.prevent="edited(routes.edit, row)">
-                                    <i class="fas fa-edit"></i> Edit
+                                    <i class="fas fa-edit"></i> Ubah
                                 </button>
                             </li>
                             <li>

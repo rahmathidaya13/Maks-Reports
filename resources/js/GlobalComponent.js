@@ -24,6 +24,7 @@ import ButtonDeleteAll from "./components/ButtonDeleteAll.vue";
 import Selects2 from "./components/Selects2.vue";
 import InputQuantity from "./components/InputQuantity.vue";
 import FileUpload from "./components/FileUpload.vue";
+import SummernoteEditor from "./components/SummernoteEditor.vue";
 export default {
   install(app) {
     app.component("alert", Alert);
@@ -52,5 +53,6 @@ export default {
     app.component("tables", Tables);
     app.component("radio-box", RadioBox);
     app.component("pagination", Pagination);
+    app.component("summernote-editor", SummernoteEditor);
   }
 };

@@ -5,6 +5,8 @@ import { debounce } from "lodash";
 import { swalAlert, swalConfirmDelete } from "../../helpers/swalHelpers";
 import { highlight } from "../../helpers/highlight";
 import { formatText } from "../../helpers/formatText";
+import moment from "moment";
+moment.locale('id');
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
@@ -26,7 +28,7 @@ const liveSearch = debounce((e) => {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["job_title", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
+        only: ["jobTitle", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
     });
 }, 1000);
 const header = [
@@ -35,6 +37,8 @@ const header = [
     { label: "Nama Jabatan", key: "title" },
     { label: "Jabatan Alias", key: "title_alias" },
     { label: "Deskripsi", key: "description" },
+    { label: "Dibuat", key: "created_at" },
+    { label: "Diperbarui", key: "updated_at" },
 ];
 watch(
     () => [
@@ -80,39 +84,35 @@ watch(selectedRow, (val) => {
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12">
-                    <div class="card mb-3 overflow-hidden rounded-4">
+                    <div class="card mb-3 overflow-hidden rounded-4 p-1">
                         <div class="row align-items-center p-3 g-2">
-                            <div class="col-xl-6 col-12 mb-xl-0 mb-3">
-                                <div class="position-relative">
-                                    <i class="fas fa-search input-icon-left"></i>
-                                    <text-input autofocus class="input-fixed-height" v-model="filters.keyword"
-                                        name="keyword" placeholder="Cari merek..." />
+                            <div class="col-xl-7 col-12 mb-0">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <text-input :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
+                                        placeholder="Pencarian....." />
                                 </div>
                             </div>
-                            <div class="col-xl-2 col-4 mb-xl-0 mb-3">
-                                <div class="position-relative">
-                                    <i class="fas fa-sort input-icon-left"></i>
-                                    <select-input :is-valid="false" selectClass="input-fixed-select"
-                                        v-model="filters.limit" name="limit" :options="[
-                                            { value: 10, label: '10' },
-                                            { value: 25, label: '25' },
-                                            { value: 50, label: '50' },
-                                            { value: 100, label: '100' },
-                                        ]" />
+                            <div class="col-xl-3 col-12 mb-xl-0 mb-0 d-flex gap-2">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
+                                    <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
+                                        { value: 10, label: '10' },
+                                        { value: 25, label: '25' },
+                                        { value: 50, label: '50' },
+                                        { value: 100, label: '100' },
+                                    ]" />
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
+                                    <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
+                                        { value: 'desc', label: 'Terbaru' },
+                                        { value: 'asc', label: 'Terlama' },
+                                    ]" />
                                 </div>
                             </div>
-                            <div class="col-xl-2 col-4 mb-xl-0 mb-3">
-                                <div class="position-relative">
-                                    <i class="fas fa-sort input-icon-left"></i>
-                                    <select-input :is-valid="false" selectClass="input-fixed-select"
-                                        v-model="filters.order_by" name="order_by" :options="[
-                                            { value: 'desc', label: 'Terbaru' },
-                                            { value: 'asc', label: 'Terlama' },
-                                        ]" />
-                                </div>
-                            </div>
-                            <div class="col-xl-2 col-4 mb-xl-0 mb-3 d-flex justify-content-xl-end">
-                                <Link :href="route('job_title.create')" class="btn btn-primary">
+                            <div class="col-xl-2 col-6 mb-xl-0 mb-0 d-grid d-xl-flex">
+                                <Link :href="route('job_title.create')" class="btn btn-outline-success">
                                 <i class="fas fa-plus"></i> Tambah
                                 </Link>
                             </div>
@@ -137,8 +137,34 @@ watch(selectedRow, (val) => {
                                         <span
                                             v-html="highlight(formatText(row.title_alias, 'uppercase'), filters.keyword)" />
                                     </template>
+                                    <template v-if="keyName === 'description'">
+                                        <div class="text-start"
+                                            v-html="row.description || 'Produk tidak memiliki deskripsi'">
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === 'created_at'">
+                                        {{ moment(row.created_at).format('LLL') }}
+                                    </template>
+                                    <template v-if="keyName === 'updated_at'">
+                                        {{ moment(row.updated_at).format('LLL') }}
+                                    </template>
+
                                 </template>
                             </base-table>
+                        </div>
+                        <div
+                            class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
+                            <div class="mb-2 order-1 order-xl-0">
+                                Menampilkan <strong>{{ props.jobTitle.from ?? 0 }}</strong> sampai
+                                <strong>{{ props.jobTitle.to ?? 0 }}</strong> dari total
+                                <strong>{{ props.jobTitle.total ?? 0 }}</strong> data
+                            </div>
+                            <pagination :links="props.jobTitle?.links" :keyword="filters.keyword" routeName="job_title"
+                                :additionalQuery="{
+                                    order_by: filters.order_by,
+                                    limit: filters.limit,
+                                    keyword: filters.keyword,
+                                }" />
                         </div>
                     </div>
                 </div>

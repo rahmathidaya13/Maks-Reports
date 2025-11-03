@@ -113,8 +113,8 @@ body {
 }
 
 /* Hanya geser icon jika input sebelumnya adalah input dengan class .has-icon-right */
-.input-fixed-height.has-icon-right.is-valid ~ .input-icon-right,
-.input-fixed-height.has-icon-right.is-invalid ~ .input-icon-right {
+.input-fixed-height.has-icon-right.is-valid~.input-icon-right,
+.input-fixed-height.has-icon-right.is-invalid~.input-icon-right {
     right: 36px;
 }
 
@@ -308,6 +308,7 @@ body {
     object-position: center;
     border-radius: 10px;
 }
+
 .img-thumbnail {
     padding: 0.2rem;
     background-color: #fff;
@@ -364,4 +365,31 @@ body {
     border: 2px solid #198754 !important;
     color: green !important;
     border-radius: 5px !important;
+}
+
+.dropdown-menu {
+    min-width: 13rem;
+    border-radius: 0.5rem;
+    border: 1px solid #c9c9c9;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(85, 80, 80, 0.377);
+    padding: 0;
+}
+
+.dropdown-menu .dropdown-item {
+    padding: 5px 15px;
+    transition: background-color 0.2s ease-in-out, color 0.2
+}
+.dropdown-menu .dropdown-item:hover {
+    background-color: #dfe2e7;
+    color: #000000;
+}
+.dropdown-menu .dropdown-header {
+    background-color: #414141;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #ffffff;
+    padding: 5px 15px;
+    border-radius: 0.25rem 0.25rem 0 0;
+    text-align: center;
 }

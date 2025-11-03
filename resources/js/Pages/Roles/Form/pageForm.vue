@@ -18,7 +18,7 @@ const form = useForm({
     description: props.jobTitle?.description ?? '',
 });
 const isSubmit = () => {
-    if (props.jobTitle?.id) {
+    if (props.jobTitle?.job_title_id) {
         form.put(route('job_title.update', props.jobTitle.job_title_id), {
             onSuccess: () => {
                 form.reset();
@@ -51,6 +51,7 @@ const breadcrumbItems = computed(() => {
     if (props.jobTitle && props.jobTitle?.job_title_id) {
         return [
             { text: "Daftar Jabatan", url: route("job_title") },
+            { text: "Buat Data Jabatan", url: route("job_title.create") },
             { text: title.value }
         ]
     }
@@ -99,9 +100,17 @@ const breadcrumbItems = computed(() => {
                         </div>
                         <div class="mb-3">
                             <input-label class="fw-bold" for="description" value="Deskripsi jabatan" />
-                            <text-area :rows="10" :cols="10" :is-valid="!form.errors.description"
+                            <summernote-editor v-model="form.description" :options="{
+                                height: 350,
+                                placeholder: 'Tulis deskripsi disini...',
+                                toolbar: [
+                                    ['font', ['bold', 'underline', 'clear']],
+                                    ['para', ['ul', 'ol', 'paragraph']],
+                                ]
+                            }" :max-length="500" />
+                            <!-- <text-area :rows="10" :cols="10" :is-valid="!form.errors.description"
                                 v-model="form.description" name="description" label="Deskripsi Jabatan"
-                                placeholder="Masukkan deskripsi jabatan..." />
+                                placeholder="Masukkan deskripsi jabatan..." /> -->
                             <input-error :message="form.errors.description" />
                         </div>
                         <div class="d-grid d-xl-block">
