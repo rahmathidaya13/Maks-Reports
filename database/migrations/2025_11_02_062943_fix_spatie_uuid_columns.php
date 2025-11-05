@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::table('model_has_roles', function (Blueprint $table) {
             $table->uuid('model_id')->change();
         });
-
         // model_has_permissions
         Schema::table('model_has_permissions', function (Blueprint $table) {
             $table->uuid('model_id')->change();

@@ -6,29 +6,34 @@ defineProps({
     },
     label: {
         type: String,
-        default: ""
+        default: "",
     },
     icon: {
         type: String,
-        default: null
+        default: null,
     },
     name: {
         type: String,
-        default: ""
+        default: "",
     },
     loading: {
         type: Boolean,
-        default: false
+        default: false,
     },
     waiting: {
         type: String,
-        default: "Please wait..."
-    }
+        default: "Please wait...",
+    },
 });
 </script>
 <template>
-    <button :class="['btn', `btn-${variant}`]" :name="name.toLowerCase()" :id="name.toLowerCase()" :disabled="loading">
-        <i v-if="icon" :class="[icon,'me-2']"></i>
+    <button
+        :class="['btn', `btn-${variant}`]"
+        :name="name.toLowerCase()"
+        :id="name.toLowerCase()"
+        :disabled="loading"
+    >
+        <i v-if="icon" :class="[icon, 'me-2']"></i>
         <span v-if="loading">{{ waiting }}</span>
         <span v-else>
             <slot>{{ label }}</slot>

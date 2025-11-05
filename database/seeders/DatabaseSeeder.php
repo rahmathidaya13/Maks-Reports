@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             BranchSeeder::class,
             JobTitle::class,
+            RolesSeeder::class
         ]);
         // \App\Models\User::factory(10)->create();
 

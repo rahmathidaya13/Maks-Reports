@@ -51,7 +51,7 @@ const roleOptions = computed(() => {
 <template>
 
     <Head title="Halaman Profile" />
-
+    <loader-overlay />
     <div class="container py-5">
         <div class="row justify-content-center align-items-center">
             <div class="col-xl-12">

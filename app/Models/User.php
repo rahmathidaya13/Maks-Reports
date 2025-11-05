@@ -66,4 +66,8 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(ProfileModel::class, 'users_id', 'id');
     }
+    public function dailyReport()
+    {
+        return $this->hasMany(DailyReportModel::class, 'created_by', 'id');
+    }
 }

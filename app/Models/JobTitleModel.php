@@ -51,40 +51,44 @@ class JobTitleModel extends Model
     }
 
     // spatie permission
-    protected static function booted()
-    {
-        // Sinkron otomatis ke Spatie roles
-        static::created(function ($job) {
-            $role = Role::firstOrCreate([
-                'name' => $job->title,
-                'guard_name' => 'web',
-            ]);
+    // protected static function booted()
+    // {
+    //     // Sinkron otomatis ke Spatie roles
+    //     static::created(function ($job) {
+    //         $role = Role::firstOrCreate([
+    //             'name' => $job->slug,
+    //             'guard_name' => 'web',
+    //         ]);
 
-            $job->update(['role_id' =>  $role->id]);
-        });
+    //         $job->update(['role_id' =>  $role->id]);
+    //     });
 
-        static::updated(function ($job) {
-            if ($job->role_id) {
-                $role = Role::find($job->role_id);
-                if ($role) {
-                    $role->update(['name' => $job->title]);
-                }
-            } else {
-                // fallback jika belum ada role_id
-                $role = Role::firstOrCreate([
-                    'name' => $job->title,
-                    'guard_name' => 'web',
-                ]);
-                $job->update(['role_id' => $role->id]);
-            }
-        });
+    //     static::updated(function ($job) {
+    //         if ($job->role_id) {
+    //             $role = Role::find($job->role_id);
+    //             if ($role) {
+    //                 $role->update(
+    //                     [
+    //                         'name' => $job->slug,
+    //                     ]
+    //                 );
+    //             }
+    //         } else {
+    //             // fallback jika belum ada role_id
+    //             $role = Role::firstOrCreate([
+    //                 'name' => $job->slug,
+    //                 'guard_name' => 'web',
+    //             ]);
+    //             $job->update(['role_id' => $role->id]);
+    //         }
+    //     });
 
-        static::deleted(function ($job) {
-            if ($job->role_id) {
-                Role::where('id', $job->role_id)->delete();
-            }
-        });
-    }
+    //     static::deleted(function ($job) {
+    //         if ($job->role_id) {
+    //             Role::where('id', $job->role_id)->delete();
+    //         }
+    //     });
+    // }
 
     public function profile()
     {

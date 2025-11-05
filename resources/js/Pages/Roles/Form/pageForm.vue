@@ -104,7 +104,7 @@ const breadcrumbItems = computed(() => {
                                 height: 350,
                                 placeholder: 'Tulis deskripsi disini...',
                                 toolbar: [
-                                    ['font', ['bold', 'underline', 'clear']],
+                                    ['font', ['bold', 'underline']],
                                     ['para', ['ul', 'ol', 'paragraph']],
                                 ]
                             }" :max-length="500" />
