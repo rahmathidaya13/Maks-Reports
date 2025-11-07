@@ -29,6 +29,15 @@ const is = (pattern) => {
                     Jabatan
                     </Link>
 
+                    <Link
+                        v-if="$page.props.auth.user.roles == 'super_admin' || $page.props.auth.user.roles == 'developer'"
+                        class="nav-link" :href="route('roles')">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    Otorisasi
+                    </Link>
+
 
 
 

@@ -16,7 +16,7 @@ const props = defineProps({
     <table class="table table-borderless table-striped text-nowrap">
         <thead class="table-dark">
             <tr>
-                <th class="text-center" v-for="(header, index) in headers" :key="index">
+                <th v-for="(header, index) in headers" :key="index">
                     {{ header.label }}
                 </th>
             </tr>

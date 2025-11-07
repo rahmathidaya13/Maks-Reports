@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\AuthGoogle\GoogleAuthController;
 use App\Http\Controllers\Authority\AuthorityController;
+use App\Http\Controllers\Authorization\RoleController;
 use App\Http\Controllers\Branches\BranchesController;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Job\JobTitleController;
@@ -91,4 +92,13 @@ Route::controller(VerificationController::class)->group(function () {
     Route::get('/email/verify', 'notice')->name('verification.notice')->middleware('auth');
     Route::get('/email/verify/{id}/{hash}', 'verify')->middleware(['signed'])->name('verification.verify');
     Route::post('/email/verification-notification', 'resend')->middleware(['throttle:6,1'])->name('verification.send');
+});
+
+Route::middleware(['auth', 'role:developer'])->prefix('authorization')->group(function () {
+    Route::controller(RoleController::class)->group(function () {
+        Route::get('/roles/list', 'index')->name('roles');
+        Route::get('/roles/create', 'create')->name('roles.create');
+        Route::post('/roles/store', 'store')->name('roles.store');
+        Route::get('/roles/edit/{id}', 'edit')->name('roles.edit');
+    });
 });

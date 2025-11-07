@@ -27,14 +27,14 @@ class ProfileModel extends Model
         'images',
     ];
 
-    public static function booted()
-    {
-        static::saved(function ($profile) {
-            if ($profile->jobTitle && $profile->user) {
-                $profile->user->syncRoles([$profile->jobTitle->title]);
-            }
-        });
-    }
+    // public static function booted()
+    // {
+    //     static::saved(function ($profile) {
+    //         if ($profile->jobTitle && $profile->user) {
+    //             $profile->user->syncRoles([$profile->jobTitle->title]);
+    //         }
+    //     });
+    // }
 
     // 🔹 Relasi ke User
     public function user()

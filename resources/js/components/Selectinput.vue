@@ -2,7 +2,7 @@
 import { computed, onMounted } from 'vue'
 const props = defineProps({
     modelValue: {
-        type: [String, Number, null],
+        type: [String, Number,Array, null],
         default: null
     },
     text: {

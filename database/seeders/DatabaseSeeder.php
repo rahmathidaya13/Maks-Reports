@@ -18,7 +18,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
+        // Pastikan role 'developer' sudah ada (guard_name penting!)
+        $role = Role::firstOrCreate([
+            'name' => 'developer',
+            'guard_name' => 'web',
+        ]);
         $user = User::firstOrCreate(
             ['email' => 'rahmadlawrent6@gmail.com'],
             [
@@ -26,9 +30,14 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Rahmat Hidayah',
                 'email_verified_at' => now(),
                 'password' => bcrypt('@Rahmad12345'),
-                'role' => 'developer',
             ]
         );
+        // Reset cache dulu untuk jaga-jaga
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // Assign role ke user
+        $user->assignRole($role);
+        $user->assignRole('developer');
         $user->profile()->updateOrCreate(
             ['users_id' => $user->id],
         );

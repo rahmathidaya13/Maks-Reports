@@ -82,6 +82,7 @@ class RegisterController extends Controller
             'can_download' => false,
         ]);
         $user->profile()->create();
+        $user->assignRole('user');
         event(new Registered($user));
 
         Auth::login($user, true);

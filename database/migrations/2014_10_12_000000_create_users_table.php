@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('email', 50)->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['developer', 'admin', 'user'])->default('user');
             $table->boolean('is_active')->default(false);
             $table->softDeletes();
             $table->rememberToken();
