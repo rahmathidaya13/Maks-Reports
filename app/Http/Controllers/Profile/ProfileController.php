@@ -94,6 +94,10 @@ class ProfileController extends Controller
         $profile->address = $request->input('address');
         $profile->is_completed = true;
         $profile->update();
+
+        auth()->user()->update([
+            'name' => $request->input('name'),
+        ]);
         return redirect()->route('home')->with('message', 'Profil berhasil diperbarui');
     }
 }

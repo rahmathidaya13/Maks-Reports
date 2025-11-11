@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Auth\ConfirmPasswordController;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
@@ -11,8 +10,11 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\AuthGoogle\GoogleAuthController;
 use App\Http\Controllers\Authority\AuthorityController;
+use App\Http\Controllers\Authorization\PermissionController;
 use App\Http\Controllers\Authorization\RoleController;
+use App\Http\Controllers\Authorization\UsersController;
 use App\Http\Controllers\Branches\BranchesController;
+use App\Http\Controllers\Daily\DailyReportController;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Job\JobTitleController;
 use App\Http\Controllers\Profile\ProfileController;
@@ -58,7 +60,7 @@ Route::middleware(['guest'])->group(function () {
 });
 
 // Akun yang sudah diverfikasi
-Route::middleware(['auth', 'level:develop,admin,user', 'verified', 'profile.completed'])->group(function () {
+Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () {
     Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::controller(HomeController::class)->group(function () {
@@ -77,6 +79,16 @@ Route::middleware(['auth', 'level:develop,admin,user', 'verified', 'profile.comp
     Route::controller(BranchesController::class)->group(function () {
         Route::get('/branches/list', 'index')->name('branches');
     });
+    // laporan harian
+    Route::controller(DailyReportController::class)->group(function () {
+        Route::get('/daily_report/list', 'index')->name('daily_report');
+        Route::get('/daily_report/create', 'create')->name('daily_report.create');
+        Route::post('/daily_report/store', 'store')->name('daily_report.store');
+        Route::get('/daily_report/edit/{id}', 'edit')->name('daily_report.edit');
+        Route::put('/daily_report/update/{id}', 'update')->name('daily_report.update');
+        Route::delete('/daily_report/destroy/{id}', 'destroy')->name('daily_report.deleted');
+        Route::post('/daily_report/delete_all', 'destroy_all')->name('daily_report.destroy_all');
+    });
 });
 
 Route::controller(ProfileController::class)->group(function () {
@@ -94,11 +106,30 @@ Route::controller(VerificationController::class)->group(function () {
     Route::post('/email/verification-notification', 'resend')->middleware(['throttle:6,1'])->name('verification.send');
 });
 
-Route::middleware(['auth', 'role:developer'])->prefix('authorization')->group(function () {
+Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->prefix('authorization')->group(function () {
     Route::controller(RoleController::class)->group(function () {
         Route::get('/roles/list', 'index')->name('roles');
         Route::get('/roles/create', 'create')->name('roles.create');
         Route::post('/roles/store', 'store')->name('roles.store');
         Route::get('/roles/edit/{id}', 'edit')->name('roles.edit');
+        Route::put('/roles/update/{id}', 'update')->name('roles.update');
+        Route::delete('/roles/destroy/{id}', 'destroy')->name('roles.delete');
+        Route::post('/roles/delete_all', 'destroyAll')->name('roles.destroy_all');
+    });
+    Route::controller(PermissionController::class)->group(function () {
+        Route::get('/permissions/list', 'index')->name('permissions');
+        Route::get('/permissions/create', 'create')->name('permissions.create');
+        Route::post('/permissions/store', 'store')->name('permissions.store');
+        Route::get('/permissions/edit/{id}', 'edit')->name('permissions.edit');
+        Route::put('/permissions/update/{id}', 'update')->name('permissions.update');
+        Route::delete('/permissions/destroy/{id}', 'destroy')->name('permissions.delete');
+        Route::post('/permissions/delete_all', 'destroyAll')->name('permissions.destroy_all');
+    });
+    Route::controller(UsersController::class)->group(function () {
+        Route::get('/users/list', 'index')->name('users');
+        Route::get('/users/edit/{id}', 'edit')->name('users.edit');
+        Route::put('/users/update/{id}', 'update')->name('users.update');
+        Route::delete('/users/destroy/{id}', 'destroy')->name('users.delete');
+        Route::post('/users/delete_all', 'destroyAll')->name('users.destroy_all');
     });
 });

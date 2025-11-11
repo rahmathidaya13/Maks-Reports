@@ -12,7 +12,7 @@ const isSubmit = () => {
         '[name="g-recaptcha-response"]'
     )?.value
     form.post(route("login.store"), {
-        onFinish: () => form.reset("password"),
+        onFinish: () => form.reset("password")
     });
 };
 const showPassword = ref(false);

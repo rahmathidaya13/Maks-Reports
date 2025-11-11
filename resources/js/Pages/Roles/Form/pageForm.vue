@@ -108,9 +108,6 @@ const breadcrumbItems = computed(() => {
                                     ['para', ['ul', 'ol', 'paragraph']],
                                 ]
                             }" :max-length="500" />
-                            <!-- <text-area :rows="10" :cols="10" :is-valid="!form.errors.description"
-                                v-model="form.description" name="description" label="Deskripsi Jabatan"
-                                placeholder="Masukkan deskripsi jabatan..." /> -->
                             <input-error :message="form.errors.description" />
                         </div>
                         <div class="d-grid d-xl-block">

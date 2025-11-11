@@ -2,18 +2,35 @@
 
 namespace App\Http\Controllers\Daily;
 
-use App\Http\Controllers\Controller;
-use App\Models\DailyReportModel;
+use Inertia\Inertia;
 use Illuminate\Http\Request;
+use App\Models\DailyReportModel;
+use App\Http\Controllers\Controller;
+use App\Repositories\DailyReportsRepository;
 
 class DailyReportController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    protected $dailyReports;
+    public function __construct(DailyReportsRepository $dailyReportsRepository)
     {
-        //
+        $this->dailyReports = $dailyReportsRepository;
+    }
+    public function index(Request $request)
+    {
+        $filters = $request->only([
+            'keyword',
+            'limit',
+            'page',
+            'order_by',
+            'start_date',
+            'end_date',
+        ]);
+        $dailyReport = $this->dailyReports->getCached(auth()->id(), $filters);
+        $can_search = auth()->user()->hasAnyRole(['admin', 'super-admin', 'developer', 'editor']);
+        return Inertia::render('DailyReport/Index', compact('dailyReport', 'filters', 'can_search'));
     }
 
     /**

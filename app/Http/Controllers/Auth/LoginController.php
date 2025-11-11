@@ -59,6 +59,8 @@ class LoginController extends Controller
         $user = User::where("email", $request->input("email"))->first();
 
         if (!$user->is_active) {
+            $user->status = "active";
+            $user->first_login = now();
             $user->is_active = true;
             $user->save();
         }
@@ -91,6 +93,7 @@ class LoginController extends Controller
         $user = User::where('email', Auth::user()->email)->first();
         if ($user && $user->is_active) {
             $user->is_active = false;
+            $user->last_login = now();
             $user->setRememberToken(null);
             $user->save();
         }

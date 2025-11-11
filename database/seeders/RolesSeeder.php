@@ -14,9 +14,11 @@ class RolesSeeder extends Seeder
      */
     public function run(): void
     {
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
         $defaults = [
             ['name' => 'developer', 'guard_name' => 'web'],
-            ['name' => 'super_admin', 'guard_name' => 'web'],
+            ['name' => 'super-admin', 'guard_name' => 'web'],
             ['name' => 'admin', 'guard_name' => 'web'],
             ['name' => 'editor', 'guard_name' => 'web'],
             ['name' => 'user', 'guard_name' => 'web'],
@@ -26,13 +28,27 @@ class RolesSeeder extends Seeder
             Role::firstOrCreate(['name' => $data['name']], $data);
         }
 
-        $permissions = ['create', 'read', 'update', 'delete', 'manage-roles', 'manage-permissions'];
+        $permissions = [
+            'create',
+            'read',
+            'update',
+            'delete',
+            'manage-backup',
+            'manage-roles',
+            'manage-permission',
+            'import',
+            'export',
+            'share',
+            'download'
+        ];
         foreach ($permissions as $perm) {
             Permission::firstOrCreate(['name' => $perm]);
         }
+        // assign semua permission ke user
+        $userRole = Role::where('name', 'user')->first();
+        $userRole->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
 
-        // assign semua permission ke developer
-        // $devRole = Role::where('name', 'developer')->first();
-        // $devRole->syncPermissions(Permission::all());
+        $devRole = Role::where('name', 'developer')->first();
+        $devRole->syncPermissions(permission::all()->pluck('name')->toArray());
     }
 }

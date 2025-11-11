@@ -85,7 +85,7 @@ const roleOptions = computed(() => {
                                         <input-label class="fw-bold" for="name" value="Nama" />
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                            <text-input disabled type="text" name="name" v-model="form.name" />
+                                            <text-input type="text" name="name" v-model="form.name" />
                                         </div>
                                         <input-error :message="form.errors.name" />
                                     </div>

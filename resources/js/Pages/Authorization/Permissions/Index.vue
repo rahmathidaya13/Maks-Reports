@@ -2,15 +2,15 @@
 import { computed, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
-// import { swalAlert, swalConfirmDelete } from "../../helpers/swalHelpers";
-// import { highlight } from "../../helpers/highlight";
-// import { formatText } from "../../helpers/formatText";
+import { highlight } from "../../../helpers/highlight";
+import { swalConfirmDelete } from "../../../helpers/swalHelpers";
+import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
 import moment from "moment";
 moment.locale('id');
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
-    roles: Object,
+    permissions: Object,
     filters: Object,
 });
 const filters = reactive({
@@ -19,26 +19,22 @@ const filters = reactive({
     order_by: props.filters.order_by ?? "desc",
     page: props.filters?.page ?? 1,
 })
-// const routes = {
-//     edit: "job_title.edit",
-//     delete: "job_title.deleted",
-// };
+
 const liveSearch = debounce((e) => {
-    router.get(route("job_title"), filters, {
+    router.get(route("permissions"), filters, {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["jobTitle", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
+        only: ["permissions", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
     });
 }, 1000);
 const header = [
     { label: "No", key: "__index" },
-    { label: "Kode Jabatan", key: "job_title_code" },
-    { label: "Nama Jabatan", key: "title" },
-    { label: "Jabatan Alias", key: "title_alias" },
-    { label: "Deskripsi", key: "description" },
-    { label: "Dibuat", key: "created_at" },
-    { label: "Diperbarui", key: "updated_at" },
+    { label: "Name Permission", key: "name" },
+    { label: "Guard Name", key: "guard_name" },
+    { label: "Created", key: "created_at" },
+    { label: "Updated", key: "updated_at" },
+    { label: "Action", key: "-" },
 ];
 watch(
     () => [
@@ -58,7 +54,7 @@ function deleteSelected() {
         text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
         confirmText: 'Ya, Hapus Semua!',
         onConfirm: () => {
-            router.post(route('job_title.destroy_all'), { all_id: selectedRow.value }, {
+            router.post(route('permissions.destroy_all'), { all_id: selectedRow.value }, {
                 preserveScroll: true,
                 preserveState: false,
             })
@@ -73,14 +69,35 @@ watch(selectedRow, (val) => {
         isVisible.value = false
     }
 })
+
+const isModalVisible = ref(false);
+
+function openModal() {
+    isModalVisible.value = true;
+}
+
+function handleSave() {
+    alert("Data disimpan!");
+    isModalVisible.value = false;
+}
+const deleted = (nameRoute, data) => {
+    swalConfirmDelete({
+        title: 'Hapus',
+        text: `Yakin ingin menghapus ${formatTextFromSlug(data.name)} data terpilih?`,
+        confirmText: 'Ya, Hapus!',
+        onConfirm: () => {
+            router.delete(route(nameRoute, data.id), { preserveScroll: true, replace: true });
+        },
+    })
+}
 </script>
 <template>
 
-    <Head title="Halaman Otorisasi" />
+    <Head title="Halaman Permission" />
     <app-layout>
         <template #content>
-            <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar Otorisasi"
-                :items="[{ text: 'Daftar Otorisasi' }]" />
+            <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar Permission"
+                :items="[{ text: 'Daftar Permission' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12">
@@ -112,37 +129,57 @@ watch(selectedRow, (val) => {
                                 </div>
                             </div>
                             <div class="col-xl-2 col-6 mb-xl-0 mb-0 d-grid d-xl-flex">
-                                <Link :href="route('job_title.create')" class="btn btn-outline-success">
+                                <Link :href="route('permissions.create')" class="btn btn-outline-success">
                                 <i class="fas fa-plus"></i> Tambah
                                 </Link>
                             </div>
                         </div>
                     </div>
-
                     <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
-
                     <div class="card mb-4 overflow-hidden rounded-4">
                         <div class="table-responsive">
-                            <!-- <base-table @update:selected="selectedRow = $event" :routes="routes"
-                                :attributes="{ id: 'job_title_id', name: 'title' }" :data="props.jobTitle"
-                                :headers="header">
-
-                            </base-table> -->
+                            <base-table @update:selected="selectedRow = $event" :attributes="{ id: 'id', name: 'name' }"
+                                :data="props.permissions" :headers="header">
+                                <template #cell="{ row, keyName }">
+                                    <template v-if="keyName === 'name'">
+                                        <div class="fw-bold">
+                                            {{ formatTextFromSlug(highlight(row.name)) }}
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === '-'">
+                                        <div class="d-flex gap-1 align-items-center justify-content-center">
+                                            <Link :href="route('permissions.edit', row.id)"
+                                                class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i>
+                                            </Link>
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                @click="deleted('permissions.delete', row)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === 'created_at'">
+                                        {{ moment(row.created_at).format('LLL') }}
+                                    </template>
+                                    <template v-if="keyName === 'updated_at'">
+                                        {{ moment(row.updated_at).format('LLL') }}
+                                    </template>
+                                </template>
+                            </base-table>
                         </div>
-                        <!-- <div
+                        <div
                             class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
                             <div class="mb-2 order-1 order-xl-0">
-                                Menampilkan <strong>{{ props.jobTitle.from ?? 0 }}</strong> sampai
-                                <strong>{{ props.jobTitle.to ?? 0 }}</strong> dari total
-                                <strong>{{ props.jobTitle.total ?? 0 }}</strong> data
+                                Menampilkan <strong>{{ props.permissions.from ?? 0 }}</strong> sampai
+                                <strong>{{ props.permissions.to ?? 0 }}</strong> dari total
+                                <strong>{{ props.permissions.total ?? 0 }}</strong> data
                             </div>
-                            <pagination :links="props.jobTitle?.links" :keyword="filters.keyword" routeName="job_title"
-                                :additionalQuery="{
+                            <pagination :links="props.permissions?.links" :keyword="filters.keyword"
+                                routeName="permissions" :additionalQuery="{
                                     order_by: filters.order_by,
                                     limit: filters.limit,
                                     keyword: filters.keyword,
                                 }" />
-                        </div> -->
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 <script setup>
 import { Link, usePage } from "@inertiajs/vue3";
+import { onMounted, ref } from "vue";
 const page = usePage();
 const currentPath = page.props.path;
 const getId = page.props.path.split('/')[2];
@@ -7,6 +8,14 @@ const is = (pattern) => {
     const regex = new RegExp("^" + pattern.replace("*", ".*") + "$");
     return regex.test(currentPath);
 };
+const roles = ref("");
+const priority = ["super-admin", "developer", "admin", "editor"];
+
+onMounted(() => {
+    const userRoles = page.props.auth.user.roles || [];
+    roles.value = priority.find(roles => userRoles.includes(roles)) || "";
+});
+
 </script>
 <template>
     <div id="layoutSidenav_nav">
@@ -21,7 +30,14 @@ const is = (pattern) => {
                     Dashboard
                     </Link>
 
-                    <Link class="nav-link" :class="{ 'active active-link': is('job_title*') }"
+                    <Link class="nav-link" :class="{ 'active active-link': is('daily_report*') }"
+                        :href="route('daily_report')">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-clipboard"></i>
+                    </div>
+                    Laporan Harian
+                    </Link>
+                    <Link v-if="roles" class="nav-link" :class="{ 'active active-link': is('job_title*') }"
                         :href="route('job_title')">
                     <div class="sb-nav-link-icon">
                         <i class="fas fa-briefcase"></i>
@@ -29,14 +45,35 @@ const is = (pattern) => {
                     Jabatan
                     </Link>
 
-                    <Link
-                        v-if="$page.props.auth.user.roles == 'super_admin' || $page.props.auth.user.roles == 'developer'"
-                        class="nav-link" :href="route('roles')">
+                    <div v-if="page.props.auth.user.roles == 'developer'" class="sb-sidenav-menu-heading">Otorisasi
+                    </div>
+
+                    <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
+                        :class="{ 'active active-link': is('authorization/roles*') }" :href="route('roles')">
                     <div class="sb-nav-link-icon">
                         <i class="fas fa-briefcase"></i>
                     </div>
-                    Otorisasi
+                    Role
                     </Link>
+
+                    <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
+                        :class="{ 'active active-link': is('authorization/permissions*') }"
+                        :href="route('permissions')">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    Permission
+                    </Link>
+                    <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
+                        :class="{ 'active active-link': is('authorization/users*') }" :href="route('users')">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    User Handle
+                    </Link>
+
+                    <div class="sb-sidenav-menu-heading">Akun
+                    </div>
 
 
 

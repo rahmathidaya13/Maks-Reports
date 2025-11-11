@@ -38,21 +38,19 @@ const goToPage = (url) => {
 <template>
     <nav aria-label="Page navigation example">
         <ul class="pagination justify-content-end pagination-sm" >
-            <!-- Tombol Previous -->
+
             <li :class="{ 'page-item': true, disabled: !links[0].url }">
                 <button class="page-link" @click.prevent="goToPage(links[0].url)" :disabled="!links[0].url">
                     &laquo;
                 </button>
             </li>
 
-            <!-- Loop Halaman -->
             <li v-for="(link, index) in links.slice(1, links.length - 1)" :key="index"
                 :class="['page-item', { active: link.active }]">
                 <button v-if="link.url" class="page-link" @click.prevent="goToPage(link.url)" v-html="link.label" />
                 <span v-else class="page-link" v-html="link.label" />
             </li>
 
-            <!-- Tombol Next -->
             <li :class="{ 'page-item': true, disabled: !links[links.length - 1].url }">
                 <button class="page-link" @click.prevent="goToPage(links[links.length - 1].url)"
                     :disabled="!links[links.length - 1].url">

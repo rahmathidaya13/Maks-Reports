@@ -1,22 +1,17 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
-import { formatText } from "../../../helpers/formatText";
 import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
 const props = defineProps({
-    permissions: {
-        type: Array,
-        default: () => [{}]
-    },
-    role: Object
+    permissions: Object,
 })
 const form = useForm({
-    name: formatTextFromSlug(props.role?.name) || "",
-    permissions: props.role?.permissions?.map(p => p.name) || [],
+    name: formatTextFromSlug(props.permissions?.name) || "",
+    guard_name: props.permissions?.guard_name || "web",
 });
 const isSubmit = () => {
-    if (props.role?.id) {
-        form.put(route('roles.update', props.role.id), {
+    if (props.permissions?.id) {
+        form.put(route('permissions.update', props.permissions.id), {
             onSuccess: () => {
                 form.reset();
             },
@@ -24,7 +19,7 @@ const isSubmit = () => {
         })
     } else {
         // Create
-        form.post(route('roles.store'), {
+        form.post(route('permissions.store'), {
             onSuccess: () => {
                 form.reset();
             }
@@ -35,30 +30,40 @@ const title = ref("");
 const icon = ref("");
 const url = ref("")
 onMounted(() => {
-    if (props.role && props.role.id) {
-        title.value = "Ubah Data Role"
+    if (props.permissions && props.permissions.id) {
+        title.value = "Ubah Data Permission"
         icon.value = "fas fa-edit"
-        url.value = route('roles', props.role.id)
+        url.value = route('permissions', props.permissions.id)
     } else {
-        title.value = "Buat Data Role"
+        title.value = "Buat Data Permission"
         icon.value = "fas fa-plus-square"
-        url.value = route('roles')
+        url.value = route('permissions')
     }
 })
 
 const breadcrumbItems = computed(() => {
-    if (props.role && props.role.id) {
+    if (props.permissions && props.permissions.id) {
         return [
-            { text: "Daftar Role", url: route("roles") },
-            { text: "Buat Data Role", url: route("roles.create") },
+            { text: "Daftar Permission", url: route("permissions") },
+            { text: "Buat Data Permission", url: route("permissions.create") },
             { text: title.value }
         ]
     }
     return [
-        { text: "Daftar Role", url: route("roles") },
+        { text: "Daftar Permission", url: route("permissions") },
         { text: title.value }
     ]
 })
+
+
+// const togglePermission = (perm) => {
+//     if (form.permissions.includes(perm)) {
+//         form.permissions = form.permissions.filter(p => p !== perm)
+//     } else {
+//         form.permissions.push(perm)
+//     }
+// }
+
 
 </script>
 <template>
@@ -77,33 +82,31 @@ const breadcrumbItems = computed(() => {
             <div class="card overflow-hidden rounded-4 bg-light">
                 <h5 class="card-header fw-bold text-uppercase p-3 text-bg-secondary">
                     <i class="fas fa-info-circle me-1 text-light"></i>
-                    Form Role
+                    Form Permission
                 </h5>
                 <div class="card-body">
                     <form-wrapper @submit="isSubmit">
                         <div class="mb-3">
-                            <input-label class="fw-bold" for="name" value="Nama Role" />
+                            <input-label class="fw-bold" for="name" value="Name Permission" />
                             <text-input autofocus v-model="form.name" name="name" />
                             <input-error :message="form.errors.name" />
                         </div>
                         <div class="mb-3">
-                            <input-label class="fw-bold" value="Permission" />
-                            <div :class="[{ 'text-bg-light border-success': form.permissions.length > 0, 'text-bg-danger': form.permissions.errors }]"
-                                class="border p-3 rounded-3 d-flex gap-2 flex-wrap">
-                                <label class="form-check-label gap-2 d-flex" v-for="perm in permissions" :key="perm.id">
-                                    <input multiple class="form-check-input" type="checkbox" :value="perm.name"
-                                        v-model="form.permissions" />
-                                    <span class="fw-semibold">{{ formatTextFromSlug(perm.name) }}</span>
-                                </label>
-                            </div>
-                            <input-error :message="form.errors.permissions" />
+                            <input-label class="fw-bold" for="guard_name" value="Guard Name" />
+                            <select-input text="Select guard name" :options="[
+                                { value: 'web', label: 'Web' },
+                                { value: 'api', label: 'API' },
+                            ]" v-model="form.guard_name" name="guard_name" />
+                            <input-error :message="form.errors.guard_name" />
                         </div>
+
+
                         <div class="d-grid d-xl-block">
                             <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
-                                :icon="props.role?.id ? 'fas fa-edit' : 'fas fa-paper-plane'"
-                                :variant="props.role?.id ? 'success' : 'primary'" type="submit"
-                                :name="props.role?.id ? 'ubah' : 'simpan'"
-                                :label="props.role?.id ? 'Ubah' : 'Simpan'" />
+                                :icon="props.permissions?.id ? 'fas fa-edit' : 'fas fa-paper-plane'"
+                                :variant="props.permissions?.id ? 'success' : 'primary'" type="submit"
+                                :name="props.permissions?.id ? 'ubah' : 'simpan'"
+                                :label="props.permissions?.id ? 'Ubah' : 'Simpan'" />
                         </div>
                     </form-wrapper>
                 </div>

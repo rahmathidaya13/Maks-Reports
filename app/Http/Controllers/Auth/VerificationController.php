@@ -17,6 +17,10 @@ class VerificationController extends Controller
 
     public function verify(EmailVerificationRequest $request)
     {
+        auth()->user()->update([
+            'is_active' => true,
+            'first_login' => now(),
+        ]);
         $request->fulfill();
         return redirect('/home')->with('message', 'Email Anda berhasil diverifikasi. Selamat datang!');
     }

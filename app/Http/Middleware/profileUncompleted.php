@@ -20,7 +20,7 @@ class profileUncompleted
         if ($user->is_completed) {
             // Cegah akses ke halaman lain kecuali halaman profile
             if ($request->routeIs('profile', 'profile.update')) {
-                return redirect()->route('home');
+                return redirect()->route('home')->with('message', 'Profil Anda sudah lengkap.');
             }
         }
         return $next($request);

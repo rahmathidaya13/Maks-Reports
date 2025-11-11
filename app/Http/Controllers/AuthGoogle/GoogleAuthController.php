@@ -53,7 +53,7 @@ class GoogleAuthController extends Controller
             // Tandai user aktif
             $user->profile()->create();
             $user->assignRole('user');
-            $user->update(['is_active' => true]);
+            $user->update(['is_active' => true, 'first_login' => now()]);
 
             Auth::login($user, true);
 

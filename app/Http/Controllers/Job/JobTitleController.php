@@ -11,6 +11,7 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use App\Repositories\RolesRepository;
 use App\Http\Requests\FormRolesRequest;
+use App\Repositories\JobTitle;
 
 class JobTitleController extends Controller
 {
@@ -18,10 +19,11 @@ class JobTitleController extends Controller
      * Display a listing of the resource.
      */
     use JobTitleValidation;
-    protected $rolesRepos;
-    public function __construct(RolesRepository $rolesRepository)
+    protected $jobTitle;
+    public function __construct(JobTitle $jobTitles)
     {
-        $this->rolesRepos = $rolesRepository;
+        $this->jobTitle = $jobTitles;
+        $this->middleware('role:developer|admin|super-admin|editor');
     }
     public function index(Request $request)
     {
@@ -31,7 +33,7 @@ class JobTitleController extends Controller
             'page',
             'order_by',
         ]);
-        $jobTitle = $this->rolesRepos->getAllByUser(auth()->id(), $filters);
+        $jobTitle = $this->jobTitle->getCached(auth()->id(), $filters);
         return Inertia::render('Roles/Index', compact('jobTitle', 'filters'));
     }
 
@@ -40,8 +42,8 @@ class JobTitleController extends Controller
      */
     public function create()
     {
-        $this->rolesRepos->clearCache(auth()->id());
         $uniqCode = JobTitleModel::generateUniqueCode();
+        $this->jobTitle->clearCache(auth()->id());
         return Inertia::render('Roles/Form/pageForm', compact('uniqCode'));
     }
 
@@ -50,7 +52,6 @@ class JobTitleController extends Controller
      */
     public function store(Request $request)
     {
-        $this->rolesRepos->clearCache(auth()->id());
         $this->validationText($request->all());
         $roles = new JobTitleModel();
         $roles->created_by = auth()->id();
@@ -59,6 +60,7 @@ class JobTitleController extends Controller
         $roles->title_alias = $request->input('title_alias');
         $roles->description = $request->input('description');
         $roles->save();
+        $this->jobTitle->clearCache(auth()->id());
         return redirect()->route('job_title')->with('message', 'Jabatan ' . $roles->title . ' berhasil ditambahkan.');
     }
 
@@ -75,7 +77,7 @@ class JobTitleController extends Controller
      */
     public function edit(JobTitleModel $jobTitleModel, string $id)
     {
-        $this->rolesRepos->clearCache(auth()->id());
+        $this->jobTitle->clearCache(auth()->id());
         $uniqCode = $jobTitleModel::generateUniqueCode();
         $jobTitle = $jobTitleModel::findOrFail($id);
         return Inertia::render('Roles/Form/pageForm', compact('uniqCode', 'jobTitle'));
@@ -86,7 +88,6 @@ class JobTitleController extends Controller
      */
     public function update(Request $request, JobTitleModel $jobTitleModel, string $id)
     {
-        $this->rolesRepos->clearCache(auth()->id());
         $this->validationText($request->all(), $id);
         $roles = $jobTitleModel::findOrFail($id);
         $roles->created_by = auth()->id();
@@ -95,6 +96,7 @@ class JobTitleController extends Controller
         $roles->title_alias = $request->input('title_alias');
         $roles->description = $request->input('description');
         $roles->update();
+        $this->jobTitle->clearCache(auth()->id());
         return redirect()->route('job_title')->with('message', 'Jabatan ' . $roles->title . ' berhasil diperbarui.');
     }
 
@@ -103,20 +105,20 @@ class JobTitleController extends Controller
      */
     public function destroy(JobTitleModel $jobTitleModel, string $id)
     {
-        $this->rolesRepos->clearCache(auth()->id());
         $roles = $jobTitleModel::findOrFail($id);
         $roles->delete();
+        $this->jobTitle->clearCache(auth()->id());
         return redirect()->route('job_title')->with('message', 'Jabatan ' . $roles->title . ' berhasil dihapus.');
     }
     public function destroy_all(Request $request)
     {
-        $this->rolesRepos->clearCache(auth()->id());
         $all_id = $request->input('all_id', []);
         if (!count($all_id)) return back()->with('message', 'Tidak ada data yang dipilih.');
 
         $job = JobTitleModel::whereIn('job_title_id', $all_id)->get();
         Role::whereIn('id', $job->pluck('role_id'))->delete();
         JobTitleModel::destroy($all_id);
+        $this->jobTitle->clearCache(auth()->id());
         return redirect()->route('job_title')->with('message', count($all_id) . ' Data berhasil Terhapus.');
     }
 }

@@ -73,13 +73,6 @@ class RegisterController extends Controller
             'name' => $request->input('name'),
             'email' => $request->input('email'),
             'password' => Hash::make($request->input('password')),
-            'role' => 'user',
-            'can_view' => true,
-            'can_add' => false,
-            'can_edit' => false,
-            'can_delete' => false,
-            'can_import' => false,
-            'can_download' => false,
         ]);
         $user->profile()->create();
         $user->assignRole('user');
