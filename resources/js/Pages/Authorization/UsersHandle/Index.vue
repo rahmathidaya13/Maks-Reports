@@ -8,6 +8,7 @@ import { swalConfirmDelete } from "../../../helpers/swalHelpers";
 import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
 import axios from "axios";
 import { data } from "jquery";
+import Swal from "sweetalert2";
 moment.locale('id');
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
@@ -106,22 +107,37 @@ const deleted = (nameRoute, data) => {
         },
     })
 }
-const status = ref({
-    new_user: false,
-    recently_logout: false,
-    recently_logged_in: false
-});
-
-
+const toast = ref(null)
 onMounted(() => {
     window.Echo.channel('user-status')
-        .listen('App\\Events\\UserStatusUpdated', (data) => {
-            console.log('Status pengguna berubah:', data);
+        .listen('.status.changed', (data) => {
+
+            const shouldClearCache = data.new_user_registered || data.recently_logged_in || data.recently_logged_out;
+            const new_user_registered = data.new_user_registered; // hanya tampil toast untuk user baru
+
+            if (shouldClearCache) {
+                if (new_user_registered) {
+                    const names = data.new_user_name.slice(0, 3).join(", ");
+                    const remaining = data.new_user_name.length - 3;
+                    const message = remaining > 0 ? `Terdaftar pengguna baru ${names} dan ${remaining} lainnya` : `Terdaftar pengguna baru ${names}`;
+
+                    // tampilkan toast
+                    toast.value.show('success', message, { timer: 10000 });
+
+                    router.post(route('users.clear.cache'), {}, {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            router.reload({ only: ['users', 'filters'] });
+                        }
+                    });
+                }
+            } else {
+                router.reload({ only: ['users', 'filters'] });
+            }
         });
 });
-console.log('App\\Events\\UserStatusUpdated');
 onUnmounted(() => {
-    // window.Echo.leave('user-status');
+    window.Echo.leaveChannel('user-status');
 });
 
 
@@ -136,6 +152,9 @@ onUnmounted(() => {
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
+
+                    <swal-toast ref="toast" />
+
                     <div class="card mb-3 overflow-hidden rounded-4 p-1">
                         <div class="row align-items-center p-3 g-2">
                             <div class="col-xl-7 col-12 mb-0">
@@ -173,6 +192,11 @@ onUnmounted(() => {
                             <base-table @update:selected="selectedRow = $event" :attributes="{ id: 'id', name: 'name' }"
                                 :data="props.users" :headers="header">
                                 <template #cell="{ row, keyName }">
+                                    <template v-if="keyName == 'name'">
+                                        <Link :href="route('users.detail', row.id)" class="text-decoration-none"><i
+                                            class="fas fa-user"></i> {{ row.name }}
+                                        </Link>
+                                    </template>
                                     <template v-if="keyName == 'roles'">
                                         <div v-for="role in row.roles" :key="role">
                                             {{ formatTextFromSlug(role) }}
@@ -246,3 +270,32 @@ onUnmounted(() => {
         </template>
     </app-layout>
 </template>
+<style>
+.colored-toast.swal2-icon-success {
+    background-color: #a5dc86 !important;
+}
+
+.colored-toast.swal2-icon-error {
+    background-color: #f27474 !important;
+}
+
+.colored-toast.swal2-icon-warning {
+    background-color: #f8bb86 !important;
+}
+
+.colored-toast.swal2-icon-info {
+    background-color: #3fc3ee !important;
+}
+
+.colored-toast.swal2-icon-question {
+    background-color: #87adbd !important;
+}
+
+.colored-toast .swal2-title {
+    color: white;
+}
+
+.colored-toast .swal2-close {
+    color: white;
+}
+</style>

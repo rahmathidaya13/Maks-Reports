@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 use App\Models\BranchesModel;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use App\Services\AssignRoleWithPermissionsById;
 
 class DatabaseSeeder extends Seeder
 {
@@ -36,8 +38,9 @@ class DatabaseSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Assign role ke user
-        $user->assignRole($role);
-        $user->assignRole('developer');
+        $user->syncRoles($role);
+        $user->syncPermissions($role->permissions()->pluck('name')->toArray());
+
         $user->profile()->updateOrCreate(
             ['users_id' => $user->id],
         );

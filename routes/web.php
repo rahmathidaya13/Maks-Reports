@@ -132,6 +132,8 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::delete('/users/destroy/{id}', 'destroy')->name('users.delete');
         Route::post('/users/delete_all', 'destroyAll')->name('users.destroy_all');
 
+        Route::get('/users/detail/{id}', 'detail')->name('users.detail');
+
         Route::get('/users/check/user', 'checkUser')->name('users.check');
         Route::post('/users/clear/cache', 'clearCache')->name('users.clear.cache');
     });

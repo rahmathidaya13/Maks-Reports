@@ -7,10 +7,11 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UserStatusUpdated implements ShouldBroadcast
+class UserStatusUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -32,18 +33,21 @@ class UserStatusUpdated implements ShouldBroadcast
     /**
      * Dapatkan channel yang harus disiarkan oleh event.
      */
-    public function broadcastOn()
+    public function broadcastOn(): Channel
     {
-        return [
-            new Channel('user-status'),
-        ];
+        return new Channel('user-status');
     }
 
     /**
      * Nama event yang akan diterima oleh Echo.
      */
-    public function broadcastAs()
+    public function broadcastAs(): string
     {
         return 'status.changed';
+    }
+
+    public function broadcastWith()
+    {
+        return $this->statusData;
     }
 }

@@ -122,11 +122,26 @@ class UsersController extends Controller
         return redirect()->route('users')->with('message', 'User ' . $users->name . ' Berhasil dihapus.');
     }
 
+    public function detail(string $id)
+    {
+        $getUser = User::with(['profile', 'permissions', 'roles'])->findOrFail($id);
+        // Format data agar mudah diolah di Vue
+        $users = [
+            'user' => $getUser,
+            'profile' => $getUser->profile,
+            'roles' => $getUser->getRoleNames(),
+            'permissions' => $getUser->getAllPermissions()->pluck('name')->toArray(),
+        ];
+        $this->userRepository->clearCache(auth()->id());
+        return Inertia::render('Authorization/UsersHandle/InfoDetail', compact('users'));
+    }
+
     public function checkUser()
     {
-        $this->userServices->checkAndBroadcastStatus();
+        $check = $this->userServices->checkAndBroadcastStatus();
         return response()->json([
             'message' => 'Status checked and broadcasted successfully.',
+            'data' => $check
         ]);
     }
     public function clearCache()

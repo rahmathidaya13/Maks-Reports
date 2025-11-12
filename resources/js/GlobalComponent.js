@@ -27,11 +27,15 @@ import FileUpload from "./components/FileUpload.vue";
 import SummernoteEditor from "./components/SummernoteEditor.vue";
 import LoaderOverlay from "./components/LoaderOverlay.vue";
 import Modal from "./components/Modal.vue";
+import ToastNotification from "./components/ToastNotification.vue";
+import SwalToast from "./components/SwalToast.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
         app.component("alert", Alert);
         app.component("modal", Modal);
+        app.component("toast-notification", ToastNotification);
+        app.component("swal-toast", SwalToast);
         app.component("base-button", BaseButton);
         app.component("button-delete-all", ButtonDeleteAll);
         app.component("check-box", CheckBox);
