@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
 use Inertia\Inertia;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use App\Models\BranchesModel;
 use App\Models\RolesModel;
+use Illuminate\Http\Request;
+use App\Models\BranchesModel;
+use App\Services\UserService;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
@@ -66,7 +67,7 @@ class RegisterController extends Controller
 
         ])->validate();
     }
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, UserService $userService): RedirectResponse
     {
         $this->validationText($request->all());
         $user = User::create([
@@ -79,7 +80,7 @@ class RegisterController extends Controller
         event(new Registered($user));
 
         Auth::login($user, true);
-
+        $userService->checkAndBroadcastStatus();
         return redirect(RouteServiceProvider::HOME);
     }
 }

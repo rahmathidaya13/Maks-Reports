@@ -38,7 +38,7 @@ onMounted(() => {
     if (props.role && props.role.id) {
         title.value = "Ubah Data Role"
         icon.value = "fas fa-edit"
-        url.value = route('roles', props.role.id)
+        url.value = route('roles')
     } else {
         title.value = "Buat Data Role"
         icon.value = "fas fa-plus-square"

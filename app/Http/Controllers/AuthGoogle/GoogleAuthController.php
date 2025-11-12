@@ -54,7 +54,7 @@ class GoogleAuthController extends Controller
             $user->profile()->create();
             $user->assignRole('user');
             $user->update(['is_active' => true, 'first_login' => now()]);
-
+            (new \App\Services\UserService())->checkAndBroadcastStatus();
             Auth::login($user, true);
 
             return redirect()->intended('/home')->with('message', 'Berhasil login menggunakan akun Google.');

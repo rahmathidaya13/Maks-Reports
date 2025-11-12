@@ -6,6 +6,8 @@ use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Services\UserService;
+use App\Events\UserStatusUpdated;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
@@ -14,9 +16,11 @@ use App\Repositories\AuthorizationUserHandle;
 class UsersController extends Controller
 {
     protected $userRepository;
-    public function __construct(AuthorizationUserHandle $userRepository)
+    protected $userServices;
+    public function __construct(AuthorizationUserHandle $userRepository, UserService $userServices)
     {
         $this->userRepository = $userRepository;
+        $this->userServices = $userServices;
     }
     public function index(Request $request)
     {
@@ -35,7 +39,6 @@ class UsersController extends Controller
         $roles = Role::select('id', 'name')->get();
         $permissions = Permission::select('id', 'name')->get();
         $this->userRepository->clearCache(auth()->id());
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions(); // Pastikan cache Spatie direset
         return Inertia::render('Authorization/UsersHandle/Form', [
             'users' => $users,
             'roles' => $roles,
@@ -60,7 +63,6 @@ class UsersController extends Controller
             'permissions' => $users->getAllPermissions()->pluck('name'),
         ];
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions(); // Pastikan cache Spatie direset
         $this->userRepository->clearCache(auth()->id());
         return Inertia::render('Authorization/UsersHandle/Form', [
             'users' => $userData,
@@ -93,7 +95,6 @@ class UsersController extends Controller
         $users->update([
             'status' => $request['status'],
         ]);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions(); // Pastikan cache Spatie direset
         $this->userRepository->clearCache(auth()->id());
         return redirect()->route('users')->with('message', 'User ' . $users->name . ' Berhasil diperbarui.');
     }
@@ -108,9 +109,7 @@ class UsersController extends Controller
 
         $users->delete();
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         $this->userRepository->clearCache(auth()->id());
-
         return redirect()->route('users')->with('message', 'User ' . $users->name . ' Berhasil dihapus.');
     }
 
@@ -119,8 +118,20 @@ class UsersController extends Controller
         $users = User::findOrFail($id);
         $users->removeRole($request['role']);
         $users->revokePermissionTo($request['permission'] ?? []);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         $this->userRepository->clearCache(auth()->id());
         return redirect()->route('users')->with('message', 'User ' . $users->name . ' Berhasil dihapus.');
+    }
+
+    public function checkUser()
+    {
+        $this->userServices->checkAndBroadcastStatus();
+        return response()->json([
+            'message' => 'Status checked and broadcasted successfully.',
+        ]);
+    }
+    public function clearCache()
+    {
+        $this->userRepository->clearCache(auth()->id());
+        return redirect()->back();
     }
 }

@@ -7,8 +7,8 @@ import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import GlobalComponent from "./GlobalComponent";
 import registerHelpers from "./helpers/autoLoadHelpers";
 const appName = import.meta.env.VITE_APP_NAME || "";
-import select2 from 'select2';
-select2()
+import select2 from "select2";
+select2();
 
 createInertiaApp({
     title: (title) => `${appName} - ${title}`,

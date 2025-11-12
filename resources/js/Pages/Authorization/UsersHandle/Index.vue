@@ -1,11 +1,13 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
 import { highlight } from "../../../helpers/highlight";
 import { swalConfirmDelete } from "../../../helpers/swalHelpers";
 import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
+import axios from "axios";
+import { data } from "jquery";
 moment.locale('id');
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
@@ -104,6 +106,25 @@ const deleted = (nameRoute, data) => {
         },
     })
 }
+const status = ref({
+    new_user: false,
+    recently_logout: false,
+    recently_logged_in: false
+});
+
+
+onMounted(() => {
+    window.Echo.channel('user-status')
+        .listen('App\\Events\\UserStatusUpdated', (data) => {
+            console.log('Status pengguna berubah:', data);
+        });
+});
+console.log('App\\Events\\UserStatusUpdated');
+onUnmounted(() => {
+    // window.Echo.leave('user-status');
+});
+
+
 </script>
 <template>
 

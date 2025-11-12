@@ -33,7 +33,7 @@ onMounted(() => {
     if (props.permissions && props.permissions.id) {
         title.value = "Ubah Data Permission"
         icon.value = "fas fa-edit"
-        url.value = route('permissions', props.permissions.id)
+        url.value = route('permissions')
     } else {
         title.value = "Buat Data Permission"
         icon.value = "fas fa-plus-square"

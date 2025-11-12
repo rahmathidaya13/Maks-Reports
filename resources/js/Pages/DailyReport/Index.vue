@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
@@ -87,7 +87,6 @@ const deleted = (nameRoute, data) => {
         },
     })
 }
-console.log(props.dailyReport, props.can_search);
 </script>
 <template>
 
@@ -111,7 +110,7 @@ console.log(props.dailyReport, props.can_search);
                                 </div>
                             </div>
 
-                            <div :class="[{ 'col-xl-3 col-12': !props.can_search }]"
+                            <div :class="[{ 'col-xl-3 col-12 order-xl-2': !props.can_search }]"
                                 class="col-xl-2 col-12 mb-xl-0 mb-0">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="limit" value="Batas :" />
@@ -127,7 +126,7 @@ console.log(props.dailyReport, props.can_search);
                                 </div>
 
                             </div>
-                            <div :class="[{ 'col-xl-3 col-12': !props.can_search }]"
+                            <div :class="[{ 'col-xl-3 col-12 order-xl-3': !props.can_search }]"
                                 class="col-xl-2 col-12 mb-xl-0 mb-0 ">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="order_by" value="Urutkan :" />
@@ -142,8 +141,8 @@ console.log(props.dailyReport, props.can_search);
                                 </div>
                             </div>
 
-                            <div :class="[{ 'col-xl-3 col-12': !props.can_search }]"
-                                class="col-xl-2 col-12 mb-xl-0 mb-0">
+                            <div :class="[{ 'col-xl-3 col-12 order-xl-0': !props.can_search }]"
+                                class="col-xl-2 col-12 mb-xl-0 mb-0 ">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="start_date" value="Tanggal Awal :" />
                                     <div class="input-group">
@@ -153,7 +152,7 @@ console.log(props.dailyReport, props.can_search);
                                     </div>
                                 </div>
                             </div>
-                            <div :class="[{ 'col-xl-3 col-12': !props.can_search }]"
+                            <div :class="[{ 'col-xl-3 col-12 order-xl-1': !props.can_search }]"
                                 class="col-xl-2 col-12 mb-xl-0 mb-0">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="end_date" value="Tanggal Akhir :" />

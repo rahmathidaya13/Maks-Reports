@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Authorization\UsersController;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use App\Services\UserService;
 
 class LoginController extends Controller
 {
@@ -20,7 +22,7 @@ class LoginController extends Controller
     {
         return Inertia::render("Auth/Login");
     }
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, UserService $userService): RedirectResponse
     {
         $request->validate([
             'email' => 'required|email|exists:users,email',
@@ -44,7 +46,7 @@ class LoginController extends Controller
 
         $this->authenticate($request);
         $request->session()->regenerate();
-
+        $userService->checkAndBroadcastStatus();
         return redirect()->intended('/home');
     }
     public function authenticate(Request $request): void
@@ -88,7 +90,7 @@ class LoginController extends Controller
     {
         return Str::transliterate(Str::lower($request->string('email')) . '|' . $request->ip());
     }
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request, UserService $userService): RedirectResponse
     {
         $user = User::where('email', Auth::user()->email)->first();
         if ($user && $user->is_active) {
@@ -102,6 +104,7 @@ class LoginController extends Controller
         // Hapus sesi & regenerasi token CSRF
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        $userService->checkAndBroadcastStatus();
         return redirect()->route('login');
     }
 }

@@ -31,7 +31,7 @@ onMounted(() => {
     if (props.users && props.users.id) {
         title.value = "Ubah Data User"
         icon.value = "fas fa-edit"
-        url.value = route('users', props.users.id)
+        url.value = route('users')
     }
 })
 
