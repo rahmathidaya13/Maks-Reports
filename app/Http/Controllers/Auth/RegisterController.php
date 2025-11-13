@@ -76,7 +76,8 @@ class RegisterController extends Controller
             'password' => Hash::make($request->input('password')),
         ]);
         $user->profile()->create();
-        $user->assignRole('user');
+        $user->syncRoles('user');
+        $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
         event(new Registered($user));
 
         Auth::login($user, true);

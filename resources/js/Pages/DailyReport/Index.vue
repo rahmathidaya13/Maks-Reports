@@ -87,6 +87,16 @@ const deleted = (nameRoute, data) => {
         },
     })
 }
+
+
+
+const handleDownload = (type) => {
+  if (type === "pdf") {
+    router.get(route("users", { format: "pdf" }));
+  } else if (type === "excel") {
+    router.get(route("users", { format: "excel" }));
+  }
+};
 </script>
 <template>
 
@@ -167,7 +177,7 @@ const deleted = (nameRoute, data) => {
                     </div>
 
                     <div class="mb-3 d-flex justify-content-end flex-wrap gap-2">
-                        <div class="dropdown">
+                        <!-- <div class="dropdown">
                             <button class="btn btn-outline-secondary dropdown-toggle" type="button"
                                 data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-download"></i> Unduh Laporan
@@ -185,7 +195,10 @@ const deleted = (nameRoute, data) => {
                                     </a>
                                 </li>
                             </ul>
-                        </div>
+                        </div> -->
+                        <drop-down @download="handleDownload" />
+
+
                         <div class="position-relative">
                             <Link :href="route('daily_report.create')" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Buat Laporan

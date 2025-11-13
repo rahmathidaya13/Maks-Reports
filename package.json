@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@inertiajs/vue3": "^2.2.8",
+        "@popperjs/core": "^2.11.8",
         "@rollup/plugin-inject": "^5.0.5",
         "@vitejs/plugin-vue": "^4.6.2",
         "bootstrap": "^5.3.8",

@@ -29,10 +29,12 @@ import LoaderOverlay from "./components/LoaderOverlay.vue";
 import Modal from "./components/Modal.vue";
 import ToastNotification from "./components/ToastNotification.vue";
 import SwalToast from "./components/SwalToast.vue";
+import DropDown from "./components/DropDown.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
         app.component("alert", Alert);
+        app.component("drop-down", DropDown);
         app.component("modal", Modal);
         app.component("toast-notification", ToastNotification);
         app.component("swal-toast", SwalToast);

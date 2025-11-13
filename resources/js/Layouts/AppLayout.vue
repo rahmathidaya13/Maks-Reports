@@ -36,7 +36,6 @@ onMounted((p) => {
             <main>
                 <div class="container-fluid">
 
-                    <loader-overlay />
                     <!-- <Breadcrumbs /> -->
                     <slot name="content" />
 

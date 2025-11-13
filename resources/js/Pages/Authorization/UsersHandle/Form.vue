@@ -119,24 +119,24 @@ watch(
                                         <table class="table table-borderless align-middle mb-0">
                                             <tbody>
                                                 <tr>
-                                                    <th scope="row" style="width: 100px;">Google ID</th>
+                                                    <th scope="row" style="width: 150px;">Google ID</th>
                                                     <td>{{ props.users.google_id ?? '-' }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th scope="row" style="width: 100px;">Name</th>
+                                                    <th scope="row" style="width: 150px;">Nama</th>
                                                     <td>{{ props.users.name }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th scope="row" style="width: 100px;">Email</th>
+                                                    <th scope="row" style="width: 150px;">Email</th>
                                                     <td>{{ props.users.email ?? 'Not Found' }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th scope="row" style="width: 100px;">Roles</th>
+                                                    <th scope="row" style="width: 150px;">Peran/Tugas</th>
                                                     <td>{{props.users.roles.map(role =>
                                                         formatTextFromSlug(role)).join(', ')}}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th scope="row" style="width: 100px;">Status</th>
+                                                    <th scope="row" style="width: 150px;">Status Pegawai</th>
                                                     <td>
                                                         <span :class="[
                                                             'badge text-capitalize px-3 py-2',
@@ -165,7 +165,7 @@ watch(
                                 </div>
 
                                 <div class="mb-3">
-                                    <input-label class="fw-bold" for="status" value="Status" />
+                                    <input-label class="fw-bold" for="status" value="Status Pegawai" />
                                     <select-input name="status" text="Select Status"
                                         :options="[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]"
                                         v-model="form.status" />

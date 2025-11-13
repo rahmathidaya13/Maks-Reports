@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Authorization\UsersController;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Services\UserService;
 use App\Services\RecaptchaService;
 use Illuminate\Auth\Events\Lockout;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use App\Services\UserService;
+use App\Http\Controllers\Authorization\UsersController;
 
 class LoginController extends Controller
 {
@@ -59,6 +60,14 @@ class LoginController extends Controller
             ]);
         }
         $user = User::where("email", $request->input("email"))->first();
+
+        // Beri hak akses penuh jika user adalah developer
+        if (auth()->user()->hasRole('developer')) {
+            auth()->user()->syncPermissions(Permission::all()->pluck('name')->toArray());
+        } else if (auth()->user()->hasRole('user')) {
+            auth()->user()->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
+        }
+        // dd(auth()->user()->hasRole('developer'));
 
         if (!$user->is_active) {
             $user->status = "active";

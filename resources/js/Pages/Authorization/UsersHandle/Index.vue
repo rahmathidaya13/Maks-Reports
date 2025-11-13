@@ -6,9 +6,7 @@ import moment from "moment";
 import { highlight } from "../../../helpers/highlight";
 import { swalConfirmDelete } from "../../../helpers/swalHelpers";
 import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
-import axios from "axios";
-import { data } from "jquery";
-import Swal from "sweetalert2";
+
 moment.locale('id');
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
@@ -37,7 +35,7 @@ const liveSearch = debounce((e) => {
 const header = [
     { label: "No", key: "__index" },
     { label: "Nama", key: "name" },
-    { label: "Status", key: "status" },
+    { label: "Status", key: "status Pegawai" },
     { label: "Daring", key: "is_active" },
     { label: "Peran", key: "roles" },
     { label: "Izin Akses", key: "permissions" },
@@ -111,7 +109,6 @@ const toast = ref(null)
 onMounted(() => {
     window.Echo.channel('user-status')
         .listen('.status.changed', (data) => {
-
             const shouldClearCache = data.new_user_registered || data.recently_logged_in || data.recently_logged_out;
             const new_user_registered = data.new_user_registered; // hanya tampil toast untuk user baru
 
@@ -131,6 +128,12 @@ onMounted(() => {
                         }
                     });
                 }
+                router.post(route('users.clear.cache'), {}, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        router.reload({ only: ['users', 'filters'] });
+                    }
+                });
             } else {
                 router.reload({ only: ['users', 'filters'] });
             }
@@ -139,8 +142,7 @@ onMounted(() => {
 onUnmounted(() => {
     window.Echo.leaveChannel('user-status');
 });
-
-
+console.log(props.filters.keyword);
 </script>
 <template>
 
@@ -193,9 +195,12 @@ onUnmounted(() => {
                                 :data="props.users" :headers="header">
                                 <template #cell="{ row, keyName }">
                                     <template v-if="keyName == 'name'">
-                                        <Link :href="route('users.detail', row.id)" class="text-decoration-none"><i
-                                            class="fas fa-user"></i> {{ row.name }}
-                                        </Link>
+                                        <div class="text-start">
+                                            <Link :href="route('users.detail', row.id)" class="text-decoration-none"><i
+                                                class="fas fa-user"></i> <span
+                                                v-html="highlight(row.name, filters.keyword)" />
+                                            </Link>
+                                        </div>
                                     </template>
                                     <template v-if="keyName == 'roles'">
                                         <div v-for="role in row.roles" :key="role">

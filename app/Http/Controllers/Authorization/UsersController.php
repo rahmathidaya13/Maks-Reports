@@ -124,14 +124,14 @@ class UsersController extends Controller
 
     public function detail(string $id)
     {
-        $getUser = User::with(['profile', 'permissions', 'roles'])->findOrFail($id);
+        $users = User::with(['profile', 'permissions', 'roles','profile.branch','profile.jobTitle'])->findOrFail($id);
         // Format data agar mudah diolah di Vue
-        $users = [
-            'user' => $getUser,
-            'profile' => $getUser->profile,
-            'roles' => $getUser->getRoleNames(),
-            'permissions' => $getUser->getAllPermissions()->pluck('name')->toArray(),
-        ];
+        // $users = [
+        //     'user' => $getUser,
+        //     'profile' => $getUser->profile,
+        //     'roles' => $getUser->getRoleNames(),
+        //     'permissions' => $getUser->getAllPermissions()->pluck('name')->toArray(),
+        // ];
         $this->userRepository->clearCache(auth()->id());
         return Inertia::render('Authorization/UsersHandle/InfoDetail', compact('users'));
     }

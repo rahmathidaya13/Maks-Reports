@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Spatie\Permission\Models\Permission;
 
 class GoogleAuthController extends Controller
 {
@@ -52,7 +53,8 @@ class GoogleAuthController extends Controller
 
             // Tandai user aktif
             $user->profile()->create();
-            $user->assignRole('user');
+            $user->syncRoles('user');
+            $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
             $user->update(['is_active' => true, 'first_login' => now()]);
             (new \App\Services\UserService())->checkAndBroadcastStatus();
             Auth::login($user, true);
