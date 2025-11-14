@@ -1,8 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
-import { formatText } from "../../../helpers/formatText";
-import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
+import { formatText } from "@/helpers/formatText";
+import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 const props = defineProps({
     users: Object,
     permissions: Array,
@@ -29,7 +29,7 @@ const icon = ref("");
 const url = ref("")
 onMounted(() => {
     if (props.users && props.users.id) {
-        title.value = "Ubah Data User"
+        title.value = "Ubah Hak Pengguna"
         icon.value = "fas fa-edit"
         url.value = route('users')
     }
@@ -38,7 +38,7 @@ onMounted(() => {
 const breadcrumbItems = computed(() => {
     if (props.users && props.users.id) {
         return [
-            { text: "Daftar User", url: route("users") },
+            { text: "Daftar Hak Pengguna", url: route("users") },
             { text: title.value }
         ]
     }
@@ -209,6 +209,7 @@ watch(
                                     </div>
                                     <input-error :message="form.errors.permissions" />
                                 </div>
+
                                 <div class="d-grid d-xl-block">
                                     <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
                                         :icon="props.users?.id ? 'fas fa-edit' : 'fas fa-paper-plane'"

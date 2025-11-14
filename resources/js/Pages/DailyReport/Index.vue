@@ -91,11 +91,11 @@ const deleted = (nameRoute, data) => {
 
 
 const handleDownload = (type) => {
-  if (type === "pdf") {
-    router.get(route("users", { format: "pdf" }));
-  } else if (type === "excel") {
-    router.get(route("users", { format: "excel" }));
-  }
+    if (type === "pdf") {
+        router.get(route("users", { format: "pdf" }));
+    } else if (type === "excel") {
+        router.get(route("users", { format: "excel" }));
+    }
 };
 </script>
 <template>
@@ -111,9 +111,9 @@ const handleDownload = (type) => {
                     <div class="card mb-3 overflow-hidden rounded-4 p-1">
                         <div class="row align-items-center p-3 g-2">
 
-                            <div v-if="props.can_search" class="col-xl-4 col-12 mb-0">
-                                <input-label class="fw-bold" for="keyword" value="Pencarian :" />
-                                <div class="input-group">
+                            <div v-if="props.can_search" class="col-xl-4 col-12 mb-0 order-last order-xl-0">
+                                <input-label class="fw-bold d-none d-xl-block" for="keyword" value="Pencarian :" />
+                                <div class="input-group mt-2 mt-xl-0">
                                     <span class="input-group-text"><i class="fas fa-search"></i></span>
                                     <text-input :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
                                         placeholder="Pencarian....." />
@@ -121,7 +121,7 @@ const handleDownload = (type) => {
                             </div>
 
                             <div :class="[{ 'col-xl-3 col-12 order-xl-2': !props.can_search }]"
-                                class="col-xl-2 col-12 mb-xl-0 mb-0">
+                                class="col-xl-2 col-6 mb-xl-0 mb-0">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="limit" value="Batas :" />
                                     <div class="input-group">
@@ -137,7 +137,7 @@ const handleDownload = (type) => {
 
                             </div>
                             <div :class="[{ 'col-xl-3 col-12 order-xl-3': !props.can_search }]"
-                                class="col-xl-2 col-12 mb-xl-0 mb-0 ">
+                                class="col-xl-2 col-6 mb-xl-0 mb-0 ">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="order_by" value="Urutkan :" />
                                     <div class="input-group">
@@ -152,7 +152,7 @@ const handleDownload = (type) => {
                             </div>
 
                             <div :class="[{ 'col-xl-3 col-12 order-xl-0': !props.can_search }]"
-                                class="col-xl-2 col-12 mb-xl-0 mb-0 ">
+                                class="col-xl-2 col-6 mb-xl-0 mb-0 ">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="start_date" value="Tanggal Awal :" />
                                     <div class="input-group">
@@ -163,7 +163,7 @@ const handleDownload = (type) => {
                                 </div>
                             </div>
                             <div :class="[{ 'col-xl-3 col-12 order-xl-1': !props.can_search }]"
-                                class="col-xl-2 col-12 mb-xl-0 mb-0">
+                                class="col-xl-2 col-6 mb-xl-0 mb-0">
                                 <div class="position-relative">
                                     <input-label class="fw-bold" for="end_date" value="Tanggal Akhir :" />
                                     <div class="input-group">

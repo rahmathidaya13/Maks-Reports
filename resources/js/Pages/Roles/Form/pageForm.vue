@@ -100,14 +100,8 @@ const breadcrumbItems = computed(() => {
                         </div>
                         <div class="mb-3">
                             <input-label class="fw-bold" for="description" value="Deskripsi jabatan" />
-                            <summernote-editor v-model="form.description" :options="{
-                                height: 350,
-                                placeholder: 'Tulis deskripsi disini...',
-                                toolbar: [
-                                    ['font', ['bold', 'underline']],
-                                    ['para', ['ul', 'ol', 'paragraph']],
-                                ]
-                            }" :max-length="500" />
+                            <quill-text placeholder="Tulis deskripsi disini..." v-model="form.description"
+                                height="500px" />
                             <input-error :message="form.errors.description" />
                         </div>
                         <div class="d-grid d-xl-block">

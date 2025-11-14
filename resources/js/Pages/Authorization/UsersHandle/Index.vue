@@ -1,11 +1,11 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
-import { debounce } from "lodash";
+import { debounce, filter } from "lodash";
 import moment from "moment";
-import { highlight } from "../../../helpers/highlight";
-import { swalConfirmDelete } from "../../../helpers/swalHelpers";
-import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
+import { highlight } from "@/helpers/highlight";
+import { swalConfirmDelete } from "@/helpers/swalHelpers";
+import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 
 moment.locale('id');
 const page = usePage();
@@ -16,12 +16,13 @@ const props = defineProps({
 });
 
 const filters = reactive({
+    active_emp: props.filters.active_emp ?? 'active',
     keyword: props.filters.keyword ?? '',
     limit: props.filters.limit ?? 10,
     order_by: props.filters.order_by ?? "desc",
     page: props.filters?.page ?? 1,
 })
-
+console.log(filters.active_emp);
 const liveSearch = debounce((e) => {
     router.get(route("users"), filters, {
         preserveScroll: true,
@@ -35,7 +36,7 @@ const liveSearch = debounce((e) => {
 const header = [
     { label: "No", key: "__index" },
     { label: "Nama", key: "name" },
-    { label: "Status", key: "status Pegawai" },
+    { label: "Status Pegawai", key: "status" },
     { label: "Daring", key: "is_active" },
     { label: "Peran", key: "roles" },
     { label: "Izin Akses", key: "permissions" },
@@ -48,7 +49,8 @@ watch(
     () => [
         filters.keyword,
         filters.limit,
-        filters.order_by,],
+        filters.order_by,
+        filters.active_emp,],
     () => liveSearch()
 );
 
@@ -105,68 +107,70 @@ const deleted = (nameRoute, data) => {
         },
     })
 }
+const is_disable = ref(true)
 const toast = ref(null)
+// cek user jika ada yang registrasi, masuk ataupun keluar
 onMounted(() => {
     window.Echo.channel('user-status')
         .listen('.status.changed', (data) => {
+            console.log(data);
             const shouldClearCache = data.new_user_registered || data.recently_logged_in || data.recently_logged_out;
             const new_user_registered = data.new_user_registered; // hanya tampil toast untuk user baru
-
             if (shouldClearCache) {
                 if (new_user_registered) {
                     const names = data.new_user_name.slice(0, 3).join(", ");
                     const remaining = data.new_user_name.length - 3;
                     const message = remaining > 0 ? `Terdaftar pengguna baru ${names} dan ${remaining} lainnya` : `Terdaftar pengguna baru ${names}`;
-
                     // tampilkan toast
                     toast.value.show('success', message, { timer: 10000 });
-
-                    router.post(route('users.clear.cache'), {}, {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            router.reload({ only: ['users', 'filters'] });
-                        }
-                    });
+                    is_disable.value = false
                 }
-                router.post(route('users.clear.cache'), {}, {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        router.reload({ only: ['users', 'filters'] });
-                    }
-                });
-            } else {
-                router.reload({ only: ['users', 'filters'] });
+                is_disable.value = false
             }
         });
 });
 onUnmounted(() => {
     window.Echo.leaveChannel('user-status');
 });
-console.log(props.filters.keyword);
+
+const isLoading = ref(false)
+const sync = () => {
+    isLoading.value = true
+    router.get(route('users.clear.cache'), {}, {
+        replace: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            router.reload({ only: ['users', 'filters'] });
+        },
+        onFinish: () => {
+            // Selesai apapun hasilnya → loader hilang
+            isLoading.value = false
+            is_disable.value = false
+        }
+    });
+}
 </script>
 <template>
 
-    <Head title="Halaman User" />
+    <Head title="Halaman Hak Pengguna" />
     <app-layout>
         <template #content>
-            <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar User"
-                :items="[{ text: 'Daftar User' }]" />
+            <bread-crumbs :home="false" icon="fas fa-user-cog" title="Daftar Hak Pengguna"
+                :items="[{ text: 'Daftar Hak Pengguna' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
-
                     <swal-toast ref="toast" />
-
                     <div class="card mb-3 overflow-hidden rounded-4 p-1">
                         <div class="row align-items-center p-3 g-2">
-                            <div class="col-xl-7 col-12 mb-0">
+                            <div class="col-xl-6 col-12 mb-0">
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
                                     <text-input :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
                                         placeholder="Pencarian....." />
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 </div>
                             </div>
-                            <div class="col-xl-3 col-12 mb-xl-0 mb-0 d-flex gap-2">
+                            <div class="col-xl-4 col-12 mb-xl-0 mb-0 d-flex gap-2">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-sort"></i></span>
                                     <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
@@ -177,20 +181,38 @@ console.log(props.filters.keyword);
                                     ]" />
                                 </div>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-filter"></i></span>
                                     <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
                                         { value: 'desc', label: 'Terbaru' },
                                         { value: 'asc', label: 'Terlama' },
                                     ]" />
                                 </div>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                                    <select-input :is-valid="false" v-model="filters.active_emp" name="active_emp"
+                                        :options="[
+                                            { value: 'active', label: 'Aktif' },
+                                            { value: 'inactive', label: 'Non-Aktif' },
+                                        ]" />
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-12 mb-xl-0 mb-0 d-flex">
+                                <button :disabled="is_disable" @click="sync" class="btn btn-primary bg-gradient px-5"><i
+                                        class="fas fa-sync" style="font-size:18px"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
+                    </div>
 
-                    <div class="card mb-4 overflow-hidden rounded-4">
-                        <div class="table-responsive">
+                    <div class="card mb-4 overflow-hidden rounded-4" :class="{ 'h-100': isLoading }">
+                        <div v-if="isLoading">
+                            <loader-horizontal />
+                        </div>
+                        <div class="table-responsive" v-else>
                             <base-table @update:selected="selectedRow = $event" :attributes="{ id: 'id', name: 'name' }"
                                 :data="props.users" :headers="header">
                                 <template #cell="{ row, keyName }">
@@ -250,12 +272,10 @@ console.log(props.filters.keyword);
                                             </button>
                                         </div>
                                     </template>
-
                                 </template>
-
                             </base-table>
                         </div>
-                        <div
+                        <div v-if="!isLoading"
                             class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
                             <div class="mb-2 order-1 order-xl-0">
                                 Menampilkan <strong>{{ props.users?.from ?? 0 }}</strong> sampai
@@ -267,6 +287,7 @@ console.log(props.filters.keyword);
                                     order_by: filters.order_by,
                                     limit: filters.limit,
                                     keyword: filters.keyword,
+                                    active_emp: filters.active_emp
                                 }" />
                         </div>
                     </div>

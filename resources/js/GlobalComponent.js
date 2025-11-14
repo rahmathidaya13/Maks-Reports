@@ -30,9 +30,12 @@ import Modal from "./components/Modal.vue";
 import ToastNotification from "./components/ToastNotification.vue";
 import SwalToast from "./components/SwalToast.vue";
 import DropDown from "./components/DropDown.vue";
+import QuillText from "./components/QuillText.vue";
+import LoaderHorizontal from "./components/LoaderHorizontal.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
+        app.component("loader-horizontal", LoaderHorizontal);
         app.component("alert", Alert);
         app.component("drop-down", DropDown);
         app.component("modal", Modal);
@@ -48,6 +51,7 @@ export default {
         app.component("input-quantity", InputQuantity);
         app.component("text-area", TextArea);
         app.component("text-input", TextInput);
+        app.component("quill-text", QuillText);
         app.component("currency-input", CurrencyInput);
         app.component("file-input", FileInput);
         app.component("file-upload", FileUpload);

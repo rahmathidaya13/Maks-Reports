@@ -135,6 +135,6 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::get('/users/detail/{id}', 'detail')->name('users.detail');
 
         Route::get('/users/check/user', 'checkUser')->name('users.check');
-        Route::post('/users/clear/cache', 'clearCache')->name('users.clear.cache');
+        Route::get('/users/clear/cache', 'clearCache')->name('users.clear.cache');
     });
 });

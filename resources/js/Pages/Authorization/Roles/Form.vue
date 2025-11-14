@@ -1,8 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
-import { formatText } from "../../../helpers/formatText";
-import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
+import { formatText } from "@/helpers/formatText";
+import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 const props = defineProps({
     permissions: {
         type: Array,

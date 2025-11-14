@@ -3,9 +3,9 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
-import { highlight } from "../../../helpers/highlight";
-import { swalConfirmDelete } from "../../../helpers/swalHelpers";
-import { formatTextFromSlug } from "../../../helpers/formatTextFromSlug";
+import { highlight } from "@/helpers/highlight";
+import { swalConfirmDelete } from "@/helpers/swalHelpers";
+import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 moment.locale('id');
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
@@ -140,8 +140,8 @@ const deleted = (nameRoute, data) => {
                                 </div>
                             </div>
                             <div class="col-xl-2 col-6 mb-xl-0 mb-0 d-grid d-xl-flex">
-                                <Link :href="route('roles.create')" class="btn btn-outline-success">
-                                <i class="fas fa-plus"></i> Tambah
+                                <Link :href="route('roles.create')" class="btn btn-primary bg-gradient px-5">
+                                <i class="fas fa-plus" style="font-size:18px"></i>
                                 </Link>
                             </div>
                         </div>

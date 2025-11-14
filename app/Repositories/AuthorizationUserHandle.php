@@ -21,8 +21,12 @@ class AuthorizationUserHandle extends BaseCacheRepository
                 $q->where(function ($sub) use ($search) {
                     $sub->where('name', 'like', "%{$search}%");
                 });
+            })
+            ->when(!empty($filters['active_emp']), function ($q) use ($filters) {
+                $status = $filters['active_emp'] ?? 'active';
+                $q->where('status', $status);
             });
-        $users =  $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
+        $users = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 10);
 
         $users->getCollection()->transform(function ($user) {

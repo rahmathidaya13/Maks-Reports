@@ -25,6 +25,11 @@ const props = defineProps({
         default: "", // untuk ambil ID unik dari row
     },
 
+    tableClass: {
+        type: [String, Array, Object],
+        default: "",
+    },
+
 });
 const edited = (nameRoute, data) => {
     router.get(
@@ -82,7 +87,7 @@ watch(selected, (val) => {
 </script>
 
 <template>
-    <table class="table table-bordered table-striped text-nowrap">
+    <table class="table table-bordered table-striped text-nowrap" :class="tableClass">
         <thead class="table-dark">
             <tr>
                 <th>

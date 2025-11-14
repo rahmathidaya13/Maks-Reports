@@ -53,7 +53,7 @@ onMounted(() => {
                     <div class="sb-nav-link-icon">
                         <i class="fas fa-briefcase"></i>
                     </div>
-                    Role
+                    Peran
                     </Link>
 
                     <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
@@ -62,14 +62,14 @@ onMounted(() => {
                     <div class="sb-nav-link-icon">
                         <i class="fas fa-handshake"></i>
                     </div>
-                    Permission
+                    Hak Akses
                     </Link>
                     <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
                         :class="{ 'active active-link': is('authorization/users*') }" :href="route('users')">
                     <div class="sb-nav-link-icon">
                         <i class="fas fa-user-cog"></i>
                     </div>
-                    User Handle
+                    Hak Pengguna
                     </Link>
 
                     <div class="sb-sidenav-menu-heading">Akun

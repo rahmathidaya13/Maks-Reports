@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { formatTextFromSlug } from '../../../helpers/formatTextFromSlug';
+import { formatTextFromSlug } from '@/helpers/formatTextFromSlug';
 import moment from 'moment';
 import { computed, ref } from 'vue';
 moment.locale('id');
@@ -38,10 +38,19 @@ const imageSource = computed(() => {
             <bread-crumbs :home="false" icon="fas fa-user-cog" title="Detail Profil Pengguna"
                 :items="[{ text: 'Detail Profil Pengguna' }]" />
             <!-- <alert :duration="10" :message="message" /> -->
-            <div class="row">
+            <div class="row pb-3">
                 <div class="col-xl-12 col-sm-12">
+                    <!-- Tombol Aksi -->
+                    <div class="mb-3 d-flex gap-2">
+                        <Link :href="route('users')" class="btn btn-sm btn-danger">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                        </Link>
+                        <Link :href="route('users.edit', users.id)" class="btn btn-primary btn-sm px-4">
+                        <i class="bi bi-pencil"></i> Ubah
+                        </Link>
+                    </div>
 
-                    <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card rounded-3 overflow-hidden">
                         <div class="card-body p-5">
 
                             <!-- Header Profil -->
@@ -140,15 +149,7 @@ const imageSource = computed(() => {
                                 </div>
                             </div>
 
-                            <!-- Tombol Aksi -->
-                            <div class="mt-4 d-flex justify-content-start flex-wrap">
-                                <Link :href="route('users')" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Kembali
-                                </Link>
-                                <Link :href="route('users.edit', users.id)" class="btn btn-primary ms-2">
-                                <i class="bi bi-pencil-square"></i> Ubah
-                                </Link>
-                            </div>
+
 
                         </div>
                     </div>

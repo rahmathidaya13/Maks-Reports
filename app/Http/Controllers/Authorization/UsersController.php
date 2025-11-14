@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Authorization;
 
 use App\Models\User;
 use Inertia\Inertia;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\UserService;
-use App\Events\UserStatusUpdated;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
@@ -17,14 +15,17 @@ class UsersController extends Controller
 {
     protected $userRepository;
     protected $userServices;
+
     public function __construct(AuthorizationUserHandle $userRepository, UserService $userServices)
     {
         $this->userRepository = $userRepository;
         $this->userServices = $userServices;
     }
+
     public function index(Request $request)
     {
         $filters = $request->only([
+            'active_emp',
             'keyword',
             'limit',
             'page',
@@ -33,6 +34,7 @@ class UsersController extends Controller
         $users = $this->userRepository->getCached(auth()->id(), $filters);
         return Inertia::render('Authorization/UsersHandle/Index', compact('users', 'filters'));
     }
+
     public function create()
     {
         $users = User::select('id', 'name', 'email')->get();
@@ -45,6 +47,7 @@ class UsersController extends Controller
             'permissions' => $permissions,
         ]);
     }
+
     public function edit(string $id)
     {
         $roles = Role::with('permissions')->get(['id', 'name']);
@@ -70,6 +73,7 @@ class UsersController extends Controller
             'permissions' => $permissions,
         ]);
     }
+
     public function update(Request $request, string $id)
     {
         $request->validate([
@@ -87,10 +91,12 @@ class UsersController extends Controller
         ]);
         $users = User::findOrFail($id);
         if (isset($request['roles'])) {
-            $users->syncRoles($request['roles']);  // sync role
+            $users->syncRoles($request['roles']);
+            // sync role
         }
         if (isset($request['permissions'])) {
-            $users->syncPermissions($request['permissions']);  // sync permission langsung (custom per user)
+            $users->syncPermissions($request['permissions']);
+            // sync permission langsung ( custom per user )
         }
         $users->update([
             'status' => $request['status'],
@@ -124,13 +130,13 @@ class UsersController extends Controller
 
     public function detail(string $id)
     {
-        $users = User::with(['profile', 'permissions', 'roles','profile.branch','profile.jobTitle'])->findOrFail($id);
+        $users = User::with(['profile', 'permissions', 'roles', 'profile.branch', 'profile.jobTitle'])->findOrFail($id);
         // Format data agar mudah diolah di Vue
         // $users = [
         //     'user' => $getUser,
         //     'profile' => $getUser->profile,
         //     'roles' => $getUser->getRoleNames(),
-        //     'permissions' => $getUser->getAllPermissions()->pluck('name')->toArray(),
+        //     'permissions' => $getUser->getAllPermissions()->pluck( 'name' )->toArray(),
         // ];
         $this->userRepository->clearCache(auth()->id());
         return Inertia::render('Authorization/UsersHandle/InfoDetail', compact('users'));
@@ -138,15 +144,15 @@ class UsersController extends Controller
 
     public function checkUser()
     {
-        $check = $this->userServices->checkAndBroadcastStatus();
         return response()->json([
             'message' => 'Status checked and broadcasted successfully.',
-            'data' => $check
+            'data' => $this->userServices->checkAndBroadcastStatus()
         ]);
     }
+
     public function clearCache()
     {
         $this->userRepository->clearCache(auth()->id());
-        return redirect()->back();
+        return redirect()->route('users')->with('message', 'Data pengguna berhasil diperbarui');
     }
 }
