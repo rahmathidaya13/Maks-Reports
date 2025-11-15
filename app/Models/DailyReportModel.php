@@ -28,6 +28,7 @@ class DailyReportModel extends Model
         'fu_last_week_closing',
         'engage_old_customer',
         'engage_closing',
+        'notes',
     ];
 
     public function creator()

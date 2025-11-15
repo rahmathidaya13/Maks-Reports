@@ -25,7 +25,7 @@ defineExpose({ focus: () => input.value?.focus() });
 </script>
 
 <template>
-    <input :class="['form-control', {
+    <input type="text" :class="['form-control', {
         'is-invalid': isInvalid && $page.props.errors[props.name],
         'is-valid': isValid && modelValue && !$page.props.errors[props.name]
     }]" v-model="modelValue" @input="$emit('update:modelValue', $event.target.value)" :name="props.name"

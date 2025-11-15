@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Daily;
 
+use App\Traits\DailyReport;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\DailyReportModel;
@@ -13,6 +14,7 @@ class DailyReportController extends Controller
     /**
      * Display a listing of the resource.
      */
+    use DailyReport;
     protected $dailyReports;
     public function __construct(DailyReportsRepository $dailyReportsRepository)
     {
@@ -38,7 +40,8 @@ class DailyReportController extends Controller
      */
     public function create()
     {
-        //
+        $this->dailyReports->clearCache(auth()->id());
+        return Inertia::render('DailyReport/Form/pageForm');
     }
 
     /**
@@ -46,7 +49,24 @@ class DailyReportController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validationText($request->all());
+        $dailyReport = new DailyReportModel();
+        $dailyReport->created_by = auth()->id();
+        $dailyReport->date = now()->toDateString();
+        $dailyReport->leads = $request->integer('leads');
+        $dailyReport->closing = $request->integer('closing');
+        $dailyReport->fu_yesterday = $request->integer('fu_yesterday');
+        $dailyReport->fu_yesterday_closing = $request->integer('fu_yesterday_closing');
+        $dailyReport->fu_before_yesterday = $request->integer('fu_before_yesterday');
+        $dailyReport->fu_before_yesterday_closing = $request->integer('fu_before_yesterday_closing');
+        $dailyReport->fu_last_week = $request->integer('fu_last_week');
+        $dailyReport->fu_last_week_closing = $request->integer('fu_last_week_closing');
+        $dailyReport->engage_old_customer = $request->integer('engage_old_customer');
+        $dailyReport->engage_closing = $request->integer('engage_closing');
+        $dailyReport->notes = $request->input('notes');
+        $dailyReport->save();
+        $this->dailyReports->clearCache(auth()->id());
+        return redirect()->route('daily_report')->with('success', 'Laporan harian kamu berhasil dibuat');
     }
 
     /**
@@ -60,24 +80,46 @@ class DailyReportController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(DailyReportModel $dailyReportModel)
+    public function edit(DailyReportModel $dailyReportModel, string $id)
     {
-        //
+        $dailyReport = $dailyReportModel::findOrFail($id);
+        $this->dailyReports->clearCache(auth()->id());
+        return Inertia::render('DailyReport/Form/pageForm', compact('dailyReport'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, DailyReportModel $dailyReportModel)
+    public function update(Request $request, DailyReportModel $dailyReportModel, string $id)
     {
-        //
+        $this->validationText($request->all());
+        $dailyReport = $dailyReportModel::findOrFail($id);
+        $dailyReport->created_by = auth()->id();
+        $dailyReport->date = now()->toDateString();
+        $dailyReport->leads = $request->integer('leads');
+        $dailyReport->closing = $request->integer('closing');
+        $dailyReport->fu_yesterday = $request->integer('fu_yesterday');
+        $dailyReport->fu_yesterday_closing = $request->integer('fu_yesterday_closing');
+        $dailyReport->fu_before_yesterday = $request->integer('fu_before_yesterday');
+        $dailyReport->fu_before_yesterday_closing = $request->integer('fu_before_yesterday_closing');
+        $dailyReport->fu_last_week = $request->integer('fu_last_week');
+        $dailyReport->fu_last_week_closing = $request->integer('fu_last_week_closing');
+        $dailyReport->engage_old_customer = $request->integer('engage_old_customer');
+        $dailyReport->engage_closing = $request->integer('engage_closing');
+        $dailyReport->notes = $request->input('notes');
+        $dailyReport->update();
+        $this->dailyReports->clearCache(auth()->id());
+        return redirect()->route('daily_report')->with('message', 'Laporan harian kamu berhasil diperbarui');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(DailyReportModel $dailyReportModel)
+    public function destroy(DailyReportModel $dailyReportModel, string $id)
     {
-        //
+        $dailyReport = $dailyReportModel::find($id);
+        $dailyReport->delete();
+        $this->dailyReports->clearCache(auth()->id());
+        return redirect()->route('daily_report')->with('message', 'Laporan harian kamu berhasil dihapus');
     }
 }

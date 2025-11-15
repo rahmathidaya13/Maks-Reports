@@ -77,42 +77,46 @@ const breadcrumbItems = computed(() => {
                 Kembali
                 </Link>
             </div>
-            <div class="card overflow-hidden rounded-4 bg-light">
-                <h5 class="card-header fw-bold text-uppercase p-3 text-bg-secondary">
-                    <i class="fas fa-info-circle me-1 text-light"></i>
-                    Form Jabatan
-                </h5>
-                <div class="card-body">
-                    <form-wrapper @submit="isSubmit">
-                        <div class="mb-3">
-                            <input-label class="fw-bold" for="code" value="Kode Jabatan" />
-                            <text-input disabled v-model="form.job_title_code" name="code" />
+            <div class="row">
+                <div class="col-xl-12 col-sm-12 pb-3">
+                    <div class="card overflow-hidden rounded-4 bg-light">
+                        <h5 class="card-header fw-bold text-uppercase p-3 text-bg-secondary">
+                            <i class="fas fa-info-circle me-1 text-light"></i>
+                            Form Jabatan
+                        </h5>
+                        <div class="card-body">
+                            <form-wrapper @submit="isSubmit">
+                                <div class="mb-3">
+                                    <input-label class="fw-bold" for="code" value="Kode Jabatan" />
+                                    <text-input disabled v-model="form.job_title_code" name="code" />
+                                </div>
+                                <div class="mb-3">
+                                    <input-label class="fw-bold" for="title" value="Nama jabatan" />
+                                    <text-input v-model="form.title" name="title" placeholder="exp: Admin" />
+                                    <input-error :message="form.errors.title" />
+                                </div>
+                                <div class="mb-3">
+                                    <input-label class="fw-bold" for="title_alias" value="Singkatan Jabatan" />
+                                    <text-input v-model="form.title_alias" name="title_alias" placeholder="exp: Adm" />
+                                    <input-error :message="form.errors.title_alias" />
+                                </div>
+                                <div class="mb-3">
+                                    <input-label class="fw-bold" for="description" value="Deskripsi jabatan" />
+                                    <quill-text placeholder="Tulis deskripsi disini..." v-model="form.description"
+                                        height="500px" />
+                                    <input-error :message="form.errors.description" />
+                                </div>
+                                <div class="d-grid d-xl-block">
+                                    <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
+                                        :icon="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'fas fa-edit' : 'fas fa-paper-plane'"
+                                        :variant="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'success' : 'primary'"
+                                        type="submit"
+                                        :name="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'ubah' : 'simpan'"
+                                        :label="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'Ubah' : 'Simpan'" />
+                                </div>
+                            </form-wrapper>
                         </div>
-                        <div class="mb-3">
-                            <input-label class="fw-bold" for="title" value="Nama jabatan" />
-                            <text-input v-model="form.title" name="title" placeholder="exp: Admin" />
-                            <input-error :message="form.errors.title" />
-                        </div>
-                        <div class="mb-3">
-                            <input-label class="fw-bold" for="title_alias" value="Singkatan Jabatan" />
-                            <text-input v-model="form.title_alias" name="title_alias" placeholder="exp: Adm" />
-                            <input-error :message="form.errors.title_alias" />
-                        </div>
-                        <div class="mb-3">
-                            <input-label class="fw-bold" for="description" value="Deskripsi jabatan" />
-                            <quill-text placeholder="Tulis deskripsi disini..." v-model="form.description"
-                                height="500px" />
-                            <input-error :message="form.errors.description" />
-                        </div>
-                        <div class="d-grid d-xl-block">
-                            <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
-                                :icon="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'fas fa-edit' : 'fas fa-paper-plane'"
-                                :variant="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'success' : 'primary'"
-                                type="submit"
-                                :name="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'ubah' : 'simpan'"
-                                :label="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'Ubah' : 'Simpan'" />
-                        </div>
-                    </form-wrapper>
+                    </div>
                 </div>
             </div>
         </template>

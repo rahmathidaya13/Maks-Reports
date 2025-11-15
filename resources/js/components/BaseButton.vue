@@ -27,13 +27,8 @@ defineProps({
 });
 </script>
 <template>
-    <button
-        :class="['btn', `btn-${variant}`]"
-        :name="name.toLowerCase()"
-        :id="name.toLowerCase()"
-        :disabled="loading"
-    >
-        <i v-if="icon" :class="[icon, 'me-2']"></i>
+    <button :class="['btn', `btn-${variant}`]" :name="name.toLowerCase()" :id="name.toLowerCase()" :disabled="loading">
+        <i v-if="icon" :class="[icon, 'me-2']" style="font-size:large"></i>
         <span v-if="loading">{{ waiting }}</span>
         <span v-else>
             <slot>{{ label }}</slot>

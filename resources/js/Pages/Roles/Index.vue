@@ -73,6 +73,8 @@ watch(selectedRow, (val) => {
         isVisible.value = false
     }
 })
+
+
 </script>
 <template>
 

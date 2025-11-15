@@ -3,6 +3,8 @@ import { computed, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
+import { swalAlert, swalConfirmDelete } from "../../helpers/swalHelpers";
+import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 
 moment.locale('id');
 const page = usePage();
@@ -34,7 +36,14 @@ const liveSearch = debounce((e) => {
 
 const header = [
     { label: "No", key: "__index" },
-    { label: "Aksi", key: "-" },
+    { label: "Tanggal", key: "date" },
+    { label: "Leads", key: "leads" },
+    { label: "FU Kemarin", key: "fu_yesterday" },
+    { label: "FU Kemarinnya", key: "fu_before_yesterday" },
+    { label: "FU Minggu Kemarinnya", key: "fu_last_week" },
+    { label: "Engage Konsumen Lama", key: "engage_old_customer" },
+    { label: "Catatan", key: "notes" },
+    { label: "", key: "-" },
 ];
 
 watch(
@@ -80,10 +89,10 @@ watch(selectedRow, (val) => {
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
         title: 'Hapus',
-        text: `Yakin ingin menghapus ${formatTextFromSlug(data.name)} data terpilih?`,
+        text: `Kamu yakin ingin menghapus laporan harian ini yang dibuat pada ${moment(data.date).format('LL')}?`,
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
-            router.delete(route(nameRoute, data.id), { preserveScroll: true, replace: true });
+            router.delete(route(nameRoute, data.daily_report_id), { preserveScroll: true, replace: true });
         },
     })
 }
@@ -97,6 +106,18 @@ const handleDownload = (type) => {
         router.get(route("users", { format: "excel" }));
     }
 };
+
+const safeNotes = computed(() => {
+    const emptyQuillTags = /^(<p><br><\/p>|<p><\/p>|<br>)$/i;
+    // Periksa apakah row.notes null atau cocok dengan pola jejak kosong
+    if (!props.dailyReport.notes || !props.dailyReport.notes || emptyQuillTags.test(props.dailyReport.notes.trim())) {
+        return null; // Kembalikan null jika catatan kosong atau hanya jejak
+    }
+    // Jika tidak, kembalikan catatan asli
+    return props.dailyReport.notes;
+})
+
+
 </script>
 <template>
 
@@ -177,25 +198,6 @@ const handleDownload = (type) => {
                     </div>
 
                     <div class="mb-3 d-flex justify-content-end flex-wrap gap-2">
-                        <!-- <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-download"></i> Unduh Laporan
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item fw-semibold d-flex justify-content-between align-items-center"
-                                        href="#">PDF <i class="fas fa-file-pdf text-danger"></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item fw-semibold d-flex justify-content-between align-items-center"
-                                        href="#">Excel
-                                        <i class="fas fa-file-excel text-success"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div> -->
                         <drop-down @download="handleDownload" />
 
 
@@ -212,7 +214,83 @@ const handleDownload = (type) => {
                             <base-table @update:selected="selectedRow = $event"
                                 :attributes="{ id: 'daily_report_id', name: '' }" :data="props.dailyReport"
                                 :headers="header">
+                                <template #cell="{ row, keyName }">
+                                    <template v-if="keyName === 'date'">
+                                        {{ moment(row.date).format('L') }}
+                                    </template>
+                                    <template v-if="keyName === 'leads'">
+                                        <div class="d-flex flex-column gap-1 text-start">
+                                            <span>Jumlah Leads: <b>{{ row.leads ?? 0 }}</b> </span>
+                                            <span>Closing Leads: <b>{{ row.closing_leads ?? 0 }}</b></span>
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === 'fu_yesterday'">
+                                        <div class="d-flex flex-column text-start">
+                                            <span>FU Konsumen Kemarin: <b>{{ row.fu_yesterday ?? 0 }}</b>
+                                            </span>
+                                            <span>Closing: <b>{{ row.fu_yesterday_closing ?? 0 }}</b></span>
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === 'fu_before_yesterday'">
+                                        <div class="d-flex flex-column text-start">
+                                            <span>FU Konsumen Kemarinnya: <b>{{ row.fu_before_yesterday ?? 0 }}</b>
+                                            </span>
+                                            <span>Closing: <b>{{ row.fu_before_yesterday_closing ?? 0 }}</b></span>
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === 'fu_last_week'">
+                                        <div class="d-flex flex-column text-start">
+                                            <span>FU Konsumen Minggu Kemarinnya: <b>{{ row.fu_last_week ?? 0 }}</b>
+                                            </span>
+                                            <span>Closing: <b>{{ row.fu_last_week_closing ?? 0 }}</b></span>
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === 'engage_old_customer'">
+                                        <div class="d-flex flex-column text-start">
+                                            <span>Engage Konsumen Lama: <b>{{ row.engage_old_customer ?? 0 }}</b>
+                                            </span>
+                                            <span>Closing: <b>{{ row.engage_closing ?? 0 }}</b></span>
+                                        </div>
+                                    </template>
+                                    <template v-if="keyName === 'notes'">
+                                        <div v-if="row.notes !== null && row.notes.trim() !== '<p><br></p>'"
+                                            class="notes" v-html="row.notes">
+                                        </div>
 
+                                        <div v-else class="notes text-center">{{ 'Tidak ada catatan' }}</div>
+                                    </template>
+
+                                    <template v-if="keyName === '-'">
+                                        <div class="dropdown dropstart">
+                                            <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                                <i class="fas fa-cog"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <Link :href="route('daily_report.edit', row.daily_report_id)"
+                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                    Ubah <i class="fas fa-edit text-info"></i>
+                                                    </Link>
+                                                </li>
+                                                <li>
+                                                    <button @click="deleted('daily_report.deleted', row)"
+                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                        Hapus <i class="fas fa-recycle text-danger"></i>
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button @click="deleted('daily_report.deleted', row)"
+                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                        Bagikan <i class="fas fa-share-alt text-primary"></i>
+                                                    </button>
+                                                </li>
+
+                                            </ul>
+                                        </div>
+                                    </template>
+
+                                </template>
 
                             </base-table>
                         </div>
@@ -238,3 +316,20 @@ const handleDownload = (type) => {
         </template>
     </app-layout>
 </template>
+<style>
+.notes {
+    width: 450px;
+    max-width: 450px;
+    /* Sesuaikan nilai ini sesuai kebutuhan Anda */
+    text-align: left;
+    /* 2. Pastikan konten yang panjang dipaksa untuk melipat */
+    white-space: normal;
+    /* 3. Gunakan properti untuk memecah kata panjang */
+    overflow-wrap: break-word;
+    word-break: break-word;
+    /* Tambahan: Opsional jika ingin menghilangkan scrollbar horizontal */
+    overflow-x: hidden;
+    vertical-align: top;
+    max-height: 300px;
+}
+</style>

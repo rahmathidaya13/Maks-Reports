@@ -139,7 +139,7 @@ const deleted = (nameRoute, data) => {
                                     ]" />
                                 </div>
                             </div>
-                            <div class="col-xl-2 col-6 mb-xl-0 mb-0 d-grid d-xl-flex">
+                            <div class="col-xl-2 col-12 mb-xl-0 mb-0 d-flex">
                                 <Link :href="route('roles.create')" class="btn btn-primary bg-gradient px-5">
                                 <i class="fas fa-plus" style="font-size:18px"></i>
                                 </Link>
@@ -174,9 +174,9 @@ const deleted = (nameRoute, data) => {
                                     <template v-if="keyName === '-'">
                                         <div class="d-flex gap-1 align-items-center justify-content-center">
                                             <Link :href="route('roles.edit', row.id)"
-                                                class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i>
+                                                class="btn btn-sm btn-info text-white px-3"><i class="fas fa-edit"></i>
                                             </Link>
-                                            <button class="btn btn-sm btn-outline-danger"
+                                            <button class="btn btn-sm btn-outline-danger px-3"
                                                 @click="deleted('roles.delete', row)">
                                                 <i class="fas fa-trash"></i>
                                             </button>

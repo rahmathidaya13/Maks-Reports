@@ -29,7 +29,7 @@ const icon = ref("");
 const url = ref("")
 onMounted(() => {
     if (props.users && props.users.id) {
-        title.value = "Ubah Hak Pengguna"
+        title.value = "Ubah Izin Pengguna"
         icon.value = "fas fa-edit"
         url.value = route('users')
     }
@@ -38,7 +38,7 @@ onMounted(() => {
 const breadcrumbItems = computed(() => {
     if (props.users && props.users.id) {
         return [
-            { text: "Daftar Hak Pengguna", url: route("users") },
+            { text: "Daftar Izin Pengguna", url: route("users") },
             { text: title.value }
         ]
     }
@@ -167,7 +167,7 @@ watch(
                                 <div class="mb-3">
                                     <input-label class="fw-bold" for="status" value="Status Pegawai" />
                                     <select-input name="status" text="Select Status"
-                                        :options="[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]"
+                                        :options="[{ value: 'active', label: 'Aktif' }, { value: 'inactive', label: 'Non-Aktif' }]"
                                         v-model="form.status" />
                                     <input-error :message="form.errors.status" />
                                 </div>

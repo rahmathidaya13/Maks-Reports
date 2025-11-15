@@ -27,7 +27,7 @@ class GoogleAuthController extends Controller
 
         try {
             // Ambil data user dari Google
-            $googleUser = Socialite::driver('google')->user();
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
             // Cari user di database berdasarkan google_id
             if (!$googleUser || !$googleUser->getEmail()) {

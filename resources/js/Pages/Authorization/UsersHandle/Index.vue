@@ -22,7 +22,6 @@ const filters = reactive({
     order_by: props.filters.order_by ?? "desc",
     page: props.filters?.page ?? 1,
 })
-console.log(filters.active_emp);
 const liveSearch = debounce((e) => {
     router.get(route("users"), filters, {
         preserveScroll: true,
@@ -36,6 +35,7 @@ const liveSearch = debounce((e) => {
 const header = [
     { label: "No", key: "__index" },
     { label: "Nama", key: "name" },
+    { label: "Email", key: "email" },
     { label: "Status Pegawai", key: "status" },
     { label: "Daring", key: "is_active" },
     { label: "Peran", key: "roles" },
@@ -100,20 +100,19 @@ const getBadgeClass = (permName) => {
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
         title: 'Hapus',
-        text: `Yakin ingin menghapus ${formatTextFromSlug(data.name)} data terpilih?`,
+        text: `Yakin ingin menghapus data pengguna ${formatTextFromSlug(data.name)}?`,
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
             router.delete(route(nameRoute, data.id), { preserveScroll: true, replace: true });
         },
     })
 }
-const is_disable = ref(true)
-const toast = ref(null)
+
+const toast = ref(null) // hanya tampil jika ada user baru
 // cek user jika ada yang registrasi, masuk ataupun keluar
 onMounted(() => {
     window.Echo.channel('user-status')
         .listen('.status.changed', (data) => {
-            console.log(data);
             const shouldClearCache = data.new_user_registered || data.recently_logged_in || data.recently_logged_out;
             const new_user_registered = data.new_user_registered; // hanya tampil toast untuk user baru
             if (shouldClearCache) {
@@ -123,9 +122,7 @@ onMounted(() => {
                     const message = remaining > 0 ? `Terdaftar pengguna baru ${names} dan ${remaining} lainnya` : `Terdaftar pengguna baru ${names}`;
                     // tampilkan toast
                     toast.value.show('success', message, { timer: 10000 });
-                    is_disable.value = false
                 }
-                is_disable.value = false
             }
         });
 });
@@ -136,8 +133,7 @@ onUnmounted(() => {
 const isLoading = ref(false)
 const sync = () => {
     isLoading.value = true
-    router.get(route('users.clear.cache'), {}, {
-        replace: true,
+    router.get(route('users.refresh'), {}, {
         preserveScroll: true,
         onSuccess: () => {
             router.reload({ only: ['users', 'filters'] });
@@ -145,7 +141,6 @@ const sync = () => {
         onFinish: () => {
             // Selesai apapun hasilnya → loader hilang
             isLoading.value = false
-            is_disable.value = false
         }
     });
 }
@@ -155,8 +150,8 @@ const sync = () => {
     <Head title="Halaman Hak Pengguna" />
     <app-layout>
         <template #content>
-            <bread-crumbs :home="false" icon="fas fa-user-cog" title="Daftar Hak Pengguna"
-                :items="[{ text: 'Daftar Hak Pengguna' }]" />
+            <bread-crumbs :home="false" icon="fas fa-user-cog" title="Izin Pengguna"
+                :items="[{ text: 'Izin Pengguna' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
@@ -197,8 +192,10 @@ const sync = () => {
                                 </div>
                             </div>
                             <div class="col-xl-2 col-12 mb-xl-0 mb-0 d-flex">
-                                <button :disabled="is_disable" @click="sync" class="btn btn-primary bg-gradient px-5"><i
-                                        class="fas fa-sync" style="font-size:18px"></i>
+                                <button :class="{ 'btn-dark': isLoading, 'btn-primary': !isLoading }"
+                                    :disabled="isLoading" @click="sync" class="btn  bg-gradient px-5"><i class="fas"
+                                        :class="{ 'fa-spinner fa-spin': isLoading, 'fa-sync': !isLoading }"
+                                        style="font-size:18px"></i>
                                 </button>
                             </div>
                         </div>
@@ -224,17 +221,19 @@ const sync = () => {
                                             </Link>
                                         </div>
                                     </template>
+
                                     <template v-if="keyName == 'roles'">
-                                        <div v-for="role in row.roles" :key="role">
-                                            {{ formatTextFromSlug(role) }}
+                                        <div class="fw-bold">
+                                            {{ formatTextFromSlug(row.roles.join(', ')) }}
                                         </div>
                                     </template>
+
                                     <template v-if="keyName == 'is_active'">
                                         <span :class="[
                                             'badge text-capitalize px-3 py-2',
                                             row.is_active == true ? 'bg-success' : 'bg-secondary',
                                         ]">
-                                            {{ formatTextFromSlug(row.is_active == true ? 'Available' : 'Unavailable')
+                                            {{ formatTextFromSlug(row.is_active == true ? 'Online' : 'Offline')
                                             }}
                                         </span>
                                     </template>
@@ -246,7 +245,6 @@ const sync = () => {
                                             {{ formatTextFromSlug(row.status) }}
                                         </span>
                                     </template>
-
 
                                     <template v-if="keyName === 'permissions'">
                                         <ul class="list-unstyled mb-0 d-flex flex-wrap gap-2">
@@ -264,9 +262,9 @@ const sync = () => {
                                     <template v-if="keyName === '-'">
                                         <div class="d-flex gap-1 align-items-center justify-content-center">
                                             <Link :href="route('users.edit', row.id)"
-                                                class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i>
+                                                class="btn btn-sm btn-info text-white px-3"><i class="fas fa-edit"></i>
                                             </Link>
-                                            <button class="btn btn-sm btn-outline-danger"
+                                            <button class="btn btn-sm btn-outline-danger px-3"
                                                 @click="deleted('users.delete', row)">
                                                 <i class="fas fa-trash"></i>
                                             </button>

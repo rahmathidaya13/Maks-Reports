@@ -25,6 +25,7 @@ return new class extends Migration
             $table->integer('fu_last_week_closing')->default(0); // closing-nya
             $table->integer('engage_old_customer')->default(0); // engage pelanggan lama
             $table->integer('engage_closing')->default(0); //closing-nya
+            $table->text('notes')->nullable(); // catatan tambahan
             $table->softDeletes();
             $table->index(['created_by', 'date', 'created_at']);
             $table->timestamps();

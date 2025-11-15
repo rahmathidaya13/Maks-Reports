@@ -25,6 +25,8 @@ class AuthorizationUserHandle extends BaseCacheRepository
             ->when(!empty($filters['active_emp']), function ($q) use ($filters) {
                 $status = $filters['active_emp'] ?? 'active';
                 $q->where('status', $status);
+            }, function ($q) {
+                $q->where('status', 'active');
             });
         $users = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 10);
@@ -37,10 +39,10 @@ class AuthorizationUserHandle extends BaseCacheRepository
                 'status' => $user->status,
                 'is_active' => $user->is_active,
                 'first_login' => $user->first_login
-                    ? Carbon::parse($user->first_login)->diffForHumans()
+                    ? Carbon::parse($user->first_login)->format('d/m/Y, H:i:s')
                     : null,
                 'last_login' => $user->last_login
-                    ? Carbon::parse($user->last_login)->toDateTimeString()
+                    ? Carbon::parse($user->last_login)->format('d/m/Y, H:i:s')
                     : null,
                 'roles' => $user->getRoleNames(),
                 'permissions' => $user->getAllPermissions()->pluck('name'),

@@ -64,9 +64,8 @@ const imageSource = computed(() => {
                                     <h4 class="mb-0 fw-bold">{{ users.name ?? '-' }}</h4>
                                     <span class="text-muted">{{ users.email ?? '-' }}</span>
                                     <span class="text-muted">{{ users.profile.number_phone ?? '-' }}</span>
-                                    <span class="badge w-25 mt-2"
-                                        :class="users.is_active ? 'bg-primary' : 'bg-secondary'">
-                                        {{ users.is_active ? 'online' : 'offline' }}
+                                    <span class="badge w-25 rounded-0" :class="users.is_active ? 'bg-primary' : 'bg-secondary'">
+                                        {{ users.is_active ? 'Online' : 'Offline' }}
                                     </span>
                                 </div>
                             </div>
@@ -80,7 +79,7 @@ const imageSource = computed(() => {
                                     <span class="text-muted">Tanggal Lahir</span>
                                     <div class="fw-semibold">{{ users.profile.birthdate ?
                                         moment(users.profile.birthdate).format('LL') : '-'
-                                    }}</div>
+                                        }}</div>
                                 </div>
                                 <div class="col-xl-6 col-md-6 col-sm-12 mb-2">
                                     <span class="text-muted">Tanggal Bergabung</span>
@@ -95,7 +94,7 @@ const imageSource = computed(() => {
                                 <div class="col-xl-6 col-md-6 col-sm-12 mb-2">
                                     <span class="text-muted">Pendidikan</span>
                                     <div class="fw-semibold">{{ formatTextFromSlug(users.profile.education) ?? '-'
-                                    }}
+                                        }}
                                     </div>
                                 </div>
 
@@ -103,7 +102,7 @@ const imageSource = computed(() => {
                                     <span class="text-muted">Jabatan</span>
                                     <div class="fw-semibold">{{ users.profile.job_title
                                         ? formatTextFromSlug(users.profile.job_title.title) : '-'
-                                    }}
+                                        }}
                                     </div>
                                 </div>
                                 <div class="col-xl-6 col-md-6 col-sm-12 mb-2">
@@ -132,10 +131,9 @@ const imageSource = computed(() => {
                             </div>
 
                             <hr>
-                            <!-- Role dan Permission -->
                             <h5 class="fw-semibold mb-2">Hak Akses</h5>
                             <div class="row mb-3">
-                                <div class="col-xl-6 col-sm-12 col-md-6 border p-3 rounded-4">
+                                <div class="col-xl-6 col-sm-12 col-md-6 border p-3 rounded-3">
                                     <ul class="list-unstyled mb-0 d-flex flex-wrap gap-2">
                                         <li v-for="permission in users.permissions" :key="permission">
                                             <span :class="[
@@ -148,9 +146,6 @@ const imageSource = computed(() => {
                                     </ul>
                                 </div>
                             </div>
-
-
-
                         </div>
                     </div>
 

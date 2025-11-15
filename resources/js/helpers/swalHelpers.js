@@ -11,28 +11,32 @@ import Swal from "sweetalert2";
  * @param {function} [options.onCancel] - Callback jika user menekan batal
  */
 export function swalConfirmDelete({
-  title = "Konfirmasi",
-  text = "Apakah Anda yakin?",
-  icon = "warning",
-  confirmText = "Ya, Hapus!",
-  cancelText = "Batal",
-  onConfirm,
-  onCancel
+    title = "Konfirmasi",
+    text = "Apakah Anda yakin?",
+    icon = "warning",
+    confirmText = "Ya, Hapus!",
+    cancelText = "Batal",
+    onConfirm,
+    onCancel,
 }) {
-  return Swal.fire({
-    title,
-    text,
-    icon,
-    showCancelButton: true,
-    confirmButtonText: confirmText,
-    cancelButtonText: cancelText
-  }).then(result => {
-    if (result.isConfirmed && typeof onConfirm === "function") {
-      onConfirm();
-    } else if (result.isDismissed && typeof onCancel === "function") {
-      onCancel();
-    }
-  });
+    return Swal.fire({
+        title,
+        text,
+        icon,
+        showCancelButton: true,
+        confirmButtonText: confirmText,
+        cancelButtonText: cancelText,
+        customClass: {
+            confirmButton: "btn btn-success",
+            cancelButton: "btn btn-outline-danger",
+        },
+    }).then((result) => {
+        if (result.isConfirmed && typeof onConfirm === "function") {
+            onConfirm();
+        } else if (result.isDismissed && typeof onCancel === "function") {
+            onCancel();
+        }
+    });
 }
 
 /**
@@ -42,5 +46,5 @@ export function swalConfirmDelete({
  * @param {'success' | 'error' | 'warning' | 'info'} [icon='info']
  */
 export function swalAlert(title, text, icon = "info") {
-  return Swal.fire(title, text, icon);
+    return Swal.fire(title, text, icon);
 }

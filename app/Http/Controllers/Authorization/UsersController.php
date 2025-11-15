@@ -150,7 +150,7 @@ class UsersController extends Controller
         ]);
     }
 
-    public function clearCache()
+    public function refresh()
     {
         $this->userRepository->clearCache(auth()->id());
         return redirect()->route('users')->with('message', 'Data pengguna berhasil diperbarui');
