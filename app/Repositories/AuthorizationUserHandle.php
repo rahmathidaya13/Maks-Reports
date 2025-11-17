@@ -29,7 +29,7 @@ class AuthorizationUserHandle extends BaseCacheRepository
                 $q->where('status', 'active');
             });
         $users = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
-            ->paginate($filters['limit'] ?? 10);
+            ->paginate($filters['limit'] ?? 5);
 
         $users->getCollection()->transform(function ($user) {
             return [

@@ -70,34 +70,25 @@ watch(selectedRow, (val) => {
     }
 })
 
-const isModalVisible = ref(false);
-
-function openModal() {
-    isModalVisible.value = true;
-}
-
-function handleSave() {
-    alert("Data disimpan!");
-    isModalVisible.value = false;
-}
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
         title: 'Hapus',
-        text: `Yakin ingin menghapus ${formatTextFromSlug(data.name)} data terpilih?`,
+        text: `Yakin ingin menghapus ${formatTextFromSlug(data.name)}?`,
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
             router.delete(route(nameRoute, data.id), { preserveScroll: true, replace: true });
         },
     })
 }
+
 </script>
 <template>
 
-    <Head title="Halaman Permission" />
+    <Head title="Halaman Izin Akses" />
     <app-layout>
         <template #content>
-            <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar Permission"
-                :items="[{ text: 'Daftar Permission' }]" />
+            <bread-crumbs :home="false" icon="fas fa-handshake" title="Daftar Izin Akses"
+                :items="[{ text: 'Daftar Izin Akses' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12">
@@ -142,8 +133,8 @@ const deleted = (nameRoute, data) => {
                                 :data="props.permissions" :headers="header">
                                 <template #cell="{ row, keyName }">
                                     <template v-if="keyName === 'name'">
-                                        <div class="fw-bold">
-                                            {{ formatTextFromSlug(highlight(row.name)) }}
+                                        <div class="fw-bold"
+                                            v-html="formatTextFromSlug(highlight(row.name, filters.keyword))">
                                         </div>
                                     </template>
                                     <template v-if="keyName === '-'">

@@ -86,16 +86,16 @@ watch(selectedRow, (val) => {
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12">
-                    <div class="card mb-3 overflow-hidden rounded-4 p-1">
+                    <div class="card mb-3 overflow-hidden rounded-3 p-1">
                         <div class="row align-items-center p-3 g-2">
-                            <div class="col-xl-7 col-12 mb-0">
+                            <div class="col-xl-6 col-12 mb-0">
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <!-- <span class="input-group-text"><i class="fas fa-search"></i></span> -->
                                     <text-input :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
                                         placeholder="Pencarian....." />
                                 </div>
                             </div>
-                            <div class="col-xl-3 col-12 mb-xl-0 mb-0 d-flex gap-2">
+                            <div class="col-xl-4 col-12 mb-xl-0 mb-0 d-flex gap-2">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-sort"></i></span>
                                     <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
@@ -106,16 +106,16 @@ watch(selectedRow, (val) => {
                                     ]" />
                                 </div>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-filter"></i></span>
                                     <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
                                         { value: 'desc', label: 'Terbaru' },
                                         { value: 'asc', label: 'Terlama' },
                                     ]" />
                                 </div>
                             </div>
-                            <div class="col-xl-2 col-6 mb-xl-0 mb-0 d-grid d-xl-flex">
-                                <Link :href="route('job_title.create')" class="btn btn-outline-success">
-                                <i class="fas fa-plus"></i> Tambah
+                            <div class="col-xl-2 mb-xl-0 mb-0 d-flex">
+                                <Link :href="route('job_title.create')" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Buat Baru
                                 </Link>
                             </div>
                         </div>

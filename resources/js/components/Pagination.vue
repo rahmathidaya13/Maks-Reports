@@ -24,11 +24,18 @@ const goToPage = (url) => {
     const params = new URLSearchParams(queryString)
     const page = params.get('page')
 
-    router.get(route(props.routeName), {
+    const payload = {
         page,
-        keyword: props.keyword,
         ...props.additionalQuery,
-    }, {
+    }
+
+    // Hanya kirim keyword jika ada isinya
+    if (props.keyword && props.keyword !== "") {
+        payload.keyword = props.keyword;
+    }
+
+
+    router.get(route(props.routeName), payload, {
         preserveScroll: true,
         preserveState: true,
         replace: true,
@@ -37,7 +44,7 @@ const goToPage = (url) => {
 </script>
 <template>
     <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-end pagination-sm" >
+        <ul class="pagination justify-content-end pagination-sm">
 
             <li :class="{ 'page-item': true, disabled: !links[0].url }">
                 <button class="page-link" @click.prevent="goToPage(links[0].url)" :disabled="!links[0].url">

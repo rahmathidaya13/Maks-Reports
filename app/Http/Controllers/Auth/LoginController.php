@@ -66,8 +66,6 @@ class LoginController extends Controller {
         if ( auth()->user()->hasRole( 'user' ) ) {
             auth()->user()->syncPermissions( [ 'create', 'read', 'update', 'delete', 'share', 'download' ] );
         }
-        // dd( auth()->user()->hasRole( 'developer' ) );
-
         if ( !$user->is_active ) {
             $user->status = 'active';
             $user->first_login = now();

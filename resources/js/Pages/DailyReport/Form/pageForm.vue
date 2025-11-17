@@ -76,7 +76,7 @@ const breadcrumbItems = computed(() => {
             </div>
 
             <div class="d-flex justify-content-between">
-                <Link :href="url" class="btn btn-danger btn-sm mb-3">
+                <Link :href="url" class="btn btn-danger mb-3">
                 <i class="fas fa-arrow-left"></i>
                 Kembali
                 </Link>
@@ -86,7 +86,7 @@ const breadcrumbItems = computed(() => {
                     <div class="card overflow-hidden rounded-4">
                         <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
                             <i class="fas fa-clipboard me-1 text-light"></i>
-                            Form Laporan Harian
+                            Form Laporan Leads Harian
                         </h5>
                         <div class="card-body">
                             <form-wrapper @submit="isSubmit">
@@ -139,7 +139,6 @@ const breadcrumbItems = computed(() => {
                                             </div>
                                         </div>
 
-
                                         <div class="col-xl-3 col-sm-6 col-md-6 col-12">
                                             <div class="mb-2">
                                                 <input-label class="fw-bold" for="fu_last_week"
@@ -184,13 +183,13 @@ const breadcrumbItems = computed(() => {
                                 </div>
 
                                 <div class="d-grid d-xl-flex justify-content-start">
-                                    <base-button :loading="form.processing"
+                                    <base-button waiting="Memproses..." :loading="form.processing"
                                         class="rounded-3 bg-gradient px-5 btn-height-2"
-                                        :icon="props.dailyReport?.daily_report_id && props.dailyReport?.daily_report_id ? 'fas fa-edit' : 'fas fa-save'"
-                                        :variant="props.dailyReport?.daily_report_id && props.dailyReport?.daily_report_id ? 'success' : 'primary'"
+                                        :icon="props.dailyReport && props.dailyReport?.daily_report_id ? 'fas fa-edit' : 'fas fa-save'"
+                                        :variant="props.dailyReport && props.dailyReport?.daily_report_id ? 'success' : 'primary'"
                                         type="submit"
-                                        :name="props.dailyReport?.daily_report_id && props.dailyReport?.daily_report_id ? 'ubah' : 'simpan'"
-                                        :label="props.dailyReport?.daily_report_id && props.dailyReport?.daily_report_id ? 'Ubah' : 'Simpan'" />
+                                        :name="props.dailyReport && props.dailyReport?.daily_report_id ? 'ubah' : 'simpan'"
+                                        :label="props.dailyReport && props.dailyReport?.daily_report_id ? 'Ubah' : 'Simpan'" />
                                 </div>
                             </form-wrapper>
                         </div>

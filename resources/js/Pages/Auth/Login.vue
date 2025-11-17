@@ -8,9 +8,9 @@ const form = useForm({
     // 'g-recaptcha-response': '', // reCAPTCHA token
 });
 const isSubmit = () => {
-    form['g-recaptcha-response'] = document.querySelector(
-        '[name="g-recaptcha-response"]'
-    )?.value
+    // form['g-recaptcha-response'] = document.querySelector(
+    //     '[name="g-recaptcha-response"]'
+    // )?.value
     form.post(route("login.store"), {
         onFinish: () => form.reset("password")
     });

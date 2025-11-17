@@ -16,6 +16,7 @@ class DailyReportController extends Controller
      */
     use DailyReport;
     protected $dailyReports;
+
     public function __construct(DailyReportsRepository $dailyReportsRepository)
     {
         $this->dailyReports = $dailyReportsRepository;
@@ -23,7 +24,6 @@ class DailyReportController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only([
-            'keyword',
             'limit',
             'page',
             'order_by',
@@ -31,8 +31,8 @@ class DailyReportController extends Controller
             'end_date',
         ]);
         $dailyReport = $this->dailyReports->getCached(auth()->id(), $filters);
-        $can_search = auth()->user()->hasAnyRole(['admin', 'super-admin', 'developer', 'editor']);
-        return Inertia::render('DailyReport/Index', compact('dailyReport', 'filters', 'can_search'));
+        // $can_search = auth()->user()->hasAnyRole(['admin', 'super-admin', 'developer', 'editor']);
+        return Inertia::render('DailyReport/Index', compact('dailyReport', 'filters'));
     }
 
     /**
@@ -66,7 +66,7 @@ class DailyReportController extends Controller
         $dailyReport->notes = $request->input('notes');
         $dailyReport->save();
         $this->dailyReports->clearCache(auth()->id());
-        return redirect()->route('daily_report')->with('success', 'Laporan harian kamu berhasil dibuat');
+        return redirect()->route('daily_report')->with('message', 'Laporan Leads harian kamu berhasil dibuat');
     }
 
     /**
@@ -109,7 +109,7 @@ class DailyReportController extends Controller
         $dailyReport->notes = $request->input('notes');
         $dailyReport->update();
         $this->dailyReports->clearCache(auth()->id());
-        return redirect()->route('daily_report')->with('message', 'Laporan harian kamu berhasil diperbarui');
+        return redirect()->route('daily_report')->with('message', 'Laporan Leads harian kamu berhasil diperbarui');
     }
 
     /**
@@ -121,5 +121,17 @@ class DailyReportController extends Controller
         $dailyReport->delete();
         $this->dailyReports->clearCache(auth()->id());
         return redirect()->route('daily_report')->with('message', 'Laporan harian kamu berhasil dihapus');
+    }
+
+    public function destroy_all(DailyReportModel $dailyReportModel, Request $request)
+    {
+        $all_id = $request->input('all_id', []);
+        if (!count($all_id))
+            return back()->with('message', 'Tidak ada data yang dipilih.');
+
+        $this->dailyReports->clearCache(auth()->id());
+
+        $dailyReportModel::whereIn('daily_report_id', $all_id)->delete();
+        return redirect()->route('daily_report')->with('message', count($all_id) . ' Data Leads berhasil Terhapus.');
     }
 }

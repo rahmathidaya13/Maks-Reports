@@ -18,7 +18,7 @@ const props = defineProps({
 const filters = reactive({
     active_emp: props.filters.active_emp ?? 'active',
     keyword: props.filters.keyword ?? '',
-    limit: props.filters.limit ?? 10,
+    limit: props.filters.limit ?? 5,
     order_by: props.filters.order_by ?? "desc",
     page: props.filters?.page ?? 1,
 })
@@ -144,6 +144,8 @@ const sync = () => {
         }
     });
 }
+
+
 </script>
 <template>
 
@@ -169,6 +171,7 @@ const sync = () => {
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-sort"></i></span>
                                     <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
+                                        { value: 5, label: '5' },
                                         { value: 10, label: '10' },
                                         { value: 25, label: '25' },
                                         { value: 50, label: '50' },
@@ -183,7 +186,7 @@ const sync = () => {
                                     ]" />
                                 </div>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                                    <span class="input-group-text"><i class="fas fa-dot-circle"></i></span>
                                     <select-input :is-valid="false" v-model="filters.active_emp" name="active_emp"
                                         :options="[
                                             { value: 'active', label: 'Aktif' },
@@ -204,7 +207,6 @@ const sync = () => {
                     <div class="d-flex justify-content-between align-items-center">
                         <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
                     </div>
-
                     <div class="card mb-4 overflow-hidden rounded-4" :class="{ 'h-100': isLoading }">
                         <div v-if="isLoading">
                             <loader-horizontal />
@@ -293,6 +295,7 @@ const sync = () => {
             </div>
         </template>
     </app-layout>
+
 </template>
 <style>
 .colored-toast.swal2-icon-success {

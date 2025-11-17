@@ -16,11 +16,9 @@ const props = defineProps({
 </script>
 <template>
     <Transition name="fade">
-        <div v-if="isVisible" class="py-2">
-            <button class="btn btn-danger rounded-3 btn-sm" @click="deleted">
-                <i class="fas fa-trash me-1"></i> {{ text }}
-            </button>
-        </div>
+        <button v-if="isVisible" class="btn btn-danger rounded-2" @click="deleted">
+            <i class="fas fa-trash me-1"></i> {{ text }}
+        </button>
     </Transition>
 </template>
 <style scoped>

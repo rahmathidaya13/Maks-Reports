@@ -72,7 +72,7 @@ const breadcrumbItems = computed(() => {
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
             <div class="d-flex justify-content-between">
-                <Link :href="url" class="btn btn-danger btn-sm mb-3">
+                <Link :href="url" class="btn btn-danger mb-3">
                 <i class="fas fa-arrow-left"></i>
                 Kembali
                 </Link>
@@ -103,11 +103,12 @@ const breadcrumbItems = computed(() => {
                                 <div class="mb-3">
                                     <input-label class="fw-bold" for="description" value="Deskripsi jabatan" />
                                     <quill-text placeholder="Tulis deskripsi disini..." v-model="form.description"
-                                        height="500px" />
+                                        height="350px" />
                                     <input-error :message="form.errors.description" />
                                 </div>
                                 <div class="d-grid d-xl-block">
-                                    <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
+                                    <base-button :loading="form.processing"
+                                        class="rounded-3 bg-gradient px-5 btn-height-2"
                                         :icon="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'fas fa-edit' : 'fas fa-paper-plane'"
                                         :variant="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'success' : 'primary'"
                                         type="submit"
