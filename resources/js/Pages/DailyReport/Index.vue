@@ -15,7 +15,7 @@ const props = defineProps({
 });
 
 const filters = reactive({
-    limit: props.filters.limit ?? 5,
+    limit: props.filters.limit ?? 1,
     order_by: props.filters.order_by ?? "desc",
     page: props.filters?.page ?? 1,
     start_date: props.filters.start_date ?? '',
@@ -34,7 +34,7 @@ const header = [
     { label: "FU Minggu Kemarinnya", key: "fu_last_week" },
     { label: "Engage Konsumen Lama", key: "engage_old_customer" },
     { label: "Catatan", key: "notes" },
-    { label: "", key: "-" },
+    { label: "Aksi", key: "-" },
 ];
 
 
@@ -70,7 +70,7 @@ watch(selectedRow, (val) => {
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
         title: 'Hapus',
-        text: `Kamu yakin ingin menghapus laporan harian ini yang dibuat pada ${moment(data.date).format('LL')}?`,
+        text: `Kamu yakin ingin menghapus laporan leads ini?`,
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
             router.delete(route(nameRoute, data.daily_report_id), { preserveScroll: false, replace: true });
@@ -99,7 +99,7 @@ function daysOnlyConvert(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('DD/MM/YYYY');
+    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
 
@@ -166,17 +166,41 @@ watch([() => filters.limit, () => filters.order_by], () => {
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
+
+                    <div class="callout callout-info">
+                        <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Informasi Laporan Leads Harian</h5>
+                        <ul class="mb-0 ps-3">
+                            <li><strong>Leads</strong> adalah calon konsumen baru yang pertama kali dihubungi pada hari
+                                ini.
+                            </li>
+                            <li><strong>FU (Follow Up)</strong> adalah tindak lanjut yang dilakukan kepada konsumen yang
+                                sebelumnya sudah pernah dihubungi.</li>
+                            <li><strong>FU Kemarin (H-1)</strong> adalah follow up untuk konsumen yang dihubungi sehari
+                                sebelumnya.</li>
+                            <li><strong>FU Kemarennya (H-2)</strong> adalah follow up untuk konsumen yang dihubungi dua
+                                hari
+                                sebelumnya.</li>
+                            <li><strong>FU Minggu Kemarennya</strong> adalah follow up untuk konsumen yang dihubungi
+                                pada
+                                minggu
+                                lalu.</li>
+                            <li><strong>Engage Pelanggan Lama</strong> adalah interaksi dengan pelanggan lama untuk
+                                menjaga
+                                hubungan dan menawarkan kebutuhan baru.</li>
+                        </ul>
+                    </div>
+
                     <div class="card mb-4 overflow-hidden rounded-3 p-1 bg-light">
                         <div class="row align-items-center p-2 g-2 pb-3">
                             <div class="col-xl-4 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal" />
+                                <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
                                 <div class="input-group">
                                     <text-input name="start_date" v-model="filters.start_date" type="date"
                                         :is-valid="false" />
                                 </div>
                             </div>
                             <div class="col-xl-4 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="end_date" value="Tanggal Akhir" />
+                                <input-label class="fw-bold mb-1" for="end_date" value="Tanggal Akhir:" />
                                 <div class="input-group">
                                     <text-input name="end_date" v-model="filters.end_date" type="date"
                                         :is-valid="false" />
@@ -186,9 +210,10 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                 </div>
                             </div>
                             <div class="col-xl-2 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="limit" value="Batas" />
+                                <input-label class="fw-bold mb-1" for="limit" value="Batas:" />
                                 <div class="input-group">
                                     <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
+                                        { value: 1, label: '1 (Default)' },
                                         { value: 5, label: '5' },
                                         { value: 10, label: '10' },
                                         { value: 25, label: '25' },
@@ -198,7 +223,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                 </div>
                             </div>
                             <div class="col-xl-2 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="order_by" value="Urutkan" />
+                                <input-label class="fw-bold mb-1" for="order_by" value="Urutkan:" />
                                 <div class="input-group">
                                     <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
                                         { value: 'desc', label: 'Terbaru' },
@@ -221,115 +246,124 @@ watch([() => filters.limit, () => filters.order_by], () => {
                         </div>
                     </div>
 
-                    <div class="card mb-4 overflow-hidden rounded-4 shadow-sm" :class="{ 'h-100': isLoading }">
-                        <div v-if="isLoading">
-                            <loader-horizontal message="Sedang mempersiapkan data....." />
+                    <div class="card mb-4 overflow-hidden rounded-4 shadow-sm" :class="{ 'h-100': isLoading }"
+                        v-if="isLoading">
+                        <loader-horizontal message="Sedang mempersiapkan data....." />
+                    </div>
+
+                    <div class="mb-3" :id="row.daily_report_id" v-for="(row, rowIndex) in dailyReport.data"
+                        :key="rowIndex" v-else>
+
+                        <div class="d-xl-flex align-items-center mb-2 mt-4 justify-content-between d-block">
+                            <h3 class="fw-bold">Laporan Leads:
+                                <span class="text-primary">
+                                    {{ daysOnlyConvert(row.date) }}
+                                </span>
+                            </h3>
+                            <div class="d-flex gap-1">
+                                <Link :href="route('daily_report.edit', row.daily_report_id)"
+                                    class="btn btn-info text-white px-4 bg-gradient">
+                                <i class="fas fa-edit"></i> Ubah</Link>
+                                <button class="btn btn-danger px-4 bg-gradient"
+                                    @click="deleted('daily_report.deleted', row)"><i class="fas fa-trash"></i>
+                                    Hapus</button>
+                                <Link class="btn btn-success px-4 bg-gradient"><i class="fas fa-share"></i> Bagikan
+                                </Link>
+                            </div>
                         </div>
-                        <div class="table-responsive" v-else>
-                            <base-table @update:selected="selectedRow = $event"
-                                :attributes="{ id: 'daily_report_id', name: '' }" :data="props.dailyReport"
-                                :headers="header">
-                                <template #cell="{ row, keyName }">
-                                    <template v-if="keyName === 'date'">
-                                        {{ daysOnlyConvert(row.date) }}
-                                    </template>
 
-                                    <template v-if="keyName === 'leads'">
-                                        <div class="d-flex flex-column text-start">
-                                            <span>Jumlah Leads: <b>{{ row.leads ?? 0 }}</b> </span>
-                                            <span class="line-table"></span>
-                                            <span>Closing Leads: <b>{{ row.closing ?? 0 }}</b></span>
-                                        </div>
-                                    </template>
+                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm">
+                            <div class="card-body p-0">
+                                <table class="table table-hover align-middle mb-0 table-striped text-wrap">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Kategori</th>
+                                            <th class="text-center">Jumlah</th>
+                                            <th class="text-center">Closing</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="fw-bold">Leads</td>
+                                            <td class="text-center fw-bold">{{ row.leads }}</td>
+                                            <td class="text-center fw-bold">{{ row.closing }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">FU Kemarin (H-1)</td>
+                                            <td class="text-center fw-bold">{{ row.fu_yesterday }}</td>
+                                            <td class="text-center fw-bold">{{ row.fu_yesterday_closing }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">FU Kemarennya (H-2)</td>
+                                            <td class="text-center fw-bold">{{ row.fu_before_yesterday }}</td>
+                                            <td class="text-center fw-bold">{{ row.fu_before_yesterday_closing
+                                                }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">FU Minggu Kemarennya</td>
+                                            <td class="text-center fw-bold">{{ row.fu_last_week }}</td>
+                                            <td class="text-center fw-bold">{{ row.fu_last_week_closing }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Engage Pelanggan Lama</td>
+                                            <td class="text-center fw-bold">{{ row.engage_old_customer }}</td>
+                                            <td class="text-center fw-bold">{{ row.engage_closing }}</td>
+                                        </tr>
 
+                                    </tbody>
+                                    <tfoot class="fw-bold">
+                                        <tr>
+                                            <td>Total</td>
+                                            <td class="text-center">
+                                                {{
+                                                    (row.leads ?? 0) +
+                                                    (row.fu_yesterday ?? 0) +
+                                                    (row.fu_before_yesterday ?? 0) +
+                                                    (row.fu_last_week ?? 0) +
+                                                    (row.engage_old_customer ?? 0)
+                                                }}
+                                            </td>
+                                            <td class="text-center"> {{
+                                                (row.closing ?? 0) +
+                                                (row.fu_yesterday_closing ?? 0) +
+                                                (row.fu_before_yesterday_closing ?? 0) +
+                                                (row.fu_last_week_closing ?? 0) +
+                                                (row.engage_closing ?? 0)
+                                                }}
+                                            </td>
+                                        </tr>
 
-                                    <template v-if="keyName === 'fu_yesterday'">
-                                        <div class="d-flex flex-column text-start">
-                                            <span>Konsumen Kemarin: <b>{{ row.fu_yesterday ?? 0 }}</b>
-                                            </span>
-                                            <span class="line-table"></span>
-                                            <span>Closing: <b>{{ row.fu_yesterday_closing ?? 0 }}</b></span>
-                                        </div>
-                                    </template>
-                                    <template v-if="keyName === 'fu_before_yesterday'">
-                                        <div class="d-flex flex-column text-start">
-                                            <span>Konsumen Kemarinnya: <b>{{ row.fu_before_yesterday ?? 0 }}</b>
-                                            </span>
-                                            <span class="line-table"></span>
-                                            <span>Closing: <b>{{ row.fu_before_yesterday_closing ?? 0 }}</b></span>
-                                        </div>
-                                    </template>
-                                    <template v-if="keyName === 'fu_last_week'">
-                                        <div class="d-flex flex-column text-start">
-                                            <span>Konsumen Minggu Kemarinnya: <b>{{ row.fu_last_week ?? 0 }}</b>
-                                            </span>
-                                            <span class="line-table"></span>
-                                            <span>Closing: <b>{{ row.fu_last_week_closing ?? 0 }}</b></span>
-                                        </div>
-                                    </template>
-                                    <template v-if="keyName === 'engage_old_customer'">
-                                        <div class="d-flex flex-column text-start">
-                                            <span>Engage Konsumen Lama: <b>{{ row.engage_old_customer ?? 0 }}</b>
-                                            </span>
-                                            <span class="line-table"></span>
-                                            <span>Closing: <b>{{ row.engage_closing ?? 0 }}</b></span>
-                                        </div>
-                                    </template>
-                                    <template v-if="keyName === 'notes'">
+                                    </tfoot>
+                                </table>
+                                <div class="p-2 border rounded-0 bg-light">
+                                    <strong>Catatan:</strong>
+                                    <div class="mt-1 mb-3">
                                         <div v-if="row.notes !== null && row.notes.trim() !== '<p><br></p>'"
                                             class="notes" v-html="row.notes">
                                         </div>
-
-                                        <div v-else class="notes text-center">{{ 'Tidak ada catatan' }}</div>
-                                    </template>
-
-                                    <template v-if="keyName === '-'">
-                                        <div class="dropdown dropstart">
-                                            <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown"
-                                                aria-expanded="false">
-                                                <i class="fas fa-cog"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <Link :href="route('daily_report.edit', row.daily_report_id)"
-                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                    Ubah <i class="fas fa-edit text-info"></i>
-                                                    </Link>
-                                                </li>
-                                                <li>
-                                                    <button @click="deleted('daily_report.deleted', row)"
-                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                        Hapus <i class="fas fa-recycle text-danger"></i>
-                                                    </button>
-                                                </li>
-                                                <li>
-                                                    <button
-                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                        Bagikan <i class="fas fa-share-alt text-primary"></i>
-                                                    </button>
-                                                </li>
-                                            </ul>
+                                        <div v-else class="notes text-center align-middle">{{ 'Tidak ada catatan' }}
                                         </div>
-                                    </template>
+                                    </div>
+                                </div>
 
-                                </template>
-
-                            </base-table>
-                        </div>
-                        <div v-if="!isLoading"
-                            class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
-                            <div class="mb-2 order-1 order-xl-0">
-                                Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> sampai
-                                <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
-                                <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
                             </div>
-                            <pagination :links="props.dailyReport?.links" routeName="daily_report" :additionalQuery="{
-                                order_by: filters.order_by,
-                                limit: filters.limit,
-                                start_date: filters.start_date,
-                                end_date: filters.end_date
-                            }" />
                         </div>
+                    </div>
+
+                    <div v-if="!isLoading"
+                        class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
+                        <div class="mb-2 order-1 order-xl-0">
+                            Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> sampai
+                            <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
+                            <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
+                        </div>
+                        <pagination :links="props.dailyReport?.links" routeName="daily_report" :additionalQuery="{
+                            limit: filters.limit,
+                            order_by: filters.order_by,
+                            start_date: filters.start_date,
+                            end_date: filters.end_date,
+                        }" />
                     </div>
 
                 </div>
@@ -337,7 +371,16 @@ watch([() => filters.limit, () => filters.order_by], () => {
         </template>
     </app-layout>
 </template>
-<style>
+<style scoped>
+.table.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #e9f2ff8a !important;
+    /* warna custom */
+}
+
+.table.table-striped tbody tr:nth-of-type(even) {
+    background-color: #ffffff !important;
+}
+
 .line-table {
     height: 1px;
     width: 100%;
@@ -346,8 +389,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
 }
 
 .notes {
-    width: 450px;
-    max-width: 450px;
+    width: 100%;
     /* Sesuaikan nilai ini sesuai kebutuhan Anda */
     text-align: left;
     /* 2. Pastikan konten yang panjang dipaksa untuk melipat */

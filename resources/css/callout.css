@@ -1,11 +1,17 @@
 .callout {
-    padding: 1.2rem;
+    padding: 1.3rem 1.4rem;
     margin: 1rem 0;
-    border-radius: 0;
-    /* mirip bootstrap rounded */
-    border-left: 5px solid #ddd;
+    border-radius: 0.6rem;
+    border-left: 6px solid #ddd;
     background-color: #f8f9fa;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 }
+/*
+.callout:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+} */
 
 .callout h5 {
     margin-top: 0;
@@ -20,25 +26,25 @@
 /* Variasi warna */
 .callout-primary {
     border-left-color: #2b7bf3;
-    background-color: #ffffff;
+    background-color: #eef4ff;
 }
 
 .callout-success {
     border-left-color: #198754;
-    background-color: #eaf7f1;
+    background-color: #e8f5ee;
 }
 
 .callout-warning {
     border-left-color: #ffc107;
-    background-color: #fff9e6;
+    background-color: #fff7e5;
 }
 
 .callout-danger {
     border-left-color: #dc3545;
-    background-color: #fdeaea;
+    background-color: #ffecec;
 }
 
 .callout-info {
     border-left-color: #22ccee;
-    background-color: #f3f4f5;
+    background-color: #eefbfd;
 }

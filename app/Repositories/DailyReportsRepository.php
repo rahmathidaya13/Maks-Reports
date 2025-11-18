@@ -22,6 +22,6 @@ class DailyReportsRepository extends BaseCacheRepository
                 ]);
             });
         return $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
-            ->paginate($filters['limit'] ?? 5);
+            ->paginate($filters['limit'] ?? 1);
     }
 }

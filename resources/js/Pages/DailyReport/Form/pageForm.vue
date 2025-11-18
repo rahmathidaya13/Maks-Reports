@@ -69,11 +69,22 @@ const breadcrumbItems = computed(() => {
         <template #content>
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
-            <div class="callout callout-info">
-                <i class="fas fa-info-circle me-2"></i>
-                Isi form laporan harian dengan data yang sesuai. Pastikan semua informasi yang dimasukkan
-                akurat sebelum menyimpan.
+            <div class="callout callout-success">
+                <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Panduan Pengisian Laporan Leads Harian</h5>
+                <ul class="mb-0 ps-3">
+                    <li>Isi setiap kolom sesuai aktivitas yang dilakukan pada hari ini.</li>
+                    <li>Angka <strong>Leads</strong> dan setiap <strong>Follow Up (FU)</strong> diisi berdasarkan jumlah
+                        konsumen yang benar-benar dihubungi.</li>
+                    <li>Kolom <strong>Closing</strong> diisi sesuai jumlah konsumen yang berhasil closing dari
+                        masing-masing kategori.</li>
+                    <li>Pastikan tidak ada kolom yang dibiarkan kosong — isi dengan angka <strong>0</strong> jika tidak
+                        ada aktivitas.</li>
+                    <li>Gunakan kolom <strong>Catatan</strong> untuk menuliskan kendala, progres penting, atau update
+                        konsumen tertentu.</li>
+                    <li>Periksa kembali semua data sebelum menekan tombol <strong>Simpan</strong>.</li>
+                </ul>
             </div>
+
 
             <div class="d-flex justify-content-between">
                 <Link :href="url" class="btn btn-danger mb-3">
@@ -83,7 +94,11 @@ const breadcrumbItems = computed(() => {
             </div>
             <div class="row">
                 <div class="col-xl-12 col-sm-12 pb-3">
-                    <div class="card overflow-hidden rounded-4">
+                    <div class="card mb-4 overflow-hidden rounded-4 shadow-sm py-5" v-if="form.processing">
+                        <loader-horizontal message="Sedang memproses data....." />
+                    </div>
+
+                    <div class="card overflow-hidden rounded-4" v-else>
                         <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
                             <i class="fas fa-clipboard me-1 text-light"></i>
                             Form Laporan Leads Harian
