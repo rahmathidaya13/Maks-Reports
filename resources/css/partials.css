@@ -151,9 +151,9 @@ body {
 .datatable-input:focus {
     color: #212529;
     background-color: #ffffff;
-    border: 1px solid #000000;
+    border: 1px solid #5e9eff;
     outline: 0;
-    box-shadow: 0 0 0 0;
+    box-shadow: 0 0 0 0 rgb(42, 46, 107)
 }
 
 .was-validated .form-control:valid:focus,
@@ -380,10 +380,12 @@ body {
     padding: 5px 15px;
     transition: background-color 0.2s ease-in-out, color 0.2
 }
+
 .dropdown-menu .dropdown-item:hover {
     background-color: #dfe2e7;
     color: #000000;
 }
+
 .dropdown-menu .dropdown-header {
     background-color: #414141;
     font-weight: bold;

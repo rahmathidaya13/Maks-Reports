@@ -42,7 +42,6 @@ class GoogleAuthController extends Controller
                     'google_id' => $googleUser->getId(),
                     'password' => bcrypt(Str::random(26)),
                     'email_verified_at' => now(),
-                    'can_view' => true,
                 ]
             );
 

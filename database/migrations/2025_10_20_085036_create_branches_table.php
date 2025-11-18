@@ -1,12 +1,10 @@
 <?php
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,8 +15,9 @@ return new class extends Migration
             $table->foreignUuid('created_by')->nullable()->constrained('users', 'id')->onDelete('cascade');
             $table->string('name'); // nama cabang, contoh: Pekanbaru
             $table->text('address');
-            $table->string('phone', 13)->nullable();
+            $table->string('phone', 13)->unique()->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->index(['branches_id', 'created_by', 'name', 'phone']);
             $table->softDeletes();
             $table->timestamps();
         });

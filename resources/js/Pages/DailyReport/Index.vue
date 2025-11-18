@@ -121,9 +121,9 @@ const searchByDate = debounce((e) => {
     });
 }, 1000);
 
-const applyDateRange = (e) => {
+// trigger button untuk melakukan pencarian berdasarkan tanggal
+const applyDateRange = () => {
     isLoading.value = true
-    console.log(e);
     if (filters.start_date && filters.end_date) {
         filters.page = 1;
         searchByDate()
@@ -195,8 +195,9 @@ watch([() => filters.limit, () => filters.order_by], () => {
                             <div class="col-xl-4 col-sm-6 col-md-3">
                                 <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
                                 <div class="input-group">
-                                    <text-input name="start_date" v-model="filters.start_date" type="date"
+                                    <text-input autofocus name="start_date" v-model="filters.start_date" type="date"
                                         :is-valid="false" />
+                                        <input-date/>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-sm-6 col-md-3">
@@ -246,7 +247,11 @@ watch([() => filters.limit, () => filters.order_by], () => {
                         </div>
                     </div>
 
-                    <div class="card mb-4 overflow-hidden rounded-4 shadow-sm" :class="{ 'h-100': isLoading }"
+                    <div v-if="!dailyReport.data.length && !isLoading"
+                        class="card overflow-hidden rounded-4 shadow-sm py-5 text-center text-muted mb-4">
+                        <span>Tidak ada laporan leads ditemukan</span>
+                    </div>
+                    <div class="card mb-4 overflow-hidden rounded-4 shadow-sm" :class="{ 'py-5': isLoading }"
                         v-if="isLoading">
                         <loader-horizontal message="Sedang mempersiapkan data....." />
                     </div>
@@ -272,9 +277,10 @@ watch([() => filters.limit, () => filters.order_by], () => {
                             </div>
                         </div>
 
-                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm">
+                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm border-dark">
                             <div class="card-body p-0">
-                                <table class="table table-hover align-middle mb-0 table-striped text-wrap">
+                                <table
+                                    class="table border-dark align-middle mb-0 table-striped text-wrap table-bordered">
                                     <thead class="table-dark">
                                         <tr>
                                             <th>Kategori</th>
@@ -284,35 +290,34 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="fw-bold">Leads</td>
+                                            <td class="fw-semibold">Leads</td>
                                             <td class="text-center fw-bold">{{ row.leads }}</td>
                                             <td class="text-center fw-bold">{{ row.closing }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold">FU Kemarin (H-1)</td>
+                                            <td class="fw-semibold">FU Konsumen Kemarin (H-1)</td>
                                             <td class="text-center fw-bold">{{ row.fu_yesterday }}</td>
                                             <td class="text-center fw-bold">{{ row.fu_yesterday_closing }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold">FU Kemarennya (H-2)</td>
+                                            <td class="fw-semibold">FU Konsumen Kemarennya (H-2)</td>
                                             <td class="text-center fw-bold">{{ row.fu_before_yesterday }}</td>
                                             <td class="text-center fw-bold">{{ row.fu_before_yesterday_closing
                                                 }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold">FU Minggu Kemarennya</td>
+                                            <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
                                             <td class="text-center fw-bold">{{ row.fu_last_week }}</td>
                                             <td class="text-center fw-bold">{{ row.fu_last_week_closing }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold">Engage Pelanggan Lama</td>
+                                            <td class="fw-semibold">Engage Konsumen Lama</td>
                                             <td class="text-center fw-bold">{{ row.engage_old_customer }}</td>
                                             <td class="text-center fw-bold">{{ row.engage_closing }}</td>
                                         </tr>
-
                                     </tbody>
-                                    <tfoot class="fw-bold">
+                                    <tfoot class="fw-bold text-bg-light">
                                         <tr>
                                             <td>Total</td>
                                             <td class="text-center">
@@ -373,7 +378,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
 </template>
 <style scoped>
 .table.table-striped tbody tr:nth-of-type(odd) {
-    background-color: #e9f2ff8a !important;
+    background-color: #fafbfd8a !important;
     /* warna custom */
 }
 

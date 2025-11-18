@@ -37,16 +37,19 @@ abstract class BaseCacheRepository
      */
     public function getCached($userId, array $filters = []): LengthAwarePaginator
     {
+        // Jika cache driver adalah array, skip caching
         if (Config::get('cache.default') === 'array') {
             Log::warning('Cache driver is array; skipping cache for ' . static::class);
             return $this->getData($filters);
         }
 
+        // Cek apakah data sudah ada di cache
         $cacheKey = $this->buildCacheKey($userId, $filters);
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
 
+        // Buat lock
         $lock = Cache::lock("lock_{$cacheKey}", $this->lockSeconds);
         $acquired = false;
 

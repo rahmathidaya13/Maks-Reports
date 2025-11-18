@@ -95,7 +95,8 @@ const breadcrumbItems = computed(() => {
             <div class="row">
                 <div class="col-xl-12 col-sm-12 pb-3">
                     <div class="card mb-4 overflow-hidden rounded-4 shadow-sm py-5" v-if="form.processing">
-                        <loader-horizontal message="Sedang memproses data....." />
+                        <loader-horizontal
+                            :message="props.dailyReport?.daily_report_id ? 'Sedang memperbarui data.....' : 'Sedang memproses data.....'" />
                     </div>
 
                     <div class="card overflow-hidden rounded-4" v-else>
@@ -108,7 +109,7 @@ const breadcrumbItems = computed(() => {
                                 <div class="mb-3 p-3 rounded-3 border border-dark">
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="leads" value="Leads" />
-                                        <input-number placeholder="0" name="leads" v-model="form.leads" />
+                                        <input-number autofocus placeholder="0" name="leads" v-model="form.leads" />
                                         <input-error :message="form.errors.leads" />
                                     </div>
                                     <div class="mb-2">

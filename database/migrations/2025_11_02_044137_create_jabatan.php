@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -19,6 +18,7 @@ return new class extends Migration
             $table->string('slug', 50)->unique();
             $table->string('title_alias', 15)->unique();
             $table->text('description');
+            $table->index(['created_by', 'job_title_code', 'title', 'slug']);
             $table->softDeletes();
             $table->timestamps();
         });

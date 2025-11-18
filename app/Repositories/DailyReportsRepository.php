@@ -14,6 +14,7 @@ class DailyReportsRepository extends BaseCacheRepository
     protected function getData(array $filters = []): LengthAwarePaginator
     {
         $query = DailyReportModel::with('creator')
+            ->where('created_by', auth()->user()->id)
             ->when(!empty($filters['start_date']) && !empty($filters['end_date']), function ($q) use ($filters) {
                 // filter rentang tanggal
                 $q->whereBetween('date', [
