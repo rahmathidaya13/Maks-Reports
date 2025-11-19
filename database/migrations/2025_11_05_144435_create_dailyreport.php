@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('daily_report', function (Blueprint $table) {
             $table->uuid('daily_report_id')->primary();
             $table->foreignUuid('created_by')->constrained('users', 'id')->cascadeOnDelete();
-            $table->date('date'); // tanggal laporan
+            $table->timestamp('date'); // tanggal laporan
             $table->integer('leads')->default(0); // jumlah leads
             $table->integer('closing')->default(0); // jumlah closing
             $table->integer('fu_yesterday')->default(0); // follow up konsumen kemarin

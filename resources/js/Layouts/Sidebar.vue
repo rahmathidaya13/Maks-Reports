@@ -37,6 +37,15 @@ onMounted(() => {
                     </div>
                     Laporan Harian
                     </Link>
+
+                    <Link class="nav-link" :class="{ 'active active-link': is('story_report*') }"
+                        :href="route('story_report')">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-sticky-note"></i>
+                    </div>
+                    Laporan Status
+                    </Link>
+
                     <Link v-if="roles" class="nav-link" :class="{ 'active active-link': is('job_title*') }"
                         :href="route('job_title')">
                     <div class="sb-nav-link-icon">

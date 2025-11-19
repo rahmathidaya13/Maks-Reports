@@ -19,6 +19,7 @@ use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Job\JobTitleController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Roles\RolesController;
+use App\Http\Controllers\StoryReport\StoryStatusReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,6 +89,15 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::put('/daily_report/update/{id}', 'update')->name('daily_report.update');
         Route::delete('/daily_report/destroy/{id}', 'destroy')->name('daily_report.deleted');
         Route::post('/daily_report/delete_all', 'destroy_all')->name('daily_report.destroy_all');
+    });
+    Route::controller(StoryStatusReportController::class)->group(function () {
+        Route::get('/story_report/list', 'index')->name('story_report');
+        Route::get('/story_report/create', 'create')->name('story_report.create');
+        Route::post('/story_report/store', 'store')->name('story_report.store');
+        Route::get('/story_report/edit/{id}', 'edit')->name('story_report.edit');
+        Route::put('/story_report/update/{id}', 'update')->name('story_report.update');
+        Route::delete('/story_report/destroy/{id}', 'destroy')->name('story_report.deleted');
+        Route::post('/story_report/delete_all', 'destroy_all')->name('daily_report.destroy_all');
     });
 });
 

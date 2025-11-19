@@ -33,6 +33,8 @@ import DropDown from "./components/DropDown.vue";
 import QuillText from "./components/QuillText.vue";
 import LoaderHorizontal from "./components/LoaderHorizontal.vue";
 import InputDate from "./components/inputDate.vue";
+import { VueDatePicker } from "@vuepic/vue-datepicker";
+import '@vuepic/vue-datepicker/dist/main.css'
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
@@ -50,7 +52,7 @@ export default {
         app.component("input-number", InputNumber);
         app.component("input-decimals", InputDecimal);
         app.component("input-quantity", InputQuantity);
-        app.component("input-date", InputDate);
+        app.component("input-date", VueDatePicker);
         app.component("text-area", TextArea);
         app.component("text-input", TextInput);
         app.component("quill-text", QuillText);

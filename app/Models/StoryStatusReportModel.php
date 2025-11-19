@@ -7,29 +7,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class DailyReportModel extends Model
+class StoryStatusReportModel extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
-    protected $table = 'daily_report';
-    protected $primaryKey = 'daily_report_id';
+    protected $table = 'story_status_reports';
+    protected $primaryKey = 'story_status_id';
     protected $keyType = 'string';
     public $incrementing = false;
     protected $dates    = ["deleted_at"];
     protected $fillable = [
         'created_by',
-        'date',
-        'leads',
-        'closing',
-        'fu_yesterday',
-        'fu_yesterday_closing',
-        'fu_before_yesterday',
-        'fu_before_yesterday_closing',
-        'fu_last_week',
-        'fu_last_week_closing',
-        'engage_old_customer',
-        'engage_closing',
-        'notes',
+        'report_date',
+        'report_time',
+        'count_status',
+        'description',
     ];
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');

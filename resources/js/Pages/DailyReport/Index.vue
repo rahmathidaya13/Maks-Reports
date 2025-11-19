@@ -4,7 +4,6 @@ import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
 import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
-
 moment.locale('id');
 
 const page = usePage();
@@ -21,9 +20,6 @@ const filters = reactive({
     start_date: props.filters.start_date ?? '',
     end_date: props.filters.end_date ?? '',
 })
-
-
-
 
 const header = [
     { label: "No", key: "__index" },
@@ -99,7 +95,7 @@ function daysOnlyConvert(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
+    const dateFormat = moment(dayValue).format('DD MMMM YYYY - HH:mm');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
 
@@ -142,6 +138,7 @@ watch(
             isLoading.value = true
             searchByDate();
         }
+
     }, {
     deep: true
 }
@@ -190,14 +187,13 @@ watch([() => filters.limit, () => filters.order_by], () => {
                         </ul>
                     </div>
 
-                    <div class="card mb-4 overflow-hidden rounded-3 p-1 bg-light">
+                    <div class="card mb-4 rounded-3 p-1 bg-light overflow-hidden shadow-sm">
                         <div class="row align-items-center p-2 g-2 pb-3">
                             <div class="col-xl-4 col-sm-6 col-md-3">
                                 <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
                                 <div class="input-group">
                                     <text-input autofocus name="start_date" v-model="filters.start_date" type="date"
                                         :is-valid="false" />
-                                        <input-date/>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-sm-6 col-md-3">
@@ -214,10 +210,10 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                 <input-label class="fw-bold mb-1" for="limit" value="Batas:" />
                                 <div class="input-group">
                                     <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                        { value: 1, label: '1 (Default)' },
+                                        { value: 1, label: 'Default' },
                                         { value: 5, label: '5' },
                                         { value: 10, label: '10' },
-                                        { value: 25, label: '25' },
+                                        { value: 20, label: '20' },
                                         { value: 50, label: '50' },
                                         { value: 100, label: '100' },
                                     ]" />
@@ -260,24 +256,23 @@ watch([() => filters.limit, () => filters.order_by], () => {
                         :key="rowIndex" v-else>
 
                         <div class="d-xl-flex align-items-center mb-2 mt-4 justify-content-between d-block">
-                            <h3 class="fw-bold">Laporan Leads:
+                            <h4 class="fw-bold">Laporan Leads:
                                 <span class="text-primary">
                                     {{ daysOnlyConvert(row.date) }}
                                 </span>
-                            </h3>
+                            </h4>
                             <div class="d-flex gap-1">
                                 <Link :href="route('daily_report.edit', row.daily_report_id)"
                                     class="btn btn-info text-white px-4 bg-gradient">
                                 <i class="fas fa-edit"></i> Ubah</Link>
-                                <button class="btn btn-danger px-4 bg-gradient"
+                                <button class="btn btn-outline-danger px-4 bg-gradient"
                                     @click="deleted('daily_report.deleted', row)"><i class="fas fa-trash"></i>
                                     Hapus</button>
                                 <Link class="btn btn-success px-4 bg-gradient"><i class="fas fa-share"></i> Bagikan
                                 </Link>
                             </div>
                         </div>
-
-                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm border-dark">
+                        <div class="card mb-0 overflow-hidden rounded-4 shadow-sm border-dark">
                             <div class="card-body p-0">
                                 <table
                                     class="table border-dark align-middle mb-0 table-striped text-wrap table-bordered">
@@ -303,7 +298,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                             <td class="fw-semibold">FU Konsumen Kemarennya (H-2)</td>
                                             <td class="text-center fw-bold">{{ row.fu_before_yesterday }}</td>
                                             <td class="text-center fw-bold">{{ row.fu_before_yesterday_closing
-                                                }}</td>
+                                            }}</td>
                                         </tr>
                                         <tr>
                                             <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
@@ -335,10 +330,9 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                                 (row.fu_before_yesterday_closing ?? 0) +
                                                 (row.fu_last_week_closing ?? 0) +
                                                 (row.engage_closing ?? 0)
-                                                }}
+                                            }}
                                             </td>
                                         </tr>
-
                                     </tfoot>
                                 </table>
                                 <div class="p-2 border rounded-0 bg-light">
@@ -358,7 +352,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
 
                     <div v-if="!isLoading"
                         class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
-                        <div class="mb-2 order-1 order-xl-0">
+                        <div class="mb-2 order-1 order-xl-0 order-lg-0 order-md-0">
                             Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> sampai
                             <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
                             <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
@@ -378,7 +372,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
 </template>
 <style scoped>
 .table.table-striped tbody tr:nth-of-type(odd) {
-    background-color: #fafbfd8a !important;
+    background-color: #f6f9fd8a !important;
     /* warna custom */
 }
 

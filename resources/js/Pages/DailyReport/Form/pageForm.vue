@@ -94,17 +94,16 @@ const breadcrumbItems = computed(() => {
             </div>
             <div class="row">
                 <div class="col-xl-12 col-sm-12 pb-3">
-                    <div class="card mb-4 overflow-hidden rounded-4 shadow-sm py-5" v-if="form.processing">
-                        <loader-horizontal
-                            :message="props.dailyReport?.daily_report_id ? 'Sedang memperbarui data.....' : 'Sedang memproses data.....'" />
-                    </div>
-
-                    <div class="card overflow-hidden rounded-4" v-else>
+                    <div class="card overflow-hidden rounded-4">
                         <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
                             <i class="fas fa-clipboard me-1 text-light"></i>
                             Form Laporan Leads Harian
                         </h5>
-                        <div class="card-body">
+                        <div :class="{ 'd-flex py-5 mt-5': form.processing }" v-if="form.processing">
+                            <loader-horizontal
+                                :message="props.dailyReport?.daily_report_id ? 'Sedang memperbarui data.....' : 'Sedang memproses data.....'" />
+                        </div>
+                        <div class="card-body" v-else>
                             <form-wrapper @submit="isSubmit">
                                 <div class="mb-3 p-3 rounded-3 border border-dark">
                                     <div class="mb-2">
@@ -198,7 +197,7 @@ const breadcrumbItems = computed(() => {
                                     </div>
                                 </div>
 
-                                <div class="d-grid d-xl-flex justify-content-start">
+                                <div class="d-grid d-xl-flex">
                                     <base-button waiting="Memproses..." :loading="form.processing"
                                         class="rounded-3 bg-gradient px-5 btn-height-2"
                                         :icon="props.dailyReport && props.dailyReport?.daily_report_id ? 'fas fa-edit' : 'fas fa-save'"

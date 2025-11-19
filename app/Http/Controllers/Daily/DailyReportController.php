@@ -52,7 +52,7 @@ class DailyReportController extends Controller
         $this->validationText($request->all());
         $dailyReport = new DailyReportModel();
         $dailyReport->created_by = auth()->id();
-        $dailyReport->date = now()->toDateString();
+        $dailyReport->date = now();
         $dailyReport->leads = $request->integer('leads');
         $dailyReport->closing = $request->integer('closing');
         $dailyReport->fu_yesterday = $request->integer('fu_yesterday');
@@ -95,7 +95,7 @@ class DailyReportController extends Controller
         $this->validationText($request->all());
         $dailyReport = $dailyReportModel::findOrFail($id);
         $dailyReport->created_by = auth()->id();
-        $dailyReport->date = now()->toDateString();
+        $dailyReport->date = now();
         $dailyReport->leads = $request->integer('leads');
         $dailyReport->closing = $request->integer('closing');
         $dailyReport->fu_yesterday = $request->integer('fu_yesterday');
