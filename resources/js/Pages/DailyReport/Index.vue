@@ -272,10 +272,10 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                 </Link>
                             </div>
                         </div>
-                        <div class="card mb-0 overflow-hidden rounded-4 shadow-sm border-dark">
+                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm border-dark">
                             <div class="card-body p-0">
                                 <table
-                                    class="table border-dark align-middle mb-0 table-striped text-wrap table-bordered">
+                                    class="table align-middle mb-0 table-striped text-wrap table-hover">
                                     <thead class="table-dark">
                                         <tr>
                                             <th>Kategori</th>
@@ -312,7 +312,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                             <td class="text-center fw-bold">{{ row.engage_closing }}</td>
                                         </tr>
                                     </tbody>
-                                    <tfoot class="fw-bold text-bg-light">
+                                    <tfoot class="fw-bold table-dark">
                                         <tr>
                                             <td>Total</td>
                                             <td class="text-center">

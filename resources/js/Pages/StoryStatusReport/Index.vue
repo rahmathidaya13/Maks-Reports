@@ -87,7 +87,7 @@ const handleDownload = (type) => {
 };
 
 
-function daysOnlyConvert(dayValue) {
+function daysTranslate(dayValue) {
     const dayConvert = {
         "Sunday": "Minggu",
         "Monday": "Senin",
@@ -98,8 +98,11 @@ function daysOnlyConvert(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
-    return dayConvert[dayName] + ", " + dateFormat ?? dayName;
+    return dayConvert[dayName] ?? dayName;
+}
+function dateFormat(date, format) {
+    const dates = moment(date).format(format);
+    return dates;
 }
 
 const isLoading = ref(false)
@@ -240,60 +243,89 @@ watch([() => filters.limit, () => filters.order_by], () => {
                         </div>
                     </div>
 
-                    <div class="card mb-4 overflow-hidden rounded-4" :class="{ 'h-100': isLoading }">
+                    <div class="card mb-4 overflow-hidden rounded-3" :class="{ 'h-100': isLoading }">
                         <div v-if="isLoading">
                             <loader-horizontal />
                         </div>
                         <div class="table-responsive" v-else>
-                            <base-table @update:selected="selectedRow = $event"
-                                :attributes="{ id: 'story_status_id', name: 'report_date' }" :data="props.storyReport"
-                                :headers="header">
-                                <template #cell="{ row, keyName }">
-                                    <template v-if="keyName === 'report_date'">
-                                        <div class="fw-bold">{{ daysOnlyConvert(row.report_date) }}</div>
-                                    </template>
-                                    <template v-if="keyName === 'report_time'">
-                                        <div class="fw-bold">{{ row.report_time }}</div>
-                                    </template>
-                                    <template v-if="keyName === 'count_status'">
-                                        <div class="fw-bold">{{ row.count_status }}</div>
-                                    </template>
-                                    <template v-if="keyName === 'description'">
-                                        <div v-if="row.description !== null && row.description.trim() !== '<p><br></p>'"
-                                            class="description" v-html="row.description">
-                                        </div>
-                                        <div v-else class="description text-center">{{ 'Tidak ada catatan' }}</div>
-                                    </template>
-                                    <template v-if="keyName === '-'">
-                                        <div class="dropdown dropstart">
-                                            <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown"
-                                                aria-expanded="false">
-                                                <i class="fas fa-cog"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <Link :href="route('story_report.edit', row.story_status_id)"
-                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                    Ubah <i class="fas fa-edit text-info"></i>
-                                                    </Link>
-                                                </li>
-                                                <li>
-                                                    <button @click="deleted('story_report.deleted', row)"
-                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                        Hapus <i class="fas fa-recycle text-danger"></i>
-                                                    </button>
-                                                </li>
-                                                <li>
-                                                    <button
-                                                        class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                        Bagikan <i class="fas fa-share-alt text-primary"></i>
-                                                    </button>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </template>
-                                </template>
-                            </base-table>
+
+                            <table class="table align-middle table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="text-center">Hari</th>
+                                        <th class="text-center">Tanggal</th>
+                                        <th class="text-center">Jam</th>
+                                        <th class="text-center">Jumlah</th>
+                                        <th class="text-center">Catatan</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr v-if="!storyReport?.data.length">
+                                        <td colspan="6" class="text-center text-muted">
+                                            Tidak ada data ditemukan
+                                        </td>
+                                    </tr>
+                                    <tr :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
+                                        :key="rowIndex">
+                                        <td class="text-center">{{ daysTranslate(row.report_date) }}
+                                        </td>
+                                        <td class="text-center">{{ dateFormat(row.report_date, 'DD-MM-YYYY')
+                                        }}</td>
+                                        <td class="text-center">{{ row.report_time.slice(0, 5) }}</td>
+                                        <td class="text-center">{{ row.count_status }}</td>
+                                        <td>
+                                            <div v-if="row.description !== null && row.description.trim() !== '<p><br></p>'"
+                                                class="description" v-html="row.description">
+                                            </div>
+                                            <div v-else class="description text-center align-middle">Tidak ada catatan
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="dropdown dropstart">
+                                                <button class="btn btn-secondary" type="button"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <Link :href="route('story_report.edit', row.story_status_id)"
+                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                        Ubah <i class="fas fa-edit text-info"></i>
+                                                        </Link>
+                                                    </li>
+                                                    <li>
+                                                        <button @click="deleted('story_report.deleted', row)"
+                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                            Hapus <i class="fas fa-recycle text-danger"></i>
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button
+                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                            Bagikan <i class="fas fa-share-alt text-primary"></i>
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="fw-bold table-dark">
+                                    <tr>
+                                        <td class="text-center">Total</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="text-center">
+                                            {{storyReport?.data.reduce((t, r) => t + (r.count_status ?? 0), 0)}}
+                                        </td>
+                                        <td class="text-center">-</td>
+                                        <td class="text-center">-</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
                         </div>
                         <div v-if="!isLoading"
                             class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
@@ -302,12 +334,11 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                 <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari total
                                 <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
                             </div>
-                            <pagination :links="props.storyReport?.links" :keyword="filters.keyword"
-                                routeName="storyReport" :additionalQuery="{
-                                    order_by: filters.order_by,
-                                    limit: filters.limit,
-                                    keyword: filters.keyword,
-                                }" />
+                            <pagination :links="props.storyReport?.links" routeName="story_report" :additionalQuery="{
+                                order_by: filters.order_by,
+                                limit: filters.limit,
+                                keyword: filters.keyword,
+                            }" />
                         </div>
                     </div>
 
@@ -330,6 +361,9 @@ watch([() => filters.limit, () => filters.order_by], () => {
     /* Tambahan: Opsional jika ingin menghilangkan scrollbar horizontal */
     overflow-x: hidden;
     vertical-align: top;
-    max-height: 300px;
+    max-height: 150px;
+    align-content: center;
+    justify-content: center;
+    display: flex;
 }
 </style>

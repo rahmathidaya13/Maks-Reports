@@ -8,7 +8,7 @@ const props = defineProps({
 })
 const form = useForm({
     report_date: props.storyReport?.report_date ?? props.date,
-    report_time: props.storyReport?.report_time ?? '',
+    report_time: props.storyReport?.report_time.slice(0, 5) ?? '',
     count_status: props.storyReport?.count_status ?? '',
     description: props.storyReport?.description ?? '',
 });
