@@ -50,14 +50,22 @@ class StoryStatusReportController extends Controller
     public function store(Request $request)
     {
         $this->validationText($request->all());
-        $storyReport = new StoryStatusReportModel();
-        $storyReport->created_by = auth()->id();
-        $storyReport->report_date = now()->toDateString();
-        $storyReport->report_time = $request->input('report_time');
-        $storyReport->count_status = $request->integer('count_status');
-        $storyReport->description = $request->input('description');
-        $storyReport->save();
+        $reports = $request->input('report');
+        foreach ($reports as $report) {
+            StoryStatusReportModel::create([
+                'created_by' => auth()->id(),
+                'report_date' => now()->toDateString(),
+                'report_time' => $report['report_time'],
+                'count_status' => $report['count_status'],
+            ]);
+        }
+        // $storyReport = new StoryStatusReportModel();
+        // $storyReport->created_by = auth()->id();
+        // $storyReport->report_date = now()->toDateString();
+        // $storyReport->report_time = $request->input('report_time');
+        // $storyReport->count_status = $request->integer('count_status');
         $this->storyReportRepository->clearCache(auth()->id());
+        // $storyReport->save();
         return redirect()->route('story_report')->with('message', 'Laporan Update Status harian kamu berhasil dibuat');
     }
 
@@ -84,13 +92,12 @@ class StoryStatusReportController extends Controller
      */
     public function update(Request $request, StoryStatusReportModel $storyStatusReportModel, string $id)
     {
-        $this->validationText($request->all());
+        $data  = $this->validationText($request->all());
         $storyReport = $storyStatusReportModel::findOrFail($id);
         $storyReport->created_by = auth()->id();
         $storyReport->report_date = now()->toDateString();
-        $storyReport->report_time = $request->input('report_time');
-        $storyReport->count_status = $request->integer('count_status');
-        $storyReport->description = $request->input('description');
+        $storyReport->report_time = $data['report'][0]['report_time'];
+        $storyReport->count_status = $data['report'][0]['count_status'];
         $storyReport->update();
         $this->storyReportRepository->clearCache(auth()->id());
         return redirect()->route('story_report')->with('message', 'Laporan Update Status harian kamu berhasil diperbarui');

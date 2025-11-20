@@ -6,12 +6,36 @@ const props = defineProps({
     storyReport: Object,
     date: String
 })
+// array form dinamis
+const forms = ref([
+    {
+        report_time: props.storyReport?.report_time.slice(0, 5) ?? '',
+        count_status: props.storyReport?.count_status ?? '',
+    }
+])
+const addForm = () => {
+    forms.value.push({
+        report_time: '',
+        count_status: '',
+    })
+}
+const removeForm = (index) => {
+    if (forms.value.length === 1) return;
+    forms.value.splice(index, 1)
+}
+
 const form = useForm({
     report_date: props.storyReport?.report_date ?? props.date,
-    report_time: props.storyReport?.report_time.slice(0, 5) ?? '',
-    count_status: props.storyReport?.count_status ?? '',
-    description: props.storyReport?.description ?? '',
+    report: forms.value,
 });
+
+watch(forms, () => {
+    form.report = forms.value
+}, {
+    deep: true
+})
+
+
 const isSubmit = () => {
     if (props.storyReport?.story_status_id) {
         form.put(route('story_report.update', props.storyReport.story_status_id), {
@@ -99,13 +123,21 @@ function daysOnlyConvert(dayValue) {
                 <i class="fas fa-arrow-left"></i>
                 Kembali
                 </Link>
+                <div class="mb-3 gap-1 d-flex" v-if="!props.storyReport?.story_status_id">
+                    <button class="btn btn-outline-danger" @click="forms = [{ report_time: '', count_status: '' }]"><i
+                            class="fas fa-recycle"></i> Hapus
+                        semua
+                    </button>
+                    <button @click="addForm" class="btn btn-primary bg-gradient"><i class="fas fa-plus"></i>
+                        Tambah</button>
+                </div>
             </div>
             <div class="row">
                 <div class="col-xl-12 col-sm-12 pb-3">
                     <div class="card overflow-hidden rounded-4">
                         <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
                             <i class="fas fa-clipboard me-1 text-light"></i>
-                            Form Laporan Update Status:
+                            Laporan Update Status:
                             <span class="text-info">{{ daysOnlyConvert(form.report_date) }}
                             </span>
                         </h5>
@@ -114,35 +146,35 @@ function daysOnlyConvert(dayValue) {
                                 :message="props.storyReport?.story_status_id ? 'Sedang memperbarui data.....' : 'Sedang memproses data.....'" />
                         </div>
                         <div class="card-body" v-else>
+
                             <form-wrapper @submit="isSubmit">
-                                <div class="mb-3 p-3 rounded-3 border" :class="{
-                                    'border-danger': form.errors.report_time || form.errors.count_status,
-                                    'border-dark': !form.errors.report_time && !form.errors.count_status
-                                }">
-                                    <div class="row">
-                                        <div class="col-xl-6 col-sm-6 col-md-6 col-12">
-                                            <div class="mb-2">
-                                                <input-label class="fw-bold" for="report_time" value="Jam" />
-                                                <text-input tabindex="1" name="report_time" type="time"
-                                                    v-model="form.report_time" />
-                                                <input-error :message="form.errors.report_time" />
-                                            </div>
-                                        </div>
-                                        <div class="col-xl-6 col-sm-6 col-md-6 col-12">
-                                            <div class="mb-2">
-                                                <input-label class="fw-bold" for="count_status" value="Jumlah" />
-                                                <input-number tabindex="2" placeholder="0" name="count_status"
-                                                    type="text" v-model="form.count_status" />
-                                                <input-error :message="form.errors.count_status" />
-                                            </div>
-                                        </div>
+
+                                <div v-for="(fieldItems, index) in forms" :key="index"
+                                    class="mb-3 rounded-3 border overflow-hidden border-dark">
+                                    <div class="p-2 text-bg-dark d-flex justify-content-between">
+                                        <h4 class="fw-bold">Form Laporan {{ index + 1 }}</h4>
+
+                                        <button class="btn btn-sm btn-danger px-3" @click.prevent="removeForm(index)"
+                                            v-if="forms.length > 1">
+                                            <i class="fas fa-times"></i>
+                                        </button>
                                     </div>
-                                </div>
-                                <div class="col-12 mb-3 p-3 rounded-3 border border-dark">
-                                    <div class="mb-2">
-                                        <quill-text placeholder="Opsional: Tulis catatan disini jika ada" height="300px"
-                                            name="notes" v-model="form.description" />
-                                        <input-error :message="form.errors.description" />
+
+                                    <div class="px-3 py-2">
+                                        <div class="mb-2">
+                                            <input-label class="fw-bold" for="report_time" value="Jam" />
+                                            <text-input autofocus class="form-control-lg" tabindex="1"
+                                                :name="[`report.${index}.report_time`]" type="time"
+                                                v-model="fieldItems.report_time" />
+                                            <input-error :message="form.errors[`report.${index}.report_time`]" />
+                                        </div>
+                                        <div class="mb-2">
+                                            <input-label class="fw-bold" for="count_status" value="Jumlah" />
+                                            <input-number class="form-control-lg" tabindex="2" placeholder="0"
+                                                :name="[`report.${index}.count_status`]" type="text"
+                                                v-model="fieldItems.count_status" />
+                                            <input-error :message="form.errors[`report.${index}.count_status`]" />
+                                        </div>
                                     </div>
                                 </div>
 

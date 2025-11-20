@@ -98,7 +98,8 @@ function daysTranslate(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    return dayConvert[dayName] ?? dayName;
+    const dateFormat = moment(dayValue).format('L');
+    return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
 function dateFormat(date, format) {
     const dates = moment(date).format(format);
@@ -248,15 +249,19 @@ watch([() => filters.limit, () => filters.order_by], () => {
                             <loader-horizontal />
                         </div>
                         <div class="table-responsive" v-else>
-
-                            <table class="table align-middle table-hover">
+                            <table class="table align-middle table-hover text-wrap">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th class="text-center">Hari</th>
-                                        <th class="text-center">Tanggal</th>
+                                        <th>
+                                            <div class="form-check d-flex justify-content-center gap-2">
+                                                <input type="checkbox" class="form-check-input"
+                                                    @change="toggleSelectAll($event)" :checked="isAllSelected" />
+                                            </div>
+                                        </th>
+                                        <th class="text-center">No</th>
+                                        <th class="text-start">Tanggal</th>
                                         <th class="text-center">Jam</th>
                                         <th class="text-center">Jumlah</th>
-                                        <th class="text-center">Catatan</th>
                                         <th class="text-center">Aksi</th>
                                     </tr>
                                 </thead>
@@ -269,18 +274,21 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                     </tr>
                                     <tr :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
                                         :key="rowIndex">
-                                        <td class="text-center">{{ daysTranslate(row.report_date) }}
+                                        <td class="text-center" style="width: 5%;">
+                                            <div class="form-check d-flex justify-content-center gap-2">
+                                                <input type="checkbox" class="form-check-input"
+                                                    :name="row.story_status_id" :id="row.story_status_id"
+                                                    :value="row.story_status_id" v-model="selected" />
+                                            </div>
                                         </td>
-                                        <td class="text-center">{{ dateFormat(row.report_date, 'DD-MM-YYYY')
-                                        }}</td>
-                                        <td class="text-center">{{ row.report_time.slice(0, 5) }}</td>
-                                        <td class="text-center">{{ row.count_status }}</td>
-                                        <td>
-                                            <div v-if="row.description !== null && row.description.trim() !== '<p><br></p>'"
-                                                class="description" v-html="row.description">
-                                            </div>
-                                            <div v-else class="description text-center align-middle">Tidak ada catatan
-                                            </div>
+                                        <td style="width: 5%;" class="text-center fw-semibold"> {{ rowIndex + 1 +
+                                            (storyReport?.current_page - 1) *
+                                            storyReport?.per_page }}</td>
+                                        <td class="text-start fw-semibold">{{
+                                            daysTranslate(row.report_date) }}</td>
+                                        <td class="text-center fw-semibold">{{
+                                            row.report_time.slice(0, 5) }}</td>
+                                        <td class="text-center fw-semibold">{{ row.count_status }}
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown dropstart">
@@ -314,14 +322,14 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                 </tbody>
                                 <tfoot class="fw-bold table-dark">
                                     <tr>
+                                        <td></td>
                                         <td class="text-center">Total</td>
                                         <td></td>
                                         <td></td>
                                         <td class="text-center">
                                             {{storyReport?.data.reduce((t, r) => t + (r.count_status ?? 0), 0)}}
                                         </td>
-                                        <td class="text-center">-</td>
-                                        <td class="text-center">-</td>
+                                        <td class="text-center"></td>
                                     </tr>
                                 </tfoot>
                             </table>

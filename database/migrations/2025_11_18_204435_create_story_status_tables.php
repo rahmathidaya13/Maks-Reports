@@ -17,7 +17,6 @@ return new class extends Migration {
             $table->date('report_date')->index();
             $table->time('report_time');
             $table->integer('count_status')->default(0);
-            $table->text('description')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

@@ -22,7 +22,6 @@ class StoryStatusReportModel extends Model
         'report_date',
         'report_time',
         'count_status',
-        'description',
     ];
     public static function boot()
     {
