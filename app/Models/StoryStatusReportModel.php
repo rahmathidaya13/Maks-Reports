@@ -27,7 +27,8 @@ class StoryStatusReportModel extends Model
     {
         parent::boot();
         self::creating(function ($model) {
-            $model->report_code = Str::random(8);
+            $model->report_code = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+            ;
         });
     }
     public function creator()

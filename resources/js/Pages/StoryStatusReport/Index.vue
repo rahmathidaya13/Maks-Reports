@@ -27,38 +27,36 @@ const header = [
     { label: "Tanggal", key: "report_date" },
     { label: "Jam", key: "report_time" },
     { label: "Jumlah", key: "count_status" },
-    { label: "Catatan", key: "description" },
     { label: "Aksi", key: "-" },
 ];
 
 
-const selectedRow = ref([]);
-const isVisible = ref(false);
-function deleteSelected() {
-    if (!selectedRow.value.length) {
-        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
-    }
-    swalConfirmDelete({
-        title: 'Hapus Data Terpilih',
-        text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
-        confirmText: 'Ya, Hapus Semua!',
-        onConfirm: () => {
-            router.post(route('story_report.destroy_all'), { all_id: selectedRow.value }, {
-                preserveScroll: true,
-                preserveState: false,
-                replace: true
-            })
-        },
-    })
-}
+// const selectedRow = ref([]);
+// const isVisible = ref(false);
+// function deleteSelected() {
+//     if (!selectedRow.value.length) {
+//         return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+//     }
+//     swalConfirmDelete({
+//         title: 'Hapus Data Terpilih',
+//         text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
+//         confirmText: 'Ya, Hapus Semua!',
+//         onConfirm: () => {
+//             router.post(route('story_report.destroy_all'), { ids: selectedRow.value }, {
+//                 preserveScroll: true,
+//                 preserveState: false,
+//             })
+//         },
+//     })
+// }
 
-watch(selectedRow, (val) => {
-    if (val.length > 0) {
-        isVisible.value = true
-    } else {
-        isVisible.value = false
-    }
-})
+// watch(selectedRow, (val) => {
+//     if (val.length > 0) {
+//         isVisible.value = true
+//     } else {
+//         isVisible.value = false
+//     }
+// })
 // atur warna badge sesuai jenis permission
 
 const deleted = (nameRoute, data) => {
@@ -85,7 +83,6 @@ const handleDownload = (type) => {
         router.get(route("storyReport", { format: "excel" }));
     }
 };
-
 
 function daysTranslate(dayValue) {
     const dayConvert = {
@@ -154,7 +151,45 @@ watch([() => filters.limit, () => filters.order_by], () => {
     deep: true
 })
 
+//hapus semua
+const selected = ref([]);
+const isVisibleButton = ref(true)
+const isAllSelected = computed(() => {
+    const rows = props.storyReport?.data ?? [];
+    return rows.length > 0 && selected.value.length === rows.length;
 
+})
+const toggleAll = (evt) => {
+    if (evt.target.checked) {
+        selected.value = props.storyReport?.data.map(r => r.story_status_id);
+    } else {
+        selected.value = [];
+    }
+}
+const deletedAll = () => {
+    if (!selected.value.length) {
+        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+    }
+    swalConfirmDelete({
+        title: 'Hapus Data Terpilih',
+        text: `Yakin ingin menghapus ${selected.value.length} data terpilih?`,
+        confirmText: 'Ya, Hapus Semua!',
+        onConfirm: () => {
+            // console.log(selected.value);
+            router.post(route('story_report.destroy_all'), { ids: selected.value }, {
+                preserveScroll: true,
+                preserveState: false,
+            })
+        },
+    })
+}
+watch(selected, (val) => {
+    if (val.length > 0) {
+        isVisibleButton.value = false;
+    } else {
+        isVisibleButton.value = true
+    }
+})
 </script>
 <template>
 
@@ -233,7 +268,15 @@ watch([() => filters.limit, () => filters.order_by], () => {
                     </div>
 
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
-                        <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
+                        <button :disabled="isVisibleButton" @click="deletedAll" type="button"
+                            class="btn btn-danger position-relative">
+                            <i class="fas fa-trash"></i> Hapus
+                            <span v-if="selected.length > 0"
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ selected.length }}
+                            </span>
+                        </button>
+                        <!-- <button-delete-all text="Hapus" :isVisible="isVisibleButton" :deleted="deletedAll" /> -->
                         <div class="d-inline-flex ms-auto gap-1">
                             <drop-down @download="handleDownload" />
                             <div class="position-relative">
@@ -249,16 +292,18 @@ watch([() => filters.limit, () => filters.order_by], () => {
                             <loader-horizontal />
                         </div>
                         <div class="table-responsive" v-else>
+
                             <table class="table align-middle table-hover text-wrap">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>
                                             <div class="form-check d-flex justify-content-center gap-2">
-                                                <input type="checkbox" class="form-check-input"
-                                                    @change="toggleSelectAll($event)" :checked="isAllSelected" />
+                                                <input type="checkbox" class="form-check-input" :checked="isAllSelected"
+                                                    @change="toggleAll($event)" />
                                             </div>
                                         </th>
                                         <th class="text-center">No</th>
+                                        <th class="text-start">Kode Status</th>
                                         <th class="text-start">Tanggal</th>
                                         <th class="text-center">Jam</th>
                                         <th class="text-center">Jumlah</th>
@@ -268,7 +313,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
 
                                 <tbody>
                                     <tr v-if="!storyReport?.data.length">
-                                        <td colspan="6" class="text-center text-muted">
+                                        <td colspan="7" class="text-center text-muted">
                                             Tidak ada data ditemukan
                                         </td>
                                     </tr>
@@ -284,6 +329,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                         <td style="width: 5%;" class="text-center fw-semibold"> {{ rowIndex + 1 +
                                             (storyReport?.current_page - 1) *
                                             storyReport?.per_page }}</td>
+                                        <td class="text-start fw-semibold">{{ row.report_code }}</td>
                                         <td class="text-start fw-semibold">{{
                                             daysTranslate(row.report_date) }}</td>
                                         <td class="text-center fw-semibold">{{
@@ -326,6 +372,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                         <td class="text-center">Total</td>
                                         <td></td>
                                         <td></td>
+                                        <td></td>
                                         <td class="text-center">
                                             {{storyReport?.data.reduce((t, r) => t + (r.count_status ?? 0), 0)}}
                                         </td>
@@ -333,6 +380,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                     </tr>
                                 </tfoot>
                             </table>
+
 
                         </div>
                         <div v-if="!isLoading"

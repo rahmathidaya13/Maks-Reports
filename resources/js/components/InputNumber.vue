@@ -6,7 +6,7 @@ const modelValue = defineModel();
 
 const props = defineProps({
     name: {
-        type: String,
+        type: [String, Number, Array],
         default: '',
     },
     // Opsional: Untuk mengizinkan nilai desimal (koma/titik)

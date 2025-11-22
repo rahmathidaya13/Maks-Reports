@@ -15,7 +15,7 @@ class AuthorizationUserHandle extends BaseCacheRepository
     protected function getData(array $filters = []): LengthAwarePaginator
     {
         $query = User::query()
-            ->with(['roles', 'permissions'])
+            ->with(['profile', 'roles', 'permissions'])
             ->when(!empty($filters['keyword']), function ($q) use ($filters) {
                 $search = $filters['keyword'];
                 $q->where(function ($sub) use ($search) {

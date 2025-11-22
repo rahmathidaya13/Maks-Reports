@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 const props = defineProps({
     name: {
-        type: String,
+        type: [String,Number,Array],
         default: "",
     },
     isValid: {

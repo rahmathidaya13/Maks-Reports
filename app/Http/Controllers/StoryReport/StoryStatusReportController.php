@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\StoryReport;
 
-use App\Traits\StoryReportValidation;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use App\Http\Controllers\Controller;
+use App\Traits\StoryReportValidation;
 use App\Models\StoryStatusReportModel;
 use App\Repositories\StoryStatusReportRepository;
 
@@ -92,7 +93,7 @@ class StoryStatusReportController extends Controller
      */
     public function update(Request $request, StoryStatusReportModel $storyStatusReportModel, string $id)
     {
-        $data  = $this->validationText($request->all());
+        $data = $this->validationText($request->all());
         $storyReport = $storyStatusReportModel::findOrFail($id);
         $storyReport->created_by = auth()->id();
         $storyReport->report_date = now()->toDateString();
@@ -106,8 +107,22 @@ class StoryStatusReportController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(StoryStatusReportModel $storyStatusReportModel)
+    public function destroy(StoryStatusReportModel $storyStatusReportModel, string $id)
     {
-        //
+        $storyReport = $storyStatusReportModel::find($id);
+        $storyReport->delete();
+        $this->storyReportRepository->clearCache(auth()->id());
+        return redirect()->route('story_report')->with('message', 'Laporan update status pada tanggal ' . Carbon::parse($storyReport->report_date)->translatedFormat('d F Y') . ' berhasil Terhapus.');
+    }
+
+    public function destroy_all(StoryStatusReportModel $storyStatusReportModel, Request $request)
+    {
+        $all_id = $request->input('ids', []);
+        if (!count($all_id)) {
+            return back()->with('message', 'Tidak ada data yang dipilih.');
+        }
+        $storyStatusReportModel::whereIn('story_status_id', $all_id)->delete();
+        $this->storyReportRepository->clearCache(auth()->id());
+        return redirect()->route('story_report')->with('message', count($all_id) . ' Data berhasil Terhapus.');
     }
 }

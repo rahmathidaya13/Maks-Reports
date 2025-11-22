@@ -97,7 +97,7 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::get('/story_report/edit/{id}', 'edit')->name('story_report.edit');
         Route::put('/story_report/update/{id}', 'update')->name('story_report.update');
         Route::delete('/story_report/destroy/{id}', 'destroy')->name('story_report.deleted');
-        Route::post('/story_report/delete_all', 'destroy_all')->name('daily_report.destroy_all');
+        Route::post('/story_report/delete_all', 'destroy_all')->name('story_report.destroy_all');
     });
 });
 
