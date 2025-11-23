@@ -27,7 +27,7 @@ const props = defineProps({
     /* loader + text di bawahnya */
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     /* jarak loader & teks */
     width: max-content;
     pointer-events: none;
@@ -74,9 +74,9 @@ const props = defineProps({
 
 /* --- TEKS --- */
 .loader-message {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #444;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #303030;
 }
 
 /* --- KEYFRAME --- */

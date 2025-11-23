@@ -51,6 +51,8 @@ class HandleInertiaRequests extends Middleware
                 'info' => $request->session()->get('info'),
                 'message' => $request->session()->get('message'),
                 'status' => $request->session()->get('status'),
+                'highlight_by_id' => $request->session()->get('highlight_by_id'),
+                'highlight_type' => $request->session()->get('highlight_type'),
             ],
             'old' => fn() => session()->getOldInput(),
             'path' => fn() => $request->path(),

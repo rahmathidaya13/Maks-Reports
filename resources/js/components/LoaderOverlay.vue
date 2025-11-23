@@ -68,7 +68,7 @@ onUnmounted(() => {
 .loader-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, .5);
+    background: rgba(0, 0, 0, .15);
     z-index: 9999;
     opacity: 0;
     transition: opacity .25s ease-in-out;

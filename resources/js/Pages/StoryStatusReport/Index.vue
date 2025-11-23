@@ -9,10 +9,24 @@ moment.locale('id');
 
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
+
+const highlightId = page.props.flash.highlight_by_id ?? [];
+const highlightType = page.props.flash.highlight_type ?? null
+
+
 const props = defineProps({
     storyReport: Object,
     filters: Object,
 });
+
+// const data = props.storyReport.data
+// // Reorder data → taruh highlightId di paling atas
+// if (highlightId) {
+//     props.storyReport.data = [
+//         ...data.filter(r => highlightId.includes(r.story_status_id)),
+//         ...data.filter(r => !highlightId.includes(r.story_status_id)),
+//     ];
+// }
 
 const filters = reactive({
     limit: props.filters.limit ?? 10,
@@ -22,42 +36,6 @@ const filters = reactive({
     end_date: props.filters.end_date ?? '',
 })
 
-const header = [
-    { label: "No", key: "__index" },
-    { label: "Tanggal", key: "report_date" },
-    { label: "Jam", key: "report_time" },
-    { label: "Jumlah", key: "count_status" },
-    { label: "Aksi", key: "-" },
-];
-
-
-// const selectedRow = ref([]);
-// const isVisible = ref(false);
-// function deleteSelected() {
-//     if (!selectedRow.value.length) {
-//         return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
-//     }
-//     swalConfirmDelete({
-//         title: 'Hapus Data Terpilih',
-//         text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
-//         confirmText: 'Ya, Hapus Semua!',
-//         onConfirm: () => {
-//             router.post(route('story_report.destroy_all'), { ids: selectedRow.value }, {
-//                 preserveScroll: true,
-//                 preserveState: false,
-//             })
-//         },
-//     })
-// }
-
-// watch(selectedRow, (val) => {
-//     if (val.length > 0) {
-//         isVisible.value = true
-//     } else {
-//         isVisible.value = false
-//     }
-// })
-// atur warna badge sesuai jenis permission
 
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
@@ -95,7 +73,7 @@ function daysTranslate(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('L');
+    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
 function dateFormat(date, format) {
@@ -153,7 +131,7 @@ watch([() => filters.limit, () => filters.order_by], () => {
 
 //hapus semua
 const selected = ref([]);
-const isVisibleButton = ref(true)
+const isVisibleButton = ref(false)
 const isAllSelected = computed(() => {
     const rows = props.storyReport?.data ?? [];
     return rows.length > 0 && selected.value.length === rows.length;
@@ -185,9 +163,9 @@ const deletedAll = () => {
 }
 watch(selected, (val) => {
     if (val.length > 0) {
-        isVisibleButton.value = false;
+        isVisibleButton.value = true;
     } else {
-        isVisibleButton.value = true
+        isVisibleButton.value = false
     }
 })
 </script>
@@ -268,14 +246,17 @@ watch(selected, (val) => {
                     </div>
 
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
-                        <button :disabled="isVisibleButton" @click="deletedAll" type="button"
-                            class="btn btn-danger position-relative">
-                            <i class="fas fa-trash"></i> Hapus
-                            <span v-if="selected.length > 0"
-                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ selected.length }}
-                            </span>
-                        </button>
+                        <transition name="fade">
+                            <button v-if="isVisibleButton" @click="deletedAll" type="button"
+                                class="btn btn-outline-danger position-relative">
+                                <i class="fas fa-trash"></i> Hapus
+                                <span v-if="selected.length > 0"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ selected.length }}
+                                </span>
+                            </button>
+                        </transition>
+
                         <!-- <button-delete-all text="Hapus" :isVisible="isVisibleButton" :deleted="deletedAll" /> -->
                         <div class="d-inline-flex ms-auto gap-1">
                             <drop-down @download="handleDownload" />
@@ -293,7 +274,7 @@ watch(selected, (val) => {
                         </div>
                         <div class="table-responsive" v-else>
 
-                            <table class="table align-middle table-hover text-wrap">
+                            <table class="table align-middle table-hover text-wrap table-striped">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>
@@ -303,7 +284,7 @@ watch(selected, (val) => {
                                             </div>
                                         </th>
                                         <th class="text-center">No</th>
-                                        <th class="text-start">Kode Status</th>
+                                        <th class="text-center">Kode Status</th>
                                         <th class="text-start">Tanggal</th>
                                         <th class="text-center">Jam</th>
                                         <th class="text-center">Jumlah</th>
@@ -317,8 +298,13 @@ watch(selected, (val) => {
                                             Tidak ada data ditemukan
                                         </td>
                                     </tr>
-                                    <tr :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
+                                    <tr :class="[
+                                        highlightId.includes(row.story_status_id)
+                                            ? (highlightType === 'create' ? 'blink-green' : 'blink-blue')
+                                            : ''
+                                    ]" :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
                                         :key="rowIndex">
+
                                         <td class="text-center" style="width: 5%;">
                                             <div class="form-check d-flex justify-content-center gap-2">
                                                 <input type="checkbox" class="form-check-input"
@@ -329,11 +315,21 @@ watch(selected, (val) => {
                                         <td style="width: 5%;" class="text-center fw-semibold"> {{ rowIndex + 1 +
                                             (storyReport?.current_page - 1) *
                                             storyReport?.per_page }}</td>
-                                        <td class="text-start fw-semibold">{{ row.report_code }}</td>
+                                        <td class="text-center fw-semibold">{{ row.report_code }}</td>
                                         <td class="text-start fw-semibold">{{
                                             daysTranslate(row.report_date) }}</td>
-                                        <td class="text-center fw-semibold">{{
-                                            row.report_time.slice(0, 5) }}</td>
+                                        <td class="text-center fw-semibold">
+                                            <div class="d-flex align-items-center gap-2 justify-content-center">
+                                                <span>{{ row.report_time.slice(0, 5) }}</span>
+                                                <span v-if="row.is_recent_created" class="badge bg-success">
+                                                    Baru Ditambahkan
+                                                </span>
+                                                <span v-if="row.is_recent_updated" class="badge bg-warning text-dark">
+                                                    Baru Diubah
+                                                </span>
+                                            </div>
+                                        </td>
+
                                         <td class="text-center fw-semibold">{{ row.count_status }}
                                         </td>
                                         <td class="text-center">
@@ -380,8 +376,6 @@ watch(selected, (val) => {
                                     </tr>
                                 </tfoot>
                             </table>
-
-
                         </div>
                         <div v-if="!isLoading"
                             class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
@@ -405,6 +399,44 @@ watch(selected, (val) => {
     </app-layout>
 </template>
 <style scoped>
+.blink-green {
+    animation: blinkGreen 1s ease-in-out 10;
+}
+
+.blink-blue {
+    animation: blinkBlue 1s ease-in-out 10;
+}
+
+@keyframes blinkGreen {
+
+    0% {
+        background-color: #a4f5a4;
+    }
+
+    50% {
+        background-color: #ffffff;
+    }
+
+    100% {
+        background-color: #a4f5a4;
+    }
+}
+
+@keyframes blinkBlue {
+
+    0% {
+        background-color: #a7c8ff;
+    }
+
+    50% {
+        background-color: #ffffff;
+    }
+
+    100% {
+        background-color: #a7c8ff;
+    }
+}
+
 .description {
     width: 100%;
     /* Sesuaikan nilai ini sesuai kebutuhan Anda */
@@ -421,5 +453,22 @@ watch(selected, (val) => {
     align-content: center;
     justify-content: center;
     display: flex;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+    opacity: 1;
+    transform: translateY(0);
 }
 </style>

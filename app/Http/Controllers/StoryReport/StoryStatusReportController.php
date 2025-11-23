@@ -52,22 +52,22 @@ class StoryStatusReportController extends Controller
     {
         $this->validationText($request->all());
         $reports = $request->input('report');
+        $createdReportById = [];
         foreach ($reports as $report) {
-            StoryStatusReportModel::create([
+            $story =  StoryStatusReportModel::create([
                 'created_by' => auth()->id(),
                 'report_date' => now()->toDateString(),
                 'report_time' => $report['report_time'],
                 'count_status' => $report['count_status'],
             ]);
+            $createdReportById[] = $story->story_status_id;
         }
-        // $storyReport = new StoryStatusReportModel();
-        // $storyReport->created_by = auth()->id();
-        // $storyReport->report_date = now()->toDateString();
-        // $storyReport->report_time = $request->input('report_time');
-        // $storyReport->count_status = $request->integer('count_status');
         $this->storyReportRepository->clearCache(auth()->id());
-        // $storyReport->save();
-        return redirect()->route('story_report')->with('message', 'Laporan Update Status harian kamu berhasil dibuat');
+        return redirect()->route('story_report')
+            ->with('message', 'Laporan Update Status harian kamu berhasil dibuat')
+            ->with('highlight_by_id', $createdReportById)
+            ->with('recent_timestamp', now()->toDateTimeString())
+            ->with('highlight_type', 'create');
     }
 
     /**
@@ -101,7 +101,11 @@ class StoryStatusReportController extends Controller
         $storyReport->count_status = $data['report'][0]['count_status'];
         $storyReport->update();
         $this->storyReportRepository->clearCache(auth()->id());
-        return redirect()->route('story_report')->with('message', 'Laporan Update Status harian kamu berhasil diperbarui');
+        return redirect()->route('story_report')
+            ->with('message', 'Laporan Update Status harian kamu berhasil diperbarui')
+            ->with('highlight_by_id', $storyReport->story_status_id)
+            ->with('recent_timestamp', now()->toDateTimeString())
+            ->with('highlight_type', 'edit');
     }
 
     /**

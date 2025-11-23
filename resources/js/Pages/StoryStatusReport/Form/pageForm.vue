@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import moment from "moment";
 const props = defineProps({
@@ -13,10 +13,25 @@ const forms = ref([
         count_status: props.storyReport?.count_status ?? '',
     }
 ])
+
+
+const formsRefs = ref([]) // Array untuk menyimpan referensi ke setiap form
 const addForm = () => {
     forms.value.push({
         report_time: '',
         count_status: '',
+    })
+    nextTick(() => {
+        const lastIndex = forms.value.length - 1;
+        // Scroll ke form baru
+        formsRefs.value[lastIndex]?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+        // Focus otomatis ke input Jam di form baru
+        const input = formsRefs.value[lastIndex]?.querySelector("input[type='time']");
+        input?.focus();
     })
 }
 const removeForm = (index) => {
@@ -46,6 +61,7 @@ const isSubmit = () => {
     } else {
         // Create
         form.post(route('story_report.store'), {
+            preserveScroll: true,
             onSuccess: () => {
                 form.reset();
             }
@@ -101,22 +117,26 @@ function daysOnlyConvert(dayValue) {
         <template #content>
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
-            <!-- <div class="callout callout-success">
-                <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Panduan Pengisian Laporan Leads Harian</h5>
+            <div class="callout callout-success">
+                <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Panduan Pengisian Laporan Update Status Harian
+                </h5>
                 <ul class="mb-0 ps-3">
-                    <li>Isi setiap kolom sesuai aktivitas yang dilakukan pada hari ini.</li>
-                    <li>Angka <strong>Leads</strong> dan setiap <strong>Follow Up (FU)</strong> diisi berdasarkan jumlah
-                        konsumen yang benar-benar dihubungi.</li>
-                    <li>Kolom <strong>Closing</strong> diisi sesuai jumlah konsumen yang berhasil closing dari
-                        masing-masing kategori.</li>
-                    <li>Pastikan tidak ada kolom yang dibiarkan kosong — isi dengan angka <strong>0</strong> jika tidak
-                        ada aktivitas.</li>
-                    <li>Gunakan kolom <strong>Catatan</strong> untuk menuliskan kendala, progres penting, atau update
-                        konsumen tertentu.</li>
-                    <li>Periksa kembali semua data sebelum menekan tombol <strong>Simpan</strong>.</li>
+                    <li>Setiap form mewakili satu aktivitas posting status pada hari ini.</li>
+                    <li>Isi <strong>Jam</strong> sesuai waktu status diposting (contoh: 08:30, 13:45, dll).</li>
+                    <li>Jika memposting status beberapa kali dalam satu hari, klik tombol
+                        <strong>Tambah</strong> untuk menambah form baru.
+                    </li>
+                    <li>Kolom <strong>Jumlah</strong> berisi banyaknya status yang diposting pada jam tersebut
+                        (isi angka <strong>1</strong> jika hanya upload satu status).</li>
+                    <li>Pastikan tidak ada kolom yang kosong — jika tidak ada status pada jam itu, hapus form terkait.
+                    </li>
+                    <li>Klik tombol <strong>X</strong> di setiap form untuk menghapus form yang tidak
+                        diperlukan.</li>
+                    <li>Periksa kembali seluruh data sebelum menekan tombol <strong>Simpan</strong> atau
+                        <strong>Ubah</strong>.
+                    </li>
                 </ul>
-            </div> -->
-
+            </div>
 
             <div class="d-flex justify-content-between">
                 <Link :href="url" class="btn btn-danger mb-3">
@@ -124,14 +144,20 @@ function daysOnlyConvert(dayValue) {
                 Kembali
                 </Link>
                 <div class="mb-3 gap-1 d-flex" v-if="!props.storyReport?.story_status_id">
-                    <button class="btn btn-outline-danger" @click="forms = [{ report_time: '', count_status: '' }]"><i
-                            class="fas fa-recycle"></i> Hapus
-                        semua
+
+                    <button title="Hapus Semua Form" v-if="forms.length > 1 && !form.processing"
+                        class="btn btn-outline-danger position-relative align-items-center"
+                        @click="forms = [{ report_time: '', count_status: '' }]"><i class="fas fa-recycle"></i> Hapus
+                        <span class="badge text-bg-danger rounded-pill">{{ forms.length - 1 }}</span>
                     </button>
-                    <button @click="addForm" class="btn btn-primary bg-gradient"><i class="fas fa-plus"></i>
+
+
+                    <button title="Tambah Form" v-if="!form.processing" @click="addForm"
+                        class="btn btn-primary bg-gradient"><i class="fas fa-plus"></i>
                         Tambah</button>
                 </div>
             </div>
+
             <div class="row">
                 <div class="col-xl-12 col-sm-12 pb-3">
                     <div class="card overflow-hidden rounded-4">
@@ -141,53 +167,62 @@ function daysOnlyConvert(dayValue) {
                             <span class="text-info">{{ daysOnlyConvert(form.report_date) }}
                             </span>
                         </h5>
-                        <div :class="{ 'd-flex py-5 mt-5': form.processing }" v-if="form.processing">
+                        <div v-if="form.processing">
                             <loader-horizontal
-                                :message="props.storyReport?.story_status_id ? 'Sedang memperbarui data.....' : 'Sedang memproses data.....'" />
+                                :message="props.storyReport?.story_status_id ? 'Sedang memperbarui data' : 'Sedang menyimpan data'" />
                         </div>
-                        <div class="card-body" v-else>
 
-                            <form-wrapper @submit="isSubmit">
+                        <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
 
-                                <div v-for="(fieldItems, index) in forms" :key="index"
-                                    class="mb-3 rounded-3 border overflow-hidden border-dark">
-                                    <div class="p-2 text-bg-dark d-flex justify-content-between">
-                                        <h4 class="fw-bold">Form Laporan {{ index + 1 }}</h4>
+                            <div class="form-overlay">
+                                <form-wrapper @submit="isSubmit">
 
-                                        <button class="btn btn-sm btn-danger px-3" @click.prevent="removeForm(index)"
-                                            v-if="forms.length > 1">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
+                                    <div :ref="el => formsRefs[index] = el" v-for="(fieldItems, index) in forms"
+                                        :key="index"
+                                        class="mb-3 text-bg-grey rounded-2 border overflow-hidden border border-dark shadow-sm">
 
-                                    <div class="px-3 py-2">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="report_time" value="Jam" />
-                                            <text-input autofocus class="form-control-lg" tabindex="1"
-                                                :name="[`report.${index}.report_time`]" type="time"
-                                                v-model="fieldItems.report_time" />
-                                            <input-error :message="form.errors[`report.${index}.report_time`]" />
+                                        <div class="py-2 px-3 d-flex justify-content-between border-bottom">
+                                            <h4 class="fw-bold">Form Laporan {{ index + 1 }}</h4>
+                                            <button title="Hapus Form" class="btn btn-sm border-0 btn-danger"
+                                                @click.prevent="removeForm(index)" v-if="forms.length > 1">
+                                                <i class="fas fa-times"></i>
+                                            </button>
                                         </div>
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="count_status" value="Jumlah" />
-                                            <input-number class="form-control-lg" tabindex="2" placeholder="0"
-                                                :name="[`report.${index}.count_status`]" type="text"
-                                                v-model="fieldItems.count_status" />
-                                            <input-error :message="form.errors[`report.${index}.count_status`]" />
+
+                                        <div class="px-3 py-2">
+                                            <div class="mb-2">
+                                                <input-label class="fw-bold" for="report_time" value="Jam" />
+                                                <text-input autofocus class="form-control-lg" :tabindex="index * 2 + 1"
+                                                    placeholder="00:00" :name="[`report.${index}.report_time`]"
+                                                    type="time" v-model="fieldItems.report_time" />
+                                                <input-error :message="form.errors[`report.${index}.report_time`]" />
+                                                <div class="mt-2" v-if="!form.errors[`report.${index}.report_time`]">
+                                                    <!-- keterangan disini -->
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <input-label class="fw-bold" for="count_status" value="Jumlah" />
+                                                <input-number class="form-control-lg" :tabindex="index * 2 + 2"
+                                                    placeholder="0" :name="[`report.${index}.count_status`]" type="text"
+                                                    v-model="fieldItems.count_status" />
+                                                <input-error :message="form.errors[`report.${index}.count_status`]" />
+                                                <div class="mt-2" v-if="!form.errors[`report.${index}.count_status`]">
+                                                    <!-- keterangan disini -->
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="d-grid d-xl-flex">
-                                    <base-button waiting="Memproses..." :loading="form.processing"
-                                        class="rounded-3 bg-gradient px-5 btn-height-2"
-                                        :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-edit' : 'fas fa-save'"
-                                        :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
-                                        type="submit"
-                                        :name="props.storyReport && props.storyReport?.story_status_id ? 'ubah' : 'simpan'"
-                                        :label="props.storyReport && props.storyReport?.story_status_id ? 'Ubah' : 'Simpan'" />
-                                </div>
-                            </form-wrapper>
+                                </form-wrapper>
+                            </div>
+                            <div class="d-grid d-xl-flex" :class="{ 'sticky-submit': forms.length > 1 }">
+                                <base-button @click="isSubmit" waiting="Memproses..." :loading="form.processing"
+                                    class="rounded-3 bg-gradient px-5 btn-height-2"
+                                    :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-edit' : 'fas fa-save'"
+                                    :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
+                                    type="submit"
+                                    :name="props.storyReport && props.storyReport?.story_status_id ? 'ubah' : 'simpan'"
+                                    :label="props.storyReport && props.storyReport?.story_status_id ? 'Ubah' : 'Simpan'" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -196,3 +231,36 @@ function daysOnlyConvert(dayValue) {
     </app-layout>
 
 </template>
+
+<style scoped>
+.blur-area {
+    transition: all 0.3s ease;
+}
+
+.blur-area.is-blurred {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
+
+.form-overlay {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 6px;
+    position: relative;
+
+}
+
+.sticky-submit {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, .95);
+    padding: 10px 0;
+    border-top: 1px solid #ddd;
+    backdrop-filter: blur(6px);
+    z-index: 999;
+    display: flex;
+}
+</style>
