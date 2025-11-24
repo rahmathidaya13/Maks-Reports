@@ -23,12 +23,6 @@ const addForm = () => {
     })
     nextTick(() => {
         const lastIndex = forms.value.length - 1;
-        // Scroll ke form baru
-        formsRefs.value[lastIndex]?.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
-
         // Focus otomatis ke input Jam di form baru
         const input = formsRefs.value[lastIndex]?.querySelector("input[type='time']");
         input?.focus();
@@ -70,18 +64,29 @@ const isSubmit = () => {
 };
 const title = ref("");
 const icon = ref("");
-const url = ref("")
+const url = ref("");
+const loaderActive = ref(null);
 onMounted(() => {
     if (props.storyReport && props.storyReport?.story_status_id) {
         title.value = "Ubah Laporan Update Status"
         icon.value = "fas fa-edit"
         url.value = route('story_report')
+
     } else {
         title.value = "Buat Laporan Update Status"
         icon.value = "fas fa-plus-square"
         url.value = route('story_report')
     }
 })
+
+// override button kembali
+const goBack = () => {
+    loaderActive.value?.show("Memproses...");
+    router.get(url.value, {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+
 const breadcrumbItems = computed(() => {
     if (props.storyReport && props.storyReport?.story_status_id) {
         return [
@@ -109,12 +114,14 @@ function daysOnlyConvert(dayValue) {
     const dateFormat = moment(dayValue).format('DD-MM-YYYY');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
+
 </script>
 <template>
 
     <Head :title="title" />
     <app-layout>
         <template #content>
+            <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
             <div class="callout callout-success">
@@ -139,7 +146,7 @@ function daysOnlyConvert(dayValue) {
             </div>
 
             <div class="d-flex justify-content-between">
-                <Link :href="url" class="btn btn-danger mb-3">
+                <Link @click.prevent="goBack" :href="url" class="btn btn-danger mb-3">
                 <i class="fas fa-arrow-left"></i>
                 Kembali
                 </Link>
@@ -216,7 +223,7 @@ function daysOnlyConvert(dayValue) {
                             </div>
                             <div class="d-grid d-xl-flex" :class="{ 'sticky-submit': forms.length > 1 }">
                                 <base-button @click="isSubmit" waiting="Memproses..." :loading="form.processing"
-                                    class="rounded-3 bg-gradient px-5 btn-height-2"
+                                    class="rounded-3 bg-gradient px-5"
                                     :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-edit' : 'fas fa-save'"
                                     :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
                                     type="submit"
@@ -227,6 +234,7 @@ function daysOnlyConvert(dayValue) {
                     </div>
                 </div>
             </div>
+
         </template>
     </app-layout>
 
@@ -246,7 +254,7 @@ function daysOnlyConvert(dayValue) {
 
 
 .form-overlay {
-    max-height: 55vh;
+    max-height: 60vh;
     overflow-y: auto;
     padding-right: 6px;
     position: relative;

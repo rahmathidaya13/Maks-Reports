@@ -36,10 +36,12 @@ import InputDate from "./components/inputDate.vue";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
 import '@vuepic/vue-datepicker/dist/main.css'
 import InputTime from "./components/inputTime.vue";
+import LoaderPerPage from "./components/LoaderPerPage.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
         app.component("loader-horizontal", LoaderHorizontal);
+        app.component("loader-page", LoaderPerPage);
         app.component("alert", Alert);
         app.component("drop-down", DropDown);
         app.component("modal", Modal);

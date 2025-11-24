@@ -17,8 +17,10 @@ const highlightType = page.props.flash.highlight_type ?? null
 const props = defineProps({
     storyReport: Object,
     filters: Object,
+    totalToday: Number,
+    summary: Object
 });
-
+// console.log(props.summary);
 // const data = props.storyReport.data
 // // Reorder data → taruh highlightId di paling atas
 // if (highlightId) {
@@ -54,13 +56,6 @@ const isDisableBtnDatePicker = computed(() => {
     return !(filters.start_date && filters.end_date);
 })
 
-const handleDownload = (type) => {
-    if (type === "pdf") {
-        router.get(route("storyReport", { format: "pdf" }));
-    } else if (type === "excel") {
-        router.get(route("storyReport", { format: "excel" }));
-    }
-};
 
 function daysTranslate(dayValue) {
     const dayConvert = {
@@ -168,42 +163,51 @@ watch(selected, (val) => {
         isVisibleButton.value = false
     }
 })
+const loaderActive = ref(null)
+const createReport = () => {
+    loaderActive.value?.show("Memproses...");
+    router.get(route("story_report.create"), {}, {
+        onFinish: () => {
+            loaderActive.value?.hide()
+        }
+    });
+}
+
+const goEdit = (id) => {
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route("story_report.edit", id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+
+const downloadItems = [
+    { id: 'pdf', text: 'Unduh PDF', icon: 'fas fa-file-pdf text-danger' },
+    { id: 'excel', text: 'Unduh Excel', icon: 'fas fa-file-excel text-success' },
+];
+
+const exportTo = (type) => {
+    console.log(type);
+    if (type === "pdf") {
+        router.get(route("story_report"));
+    } else if (type === "excel") {
+        router.get(route("story_report.print_to_excel"));
+    }
+};
+
 </script>
 <template>
 
     <Head title="Halaman Laporan Update Status" />
     <app-layout>
         <template #content>
+            <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-sticky-note" title="Laporan Update Status"
                 :items="[{ text: 'Laporan Update Status' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
 
-                    <!-- <div class="callout callout-info">
-                        <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Informasi Laporan Leads Harian</h5>
-                        <ul class="mb-0 ps-3">
-                            <li><strong>Leads</strong> adalah calon konsumen baru yang pertama kali dihubungi pada hari
-                                ini.
-                            </li>
-                            <li><strong>FU (Follow Up)</strong> adalah tindak lanjut yang dilakukan kepada konsumen yang
-                                sebelumnya sudah pernah dihubungi.</li>
-                            <li><strong>FU Kemarin (H-1)</strong> adalah follow up untuk konsumen yang dihubungi sehari
-                                sebelumnya.</li>
-                            <li><strong>FU Kemarennya (H-2)</strong> adalah follow up untuk konsumen yang dihubungi dua
-                                hari
-                                sebelumnya.</li>
-                            <li><strong>FU Minggu Kemarennya</strong> adalah follow up untuk konsumen yang dihubungi
-                                pada
-                                minggu
-                                lalu.</li>
-                            <li><strong>Engage Pelanggan Lama</strong> adalah interaksi dengan pelanggan lama untuk
-                                menjaga
-                                hubungan dan menawarkan kebutuhan baru.</li>
-                        </ul>
-                    </div> -->
-
-                    <div class="card mb-4 rounded-3 p-1 bg-light overflow-hidden shadow-sm">
+                    <div class="card mb-3 rounded-3 p-1 bg-light overflow-hidden shadow-sm">
                         <div class="row align-items-center p-2 g-2 pb-3">
                             <div class="col-xl-4 col-sm-6 col-md-3">
                                 <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
@@ -257,138 +261,156 @@ watch(selected, (val) => {
                             </button>
                         </transition>
 
-                        <!-- <button-delete-all text="Hapus" :isVisible="isVisibleButton" :deleted="deletedAll" /> -->
                         <div class="d-inline-flex ms-auto gap-1">
-                            <drop-down @download="handleDownload" />
+                            <!-- <a :href="route('story_report.print_to_excel')" class="btn btn-success">Download Excel
+                            </a> -->
+                            <drop-down variant="success" :items="downloadItems" @action="exportTo" />
+
                             <div class="position-relative">
-                                <Link :href="route('story_report.create')" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Buat Laporan
-                                </Link>
+                                <base-button @click="createReport" class="bg-gradient" name="create"
+                                    label="Buat Laporan" icon="fas fa-plus" />
                             </div>
                         </div>
                     </div>
 
-                    <div class="card mb-4 overflow-hidden rounded-3" :class="{ 'h-100': isLoading }">
+                    <div class="card mb-4 overflow-hidden rounded-3 shadow-sm">
                         <div v-if="isLoading">
-                            <loader-horizontal />
+                            <loader-horizontal message="Sedang memproses data" />
                         </div>
-                        <div class="table-responsive" v-else>
 
-                            <table class="table align-middle table-hover text-wrap table-striped">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>
-                                            <div class="form-check d-flex justify-content-center gap-2">
-                                                <input type="checkbox" class="form-check-input" :checked="isAllSelected"
-                                                    @change="toggleAll($event)" />
-                                            </div>
-                                        </th>
-                                        <th class="text-center">No</th>
-                                        <th class="text-center">Kode Status</th>
-                                        <th class="text-start">Tanggal</th>
-                                        <th class="text-center">Jam</th>
-                                        <th class="text-center">Jumlah</th>
-                                        <th class="text-center">Aksi</th>
-                                    </tr>
-                                </thead>
+                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                            <div class="table-responsive">
+                                <table class="table align-middle table-hover text-nowrap table-striped table-bordered">
+                                    <thead class="table-dark position-sticky">
+                                        <tr>
+                                            <th>
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input type="checkbox" class="form-check-input"
+                                                        :checked="isAllSelected" @change="toggleAll($event)" />
+                                                </div>
+                                            </th>
+                                            <th class="text-center">No</th>
+                                            <th class="text-center">Kode Status</th>
+                                            <th class="text-center">Tanggal</th>
+                                            <th class="text-center">Jam</th>
+                                            <th class="text-center">Jumlah Status</th>
+                                            <th class="text-center">Dibuat</th>
+                                            <th class="text-center">Diperbarui</th>
+                                            <th class="text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
 
-                                <tbody>
-                                    <tr v-if="!storyReport?.data.length">
-                                        <td colspan="7" class="text-center text-muted">
-                                            Tidak ada data ditemukan
-                                        </td>
-                                    </tr>
-                                    <tr :class="[
-                                        highlightId.includes(row.story_status_id)
-                                            ? (highlightType === 'create' ? 'blink-green' : 'blink-blue')
-                                            : ''
-                                    ]" :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
-                                        :key="rowIndex">
+                                    <tbody>
+                                        <tr v-if="!storyReport?.data.length">
+                                            <td colspan="9" class="text-center text-muted">
+                                                Tidak ada data ditemukan
+                                            </td>
+                                        </tr>
 
-                                        <td class="text-center" style="width: 5%;">
-                                            <div class="form-check d-flex justify-content-center gap-2">
-                                                <input type="checkbox" class="form-check-input"
-                                                    :name="row.story_status_id" :id="row.story_status_id"
-                                                    :value="row.story_status_id" v-model="selected" />
-                                            </div>
-                                        </td>
-                                        <td style="width: 5%;" class="text-center fw-semibold"> {{ rowIndex + 1 +
-                                            (storyReport?.current_page - 1) *
-                                            storyReport?.per_page }}</td>
-                                        <td class="text-center fw-semibold">{{ row.report_code }}</td>
-                                        <td class="text-start fw-semibold">{{
-                                            daysTranslate(row.report_date) }}</td>
-                                        <td class="text-center fw-semibold">
-                                            <div class="d-flex align-items-center gap-2 justify-content-center">
+                                        <tr :class="[
+                                            highlightId.includes(row.story_status_id)
+                                                ? (highlightType === 'create' ? 'blink-green' : 'blink-blue')
+                                                : ''
+                                        ]" :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
+                                            :key="rowIndex">
+
+                                            <td class="text-center" style="width: 5%;">
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input type="checkbox" class="form-check-input"
+                                                        :name="row.story_status_id" :id="row.story_status_id"
+                                                        :value="row.story_status_id" v-model="selected" />
+                                                </div>
+                                            </td>
+
+                                            <td style="width: 5%;" class="text-center"> {{ rowIndex + 1 +
+                                                (storyReport?.current_page - 1) *
+                                                storyReport?.per_page }}
+                                            </td>
+
+                                            <td class="text-center">{{ row.report_code }}</td>
+                                            <td class="text-start lh-sm">
+                                                <div>
+                                                    {{ daysTranslate(row.report_date) }}
+                                                </div>
+                                                <small class="fw-normal text-muted" style="font-size: 12px;">{{
+                                                    row.informasi
+                                                    }}</small>
+                                            </td>
+                                            <td class="text-center">
                                                 <span>{{ row.report_time.slice(0, 5) }}</span>
-                                                <span v-if="row.is_recent_created" class="badge bg-success">
-                                                    Baru Ditambahkan
-                                                </span>
-                                                <span v-if="row.is_recent_updated" class="badge bg-warning text-dark">
-                                                    Baru Diubah
-                                                </span>
-                                            </div>
-                                        </td>
+                                            </td>
 
-                                        <td class="text-center fw-semibold">{{ row.count_status }}
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="dropdown dropstart">
-                                                <button class="btn btn-secondary" type="button"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="fas fa-cog"></i>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li>
-                                                        <Link :href="route('story_report.edit', row.story_status_id)"
-                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                        Ubah <i class="fas fa-edit text-info"></i>
-                                                        </Link>
-                                                    </li>
-                                                    <li>
-                                                        <button @click="deleted('story_report.deleted', row)"
-                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                            Hapus <i class="fas fa-recycle text-danger"></i>
-                                                        </button>
-                                                    </li>
-                                                    <li>
-                                                        <button
-                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                            Bagikan <i class="fas fa-share-alt text-primary"></i>
-                                                        </button>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot class="fw-bold table-dark">
-                                    <tr>
-                                        <td></td>
-                                        <td class="text-center">Total</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td class="text-center">
-                                            {{storyReport?.data.reduce((t, r) => t + (r.count_status ?? 0), 0)}}
-                                        </td>
-                                        <td class="text-center"></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                        <div v-if="!isLoading"
-                            class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
-                            <div class="mb-2 order-1 order-xl-0">
-                                Menampilkan <strong>{{ props.storyReport?.from ?? 0 }}</strong> sampai
-                                <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari total
-                                <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
+                                            <td class="text-center">{{ row.count_status }}
+                                            </td>
+                                            <td class="text-center ">{{
+                                                moment(row.created_at).format('DD-MM-YYYY, H:mm A') }}
+                                            </td>
+                                            <td class="text-center">{{ row.updated_at === row.created_at
+                                                ? '-'
+                                                : moment(row.updated_at).format('DD-MM-YYYY, H:mm A') }}
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="dropdown dropstart">
+                                                    <button class="btn btn-secondary" type="button"
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="fas fa-cog"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <button @click="goEdit(row.story_status_id)"
+                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                Ubah <i class="fas fa-edit text-info"></i>
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button @click="deleted('story_report.deleted', row)"
+                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                Hapus <i class="fas fa-recycle text-danger"></i>
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button
+                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                Bagikan <i class="fas fa-share-alt text-primary"></i>
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot class="fw-bold table-dark">
+                                        <tr>
+                                            <td></td>
+                                            <td class="text-center">Total</td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-center">
+                                                {{ props.totalToday ?? props.totalWithFilter }}
+                                            </td>
+                                            <td class="text-center"></td>
+                                            <td class="text-center"></td>
+                                            <td class="text-center"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
-                            <pagination :links="props.storyReport?.links" routeName="story_report" :additionalQuery="{
-                                order_by: filters.order_by,
-                                limit: filters.limit,
-                                keyword: filters.keyword,
-                            }" />
+                            <div
+                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row px-2">
+                                <div class="mb-2 order-1 order-xl-0">
+                                    Menampilkan <strong>{{ props.storyReport?.from ?? 0 }}</strong> sampai
+                                    <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
+                                </div>
+                                <pagination :links="props.storyReport?.links" routeName="story_report" :additionalQuery="{
+                                    order_by: filters.order_by,
+                                    limit: filters.limit,
+                                    start_date: filters.start_date,
+                                    end_date: filters.end_date,
+                                }" />
+                            </div>
+
                         </div>
                     </div>
 
@@ -399,12 +421,23 @@ watch(selected, (val) => {
     </app-layout>
 </template>
 <style scoped>
+.blur-area {
+    transition: all 0.3s ease;
+}
+
+.blur-area.is-blurred {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
 .blink-green {
-    animation: blinkGreen 1s ease-in-out 10;
+    animation: blinkGreen 1s ease-in-out 5;
 }
 
 .blink-blue {
-    animation: blinkBlue 1s ease-in-out 10;
+    animation: blinkBlue 1s ease-in-out 5;
 }
 
 @keyframes blinkGreen {
@@ -470,5 +503,57 @@ watch(selected, (val) => {
 .fade-leave-from {
     opacity: 1;
     transform: translateY(0);
+}
+
+.table.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #c2dff731;
+}
+
+.table.table-striped tbody tr:nth-of-type(even) {
+    background-color: #ffffff;
+}
+
+/* Hover hanya untuk teks table, tapi TIDAK untuk dropdown */
+.table.table-hover tbody tr:hover {
+    background-color: rgba(0, 183, 255, 0.171) !important;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0.918);
+    transition: all 0.15s ease-in-out;
+}
+
+.table-hover tbody tr:hover td .dropdown,
+.table-hover tbody tr:hover td .dropdown * {
+    text-shadow: none !important;
+}
+
+
+.card-stat {
+    border-radius: 12px;
+    transition: all .2s ease-in-out;
+}
+
+.card-stat:hover {
+    transform: translateY(-4px);
+}
+
+.icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+}
+
+.label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+.value {
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: -4px;
 }
 </style>

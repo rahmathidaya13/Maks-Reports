@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\StoryReport;
 
+use App\Traits\DashboardSummaryStatusReport;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -15,7 +16,7 @@ class StoryStatusReportController extends Controller
     /**
      * Display a listing of the resource.
      */
-    use StoryReportValidation;
+    use StoryReportValidation, DashboardSummaryStatusReport;
     protected $storyReportRepository;
     public function __construct(StoryStatusReportRepository $storyReportRepository)
     {
@@ -31,7 +32,17 @@ class StoryStatusReportController extends Controller
             'end_date',
         ]);
         $storyReport = $this->storyReportRepository->getCached(auth()->id(), $filters);
-        return Inertia::render('StoryStatusReport/Index', compact('storyReport', 'filters'));
+
+        // Hitung total status di hari ini
+        $totalToday = StoryStatusReportModel::where('created_by', auth()->id())
+            ->whereDate('report_date', now()->toDateString())
+            ->sum('count_status');
+        return Inertia::render('StoryStatusReport/Index', [
+            'storyReport' => $storyReport,
+            'totalToday' => (int) $totalToday,
+            'filters' => $filters,
+            'summary' => $this->dashboardSummary()
+        ]);
     }
 
     /**
@@ -51,10 +62,10 @@ class StoryStatusReportController extends Controller
     public function store(Request $request)
     {
         $this->validationText($request->all());
-        $reports = $request->input('report');
+        $reports = $request->input('report', []);
         $createdReportById = [];
         foreach ($reports as $report) {
-            $story =  StoryStatusReportModel::create([
+            $story = StoryStatusReportModel::create([
                 'created_by' => auth()->id(),
                 'report_date' => now()->toDateString(),
                 'report_time' => $report['report_time'],
@@ -64,7 +75,7 @@ class StoryStatusReportController extends Controller
         }
         $this->storyReportRepository->clearCache(auth()->id());
         return redirect()->route('story_report')
-            ->with('message', 'Laporan Update Status harian kamu berhasil dibuat')
+            ->with('message', count($createdReportById) . ' ' . 'Laporan Update Status harian berhasil dibuat')
             ->with('highlight_by_id', $createdReportById)
             ->with('recent_timestamp', now()->toDateTimeString())
             ->with('highlight_type', 'create');

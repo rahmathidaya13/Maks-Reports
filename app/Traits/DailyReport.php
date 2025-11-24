@@ -3,8 +3,6 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-
 trait DailyReport
 {
     public function validationText($request)
@@ -38,7 +36,7 @@ trait DailyReport
             'notes' => [
                 'nullable',
                 'string',
-                'max:500'
+                'max:1000'
             ],
         ], [
 

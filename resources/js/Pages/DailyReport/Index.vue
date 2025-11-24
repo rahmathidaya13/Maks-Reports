@@ -272,10 +272,10 @@ watch([() => filters.limit, () => filters.order_by], () => {
                                 </Link>
                             </div>
                         </div>
-                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm border-dark">
+                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm">
                             <div class="card-body p-0">
                                 <table
-                                    class="table align-middle mb-0 table-striped text-wrap table-hover">
+                                    class="table align-middle mb-0 table-striped text-wrap table-hover table-bordered">
                                     <thead class="table-dark">
                                         <tr>
                                             <th>Kategori</th>

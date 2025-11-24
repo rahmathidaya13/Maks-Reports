@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -23,6 +23,20 @@ class StoryStatusReportModel extends Model
         'report_time',
         'count_status',
     ];
+    protected $appends = ['informasi'];
+    public function getInformasiAttribute()
+    {
+        $created = Carbon::parse($this->created_at);
+        $updated = Carbon::parse($this->updated_at);
+        // Jika lebih dari 1 hari → tidak perlu highlight
+        if ($created->diffInDays(now()) >= 1 && $updated->diffInDays(now()) >= 1) {
+            return "";
+        }
+        if ($created->eq($updated)) {
+            return "Baru dibuat " . $created->diffForHumans();
+        }
+        return "Terakhir diperbarui " . $updated->diffForHumans();
+    }
     public static function boot()
     {
         parent::boot();

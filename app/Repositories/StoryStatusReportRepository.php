@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use Illuminate\Support\Carbon;
 use App\Models\StoryStatusReportModel;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -14,9 +13,6 @@ class StoryStatusReportRepository extends BaseCacheRepository
      */
     protected function getData(array $filters = []): LengthAwarePaginator
     {
-        $recent_timestamp = session('recent_timestamp');
-        $recent_action = session('highlight_type');
-
         $query = StoryStatusReportModel::with('creator')
             ->where('created_by', auth()->user()->id)
             ->when(empty($filters['start_date']) && empty($filters['end_date']), function ($q) {
@@ -30,26 +26,10 @@ class StoryStatusReportRepository extends BaseCacheRepository
                     $filters['end_date']
                 ]);
             });
+
+        // Ambil data paginasi
         $storyReport = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 10);
-
-        if ($recent_timestamp) {
-            $recent = Carbon::parse($recent_timestamp);
-            $storyReport->getCollection()->transform(function ($item) use ($recent, $recent_action) {
-                $item->is_recent_created = false;
-                $item->is_recent_updated = false;
-
-                if ($recent_action === 'create' && $item->created_at >= $recent) {
-                    $item->is_recent_created = $item->created_at->gt(now()->subDay());
-                }
-
-                if ($recent_action === 'edit' && $item->updated_at >= $recent) {
-                    $item->is_recent_updated = $item->updated_at->gt(now()->subDay());
-                }
-
-                return $item;
-            });
-        }
 
         return $storyReport;
     }

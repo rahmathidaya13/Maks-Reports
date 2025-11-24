@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\ConfirmPasswordController;
+use App\Http\Controllers\StoryReport\StatusReportPrintOut;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
@@ -99,6 +100,11 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::delete('/story_report/destroy/{id}', 'destroy')->name('story_report.deleted');
         Route::post('/story_report/delete_all', 'destroy_all')->name('story_report.destroy_all');
     });
+    
+    Route::controller(StatusReportPrintOut::class)->group(function () {
+        Route::get('/story_report/export_to_excel', 'printToExcel')->name('story_report.print_to_excel');
+    });
+
 });
 
 Route::controller(ProfileController::class)->group(function () {
