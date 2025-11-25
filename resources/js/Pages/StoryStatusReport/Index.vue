@@ -190,7 +190,8 @@ const exportTo = (type) => {
     if (type === "pdf") {
         router.get(route("story_report"));
     } else if (type === "excel") {
-        router.get(route("story_report.print_to_excel"));
+        window.location.href = route("story_report.print_to_excel");
+        // router.get(route("story_report.print_to_excel"));
     }
 };
 
