@@ -188,7 +188,7 @@ const downloadItems = [
 const exportTo = (type) => {
     console.log(type);
     if (type === "pdf") {
-        router.get(route("story_report"));
+        window.location.href = route("story_report.print_to_pdf");
     } else if (type === "excel") {
         window.location.href = route("story_report.print_to_excel");
         // router.get(route("story_report.print_to_excel"));
@@ -263,8 +263,6 @@ const exportTo = (type) => {
                         </transition>
 
                         <div class="d-inline-flex ms-auto gap-1">
-                            <!-- <a :href="route('story_report.print_to_excel')" class="btn btn-success">Download Excel
-                            </a> -->
                             <drop-down variant="success" :items="downloadItems" @action="exportTo" />
 
                             <div class="position-relative">
@@ -344,11 +342,11 @@ const exportTo = (type) => {
                                             <td class="text-center">{{ row.count_status }}
                                             </td>
                                             <td class="text-center ">{{
-                                                moment(row.created_at).format('DD-MM-YYYY, H:mm A') }}
+                                                moment(row.created_at).format('H:mm A') }}
                                             </td>
                                             <td class="text-center">{{ row.updated_at === row.created_at
                                                 ? '-'
-                                                : moment(row.updated_at).format('DD-MM-YYYY, H:mm A') }}
+                                                : moment(row.updated_at).format('H:mm A') }}
                                             </td>
                                             <td class="text-center">
                                                 <div class="dropdown dropstart">
@@ -366,7 +364,7 @@ const exportTo = (type) => {
                                                         <li>
                                                             <button @click="deleted('story_report.deleted', row)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Hapus <i class="fas fa-recycle text-danger"></i>
+                                                                Hapus <i class="fas fa-trash-alt text-danger"></i>
                                                             </button>
                                                         </li>
                                                         <li>
@@ -516,7 +514,7 @@ const exportTo = (type) => {
 
 /* Hover hanya untuk teks table, tapi TIDAK untuk dropdown */
 .table.table-hover tbody tr:hover {
-    background-color: rgba(0, 183, 255, 0.171) !important;
+    background-color: rgba(0, 183, 255, 0.171);
     text-shadow: 0 0 0 rgba(0, 0, 0, 0.918);
     transition: all 0.15s ease-in-out;
 }

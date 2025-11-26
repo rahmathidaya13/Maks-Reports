@@ -27,7 +27,6 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ->map(function ($report, $index) {
                 return [
                     'No' => $index + 1,
-                    'Nama' => $report->creator->name ?? 'N/A', // Mengganti 'created_by' (ID) dengan 'creator->name'
                     'Kode Status' => $report->report_code,
                     'Tanggal' => Carbon::parse($report->report_date)->translatedFormat('l, d-m-Y'),
                     'Jam' => Carbon::parse($report->report_time)->format('H:i'),
@@ -50,7 +49,6 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             [],
             [
                 'No',
-                'Nama',
                 'Kode Status',
                 'Tanggal',
                 'Jam',
@@ -65,7 +63,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         //  MERGE UNTUK HEADING UTAMA
         // =====================================
         foreach (range(1, 4) as $row) {
-            $sheet->mergeCells("A{$row}:F{$row}");
+            $sheet->mergeCells("A{$row}:E{$row}");
         }
 
         // Judul utama (A1)
@@ -82,7 +80,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
@@ -100,7 +98,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
@@ -115,7 +113,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // ==============================
         // 🎨 HEADER TABLE (Baris 5)
         // ==============================
-        $sheet->getStyle('A5:F5')->applyFromArray([
+        $sheet->getStyle('A5:E5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['argb' => 'FFFFFFFF'], // putih
@@ -127,12 +125,12 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['argb' => 'FF000000'],
+                    'color' => ['argb' => 'FF000000'],
                 ],
             ],
         ]);
@@ -142,19 +140,19 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // ==============================
         $lastRow = $sheet->getHighestRow();
 
-        $sheet->getStyle("A6:F$lastRow")->applyFromArray([
+        $sheet->getStyle("A6:E$lastRow")->applyFromArray([
             'font' => [
                 'size' => 12,
                 'name' => 'Calibri'
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['argb' => 'FF000000'],
+                    'color' => ['argb' => 'FF000000'],
                 ],
             ],
         ]);
@@ -171,14 +169,14 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         $totalRow = $lastRow + 1;
 
         // Tulis label TOTAL (A–D)
-        $sheet->setCellValue("E$totalRow", "Total");
+        $sheet->setCellValue("D$totalRow", "Total");
         // $sheet->mergeCells("A$totalRow:D$totalRow");
 
         // Tulis totalnya (kolom E)
-        $sheet->setCellValue("F$totalRow", $total);
+        $sheet->setCellValue("E$totalRow", $total);
 
         // Styling baris total
-        $sheet->getStyle("E$totalRow:F$totalRow")->applyFromArray([
+        $sheet->getStyle("D$totalRow:E$totalRow")->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 12,
@@ -186,7 +184,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -195,7 +193,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['argb' => 'FF000000'],
+                    'color' => ['argb' => 'FF000000'],
                 ],
             ],
         ]);
@@ -207,7 +205,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // 🌫 Zebra striping
         for ($row = 6; $row <= $lastRow; $row++) {
             if ($row % 2 == 0) {
-                $sheet->getStyle("A$row:F$row")->applyFromArray([
+                $sheet->getStyle("A$row:E$row")->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['argb' => 'ebebebfa'], // putih keabu lembut
@@ -222,31 +220,31 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
 
         $ttdStart = $totalRow + 3;
         // Tanggal + Kota
-        $sheet->getStyle("D{$ttdStart}")->applyFromArray([
+        $sheet->getStyle("C{$ttdStart}")->applyFromArray([
             'font' => [
                 'bold' => false,
                 'size' => 12,
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
         // Label: Dibuat oleh - Disetujui oleh
         $ttdRow1 = $ttdStart + 2;
 
-        $sheet->setCellValue("D{$ttdRow1}", "Dibuat oleh,");
-        $sheet->setCellValue("F{$ttdRow1}", "Disetujui oleh,");
+        $sheet->setCellValue("C{$ttdRow1}", "Dibuat oleh,");
+        $sheet->setCellValue("E{$ttdRow1}", "Diketahui oleh,");
 
-        $sheet->getStyle("D{$ttdRow1}:F{$ttdRow1}")->applyFromArray([
+        $sheet->getStyle("C{$ttdRow1}:E{$ttdRow1}")->applyFromArray([
             'font' => [
                 'bold' => false,
                 'size' => 12,
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
@@ -254,22 +252,22 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         $ttdRow2 = $ttdRow1 + 3;
 
         // Nama user dan manager
-        $sheet->setCellValue("D{$ttdRow2}", "(" . auth()->user()->name . ")");
-        $sheet->setCellValue("F{$ttdRow2}", "");
+        $sheet->setCellValue("C{$ttdRow2}", "(" . auth()->user()->name . ")");
+        $sheet->setCellValue("E{$ttdRow2}", "");
 
-        $sheet->getStyle("D{$ttdRow2}:F{$ttdRow2}")->applyFromArray([
+        $sheet->getStyle("C{$ttdRow2}:E{$ttdRow2}")->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 12,
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
-        $sheet->getStyle("D{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("F{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("C{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("E{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
 
 

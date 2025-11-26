@@ -100,9 +100,10 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::delete('/story_report/destroy/{id}', 'destroy')->name('story_report.deleted');
         Route::post('/story_report/delete_all', 'destroy_all')->name('story_report.destroy_all');
     });
-    
+
     Route::controller(StatusReportPrintOut::class)->group(function () {
         Route::get('/story_report/export_to_excel', 'printToExcel')->name('story_report.print_to_excel');
+        Route::get('/story_report/export_to_pdf', 'printToPdf')->name('story_report.print_to_pdf');
     });
 
 });
@@ -154,3 +155,7 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::get('/users/refresh', 'refresh')->name('users.refresh');
     });
 });
+
+Route::get("/laporan/pdf", function(){
+    return view('pdf.status_report');
+})->name("print.pdf");
