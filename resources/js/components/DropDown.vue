@@ -40,7 +40,8 @@ const props = defineProps({
 
         <ul class="dropdown-menu shadow-sm border-0">
             <li v-for="item in items" :key="item.id">
-                <button href="#" class="dropdown-item fw-semibold d-flex justify-content-between align-items-center"
+                <button type="button"
+                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center"
                     @click="emit('action', item.id)">
 
                     {{ item.text }}

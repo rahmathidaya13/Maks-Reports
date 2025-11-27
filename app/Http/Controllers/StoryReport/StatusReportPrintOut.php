@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\StoryStatusReportModel;
 use Barryvdh\DomPDF\Facade\Pdf;
+
 class StatusReportPrintOut extends Controller
 {
     public function printToExcel()
@@ -16,7 +17,6 @@ class StatusReportPrintOut extends Controller
         // dd('hello world');
         $fileName = 'Laporan_Status_Update_' . now()->format('Ymd_His') . '.xlsx';
         return Excel::download(new StatusReportUpdate, $fileName);
-
     }
     public function printToPdf()
     {
@@ -39,6 +39,7 @@ class StatusReportPrintOut extends Controller
 
         $pdfLoad = Pdf::loadView('pdf.status_report', [
             'nama' => $reportStatus[0]['nama'],
+            'jabatan' => $jobTitle,
             'branch' => $branchName,
             'reports' => $reportStatus,
             'date_now' => Carbon::now()->translatedFormat('l, d-m-Y'),

@@ -155,7 +155,7 @@ function daysOnlyConvert(dayValue) {
                     <button title="Hapus Semua Form" v-if="forms.length > 1 && !form.processing"
                         class="btn btn-outline-danger position-relative align-items-center"
                         @click="forms = [{ report_time: '', count_status: '' }]"><i class="fas fa-recycle"></i> Hapus
-                        <span class="badge text-bg-danger rounded-pill">{{ forms.length - 1 }}</span>
+                        <span class="badge text-bg-danger rounded-pill">{{ forms.length }}</span>
                     </button>
 
 

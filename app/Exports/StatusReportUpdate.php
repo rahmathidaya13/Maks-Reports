@@ -118,6 +118,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
                 'bold' => true,
                 'color' => ['argb' => 'FFFFFFFF'], // putih
                 'size' => 12,
+                'name' => 'Calibri'
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -230,14 +231,15 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
                 'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
-
         // Label: Dibuat oleh - Disetujui oleh
         $ttdRow1 = $ttdStart + 2;
 
-        $sheet->setCellValue("C{$ttdRow1}", "Dibuat oleh,");
+        $sheet->mergeCells("A{$ttdRow1}:B{$ttdRow1}");
+
+        $sheet->setCellValue("A{$ttdRow1}", "Dibuat oleh,");
         $sheet->setCellValue("E{$ttdRow1}", "Diketahui oleh,");
 
-        $sheet->getStyle("C{$ttdRow1}:E{$ttdRow1}")->applyFromArray([
+        $sheet->getStyle("A{$ttdRow1}:E{$ttdRow1}")->applyFromArray([
             'font' => [
                 'bold' => false,
                 'size' => 12,
@@ -251,11 +253,13 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // Ruang untuk tanda tangan (kosong)
         $ttdRow2 = $ttdRow1 + 3;
 
+        $sheet->mergeCells("A{$ttdRow2}:B{$ttdRow2}");
+
         // Nama user dan manager
-        $sheet->setCellValue("C{$ttdRow2}", "(" . auth()->user()->name . ")");
+        $sheet->setCellValue("A{$ttdRow2}", "(" . auth()->user()->name . ")");
         $sheet->setCellValue("E{$ttdRow2}", "");
 
-        $sheet->getStyle("C{$ttdRow2}:E{$ttdRow2}")->applyFromArray([
+        $sheet->getStyle("A{$ttdRow2}:E{$ttdRow2}")->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 12,
@@ -266,7 +270,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ],
         ]);
 
-        $sheet->getStyle("C{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("A{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("E{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
 
