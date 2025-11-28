@@ -1,145 +1,98 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from "vue";
-
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Modal } from 'bootstrap'
 const props = defineProps({
-    modalId: { type: String, default: "exampleModal" },
-    title: { type: String, default: "Modal title" },
-    body: { type: String, default: "" },
-    show: { type: Boolean, default: false },
-    dialogClass: { type: String, default: "" },
-    close: { type: String, default: "Close" },
-    save: { type: String, default: "Save" },
-});
+    show: Boolean,
+    title: String,
+    size: {
+        type: String,
+        default: '',
+    },
+})
 
-const emit = defineEmits(["update:show", "save", "hidden", "shown"]);
+const emit = defineEmits(["update:show", "opened", "closed"])
 
-const visible = ref(props.show);
-const modalRef = ref(null);
+const modalEl = ref(null)
+let modalInstance = null
 
-// Sync prop -> internal
-watch(
-    () => props.show,
-    (value) => {
-        visible.value = value;
-        toggleScroll(value);
+
+onMounted(() => {
+    modalInstance = new Modal(modalEl.value, {
+        backdrop: true,
+        keyboard: true
+    })
+
+    if (props.show) {
+        modalInstance.show()
     }
-);
 
-// Disable body scroll while modal open
-function toggleScroll(state) {
-    document.body.style.overflow = state ? "hidden" : "";
-}
+    modalEl.value.addEventListener('shown.bs.modal', () => {
+        emit("opened")
+    })
 
-function hide() {
-    visible.value = false;
-    emit("update:show", false);
-}
+    modalEl.value.addEventListener('hidden.bs.modal', () => {
+        emit("update:show", false)
+        emit("closed")
+    })
+})
 
-function onBeforeEnter() {
-    emit("shown");
-}
-
-function onAfterLeave() {
-    emit("hidden");
-    toggleScroll(false);
-}
-
-// Cleanup jika component di-destroy
 onUnmounted(() => {
-    toggleScroll(false);
-});
+    if (modalInstance) modalInstance.dispose()
+})
+
+watch(() => props.show, (v) => {
+    if (!modalInstance) return
+    if (v) {
+        modalInstance.show()
+    } else {
+        modalInstance.hide()
+    }
+})
+
 </script>
 
 <template>
-    <transition name="modal-fade" @before-enter="onBeforeEnter" @after-leave="onAfterLeave">
-        <div v-if="visible">
-            <!-- BACKDROP -->
-            <transition name="backdrop-fade">
-                <div class="modal-backdrop" v-if="visible"></div>
-            </transition>
+    <div class="modal custom-modal fade" tabindex="-1" ref="modalEl">
+        <div class="modal-dialog" :class="size">
+            <div class="modal-content smooth-content">
 
-            <div class="modal" ref="modalRef" :id="modalId" role="dialog" :aria-labelledby="modalId + 'Label'"
-                aria-modal="true" style="display: block;">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ title }}</h5>
+                    <button type="button" class="btn-close" @click="emit('update:show', false)"></button>
+                </div>
 
-                <div class="modal-dialog" :class="dialogClass">
-                    <div class="modal-content">
+                <div class="modal-body">
+                    <slot />
+                </div>
 
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5" :id="modalId + 'Label'">
-                                {{ title }}
-                            </h1>
-                            <button type="button" class="btn-close" aria-label="Close" @click="hide"></button>
-                        </div>
-
-                        <div class="modal-body">
-                            <slot name="body">
-                                {{ body }}
-                            </slot>
-                        </div>
-
-                        <div class="modal-footer d-flex justify-content-between">
-                            <slot name="footer">
-                                <button type="button" class="btn btn-outline-secondary" @click="hide">
-                                    {{ close }}
-                                </button>
-                                <button type="button" class="btn btn-primary" @click="$emit('save')">
-                                    {{ save }}
-                                </button>
-                            </slot>
-                        </div>
-
-                    </div>
+                <div class="modal-footer">
+                    <slot name="footer">
+                        <button class="btn btn-secondary" @click="emit('update:show', false)">Close</button>
+                    </slot>
                 </div>
 
             </div>
         </div>
-    </transition>
+    </div>
 </template>
 
 <style scoped>
-/* === Smooth fade + slide === */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-    /* transition: all 0.25s ease; */
+/* =============== ANIMASI BACKDROP =============== */
+.custom-modal.fade .modal-backdrop {
+    transition: opacity .35s ease !important;
 }
 
-.modal-fade-enter-from {
+/* =============== ANIMASI MODAL CONTENT =============== */
+.custom-modal .smooth-content {
+    transform: translateY(-20px);
     opacity: 0;
-    /* transform: translateY(-12px); */
+    transition:
+        transform .35s ease,
+        opacity .35s ease !important;
 }
 
-.modal-fade-leave-to {
-    opacity: 0;
-    transform: translateY(-12px);
-}
-
-/* === Backdrop Animation === */
-.backdrop-fade-enter-active,
-.backdrop-fade-leave-active {
-    transition: opacity 0.25s ease;
-}
-
-.backdrop-fade-enter-from,
-.backdrop-fade-leave-to {
-    opacity: 0;
-}
-
-/* === Backdrop Style === */
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.747);
-    z-index: 1040;
-}
-
-/* === Modal Positioning === */
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1050;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+.custom-modal.show .smooth-content {
+    transform: translateY(0);
+    opacity: 1;
 }
 </style>

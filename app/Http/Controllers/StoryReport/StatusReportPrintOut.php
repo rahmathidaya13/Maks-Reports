@@ -25,11 +25,12 @@ class StatusReportPrintOut extends Controller
         $jobTitle = $user->profile->jobTitle->title ?? '-';
 
         $reportStatus = StoryStatusReportModel::with('creator')
+            ->where('created_by', $user->id)
+            ->whereDate('created_at', now()->toDateString())
             ->get()
             ->map(function ($report, $index) {
                 return [
                     'no' => $index + 1,
-                    'nama' => $report->creator->name,
                     'kode' => $report->report_code,
                     'tanggal' => Carbon::parse($report->report_date)->translatedFormat('l, d-m-Y'),
                     'jam' => Carbon::parse($report->report_time)->format('H:i'),
@@ -37,14 +38,26 @@ class StatusReportPrintOut extends Controller
                 ];
             });
 
-        $pdfLoad = Pdf::loadView('pdf.status_report', [
-            'nama' => $reportStatus[0]['nama'],
-            'jabatan' => $jobTitle,
-            'branch' => $branchName,
-            'reports' => $reportStatus,
-            'date_now' => Carbon::now()->translatedFormat('l, d-m-Y'),
+        $pdfLoad = Pdf::loadView('pdf.ReportToPdf', [
+            'headers' => ['No', 'Kode Status', 'Tanggal', 'Jam', 'Jumlah'],
+            'data' => $reportStatus,
+            'title' => 'Laporan Harian Update Status',
+            'subtitle' => 'PT. Toko Maksindo Cabang ' . ucwords($branchName),
+            'dibuat' => $user->name,
             'total' => $reportStatus->sum('jumlah_status'),
-        ])->setPaper('A4', 'portrait');
-        return $pdfLoad->stream('laporan_status.pdf');
+            'info' => [
+                'Tanggal: ' . Carbon::now()->translatedFormat('l, d/m/Y'),
+                'Periode: Minggu ke-' . Carbon::now()->weekOfMonth,
+                'Divisi: ' . $jobTitle,
+            ],
+            'logo' => public_path('storage/logo/logo.jpg'),
+            'logo_width' => '420px',
+            'logo_opacity' => 0.06,
+            'logo_top' => '50%',
+            'logo_left' => '50%',
+
+        ]);
+        $pdfLoad->setPaper('A4', 'portrait');
+        return $pdfLoad->stream('laporan_update_status ' . now()->format('Ymd_His') . '.pdf');
     }
 }

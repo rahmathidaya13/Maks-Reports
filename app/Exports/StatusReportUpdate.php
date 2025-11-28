@@ -23,6 +23,8 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
     {
         // Mengambil data dan memetakan (map) untuk menyesuaikan urutan dan format
         return StoryStatusReportModel::with('creator')
+            ->where('created_by', auth()->id())
+            ->whereDate('created_at', now()->toDateString())
             ->get()
             ->map(function ($report, $index) {
                 return [
@@ -45,7 +47,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         return [
             ['LAPORAN HARIAN UPDATE STATUS'],
             ['PT. Toko Maksindo Cabang ' . ucwords($branchName)],
-            ['Tanggal Laporan: ' . Carbon::now()->translatedFormat('l, d-m-Y') . ', ' . 'Minggu ke-' . $today->weekOfMonth],
+            ['Tanggal Laporan: ' . Carbon::now()->translatedFormat('l, d/m/Y') . ', ' . 'Minggu ke-' . $today->weekOfMonth],
             [],
             [
                 'No',
@@ -221,23 +223,24 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
 
         $ttdStart = $totalRow + 3;
         // Tanggal + Kota
-        $sheet->getStyle("C{$ttdStart}")->applyFromArray([
-            'font' => [
-                'bold' => false,
-                'size' => 12,
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-        ]);
-        // Label: Dibuat oleh - Disetujui oleh
+        // $sheet->getStyle("C{$ttdStart}")->applyFromArray([
+        //     'font' => [
+        //         'bold' => false,
+        //         'size' => 12,
+        //     ],
+        //     'alignment' => [
+        //         'horizontal' => Alignment::HORIZONTAL_CENTER,
+        //         'vertical' => Alignment::VERTICAL_CENTER,
+        //     ],
+        // ]);
+        // Label: Dibuat oleh - Diketahui oleh
         $ttdRow1 = $ttdStart + 2;
 
         $sheet->mergeCells("A{$ttdRow1}:B{$ttdRow1}");
 
         $sheet->setCellValue("A{$ttdRow1}", "Dibuat oleh,");
-        $sheet->setCellValue("E{$ttdRow1}", "Diketahui oleh,");
+        $sheet->setCellValue("C{$ttdRow1}", "Diketahui oleh,");
+        $sheet->setCellValue("E{$ttdRow1}", "Disetujui oleh,");
 
         $sheet->getStyle("A{$ttdRow1}:E{$ttdRow1}")->applyFromArray([
             'font' => [
@@ -251,13 +254,14 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         ]);
 
         // Ruang untuk tanda tangan (kosong)
-        $ttdRow2 = $ttdRow1 + 3;
+        $ttdRow2 = $ttdRow1 + 4;
 
         $sheet->mergeCells("A{$ttdRow2}:B{$ttdRow2}");
 
-        // Nama user dan manager
-        $sheet->setCellValue("A{$ttdRow2}", "(" . auth()->user()->name . ")");
-        $sheet->setCellValue("E{$ttdRow2}", "");
+        // Nama user dan jabatan tertentu
+        $sheet->setCellValue("A{$ttdRow2}", auth()->user()->name);
+        $sheet->setCellValue("C{$ttdRow2}", "__________________");
+        $sheet->setCellValue("E{$ttdRow2}", "__________________");
 
         $sheet->getStyle("A{$ttdRow2}:E{$ttdRow2}")->applyFromArray([
             'font' => [
@@ -271,6 +275,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         ]);
 
         $sheet->getStyle("A{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("C{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("E{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
 

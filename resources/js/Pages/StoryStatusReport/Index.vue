@@ -195,6 +195,16 @@ const exportTo = (type) => {
     }
 };
 
+const showModal = ref(false);
+// buka modal
+function openModal() {
+    showModal.value = true
+}
+
+// tutup modal SETELAH Bootstrap selesai animasi
+function closeModal() {
+    showModal.value = false
+}
 </script>
 <template>
 
@@ -272,6 +282,10 @@ const exportTo = (type) => {
                         </div>
                     </div>
 
+                    <button @click="openModal"> Klik me</button>
+                    <modal v-if="showModal" :show="showModal" title="Contoh Modal" @update:show="showModal = $event"
+                        @closed="closeModal" />
+
                     <div class="card mb-4 overflow-hidden rounded-3 shadow-sm">
                         <div v-if="isLoading">
                             <loader-horizontal message="Sedang memproses data" />
@@ -333,7 +347,7 @@ const exportTo = (type) => {
                                                 </div>
                                                 <small class="fw-normal text-muted" style="font-size: 12px;">{{
                                                     row.informasi
-                                                    }}</small>
+                                                }}</small>
                                             </td>
                                             <td class="text-center">
                                                 <span>{{ row.report_time.slice(0, 5) }}</span>
