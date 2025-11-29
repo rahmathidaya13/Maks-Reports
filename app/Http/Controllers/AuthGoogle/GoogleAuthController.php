@@ -38,23 +38,26 @@ class GoogleAuthController extends Controller
             $user = User::firstOrCreate(
                 ['email' => $googleUser->getEmail()],
                 [
+                    'email' => $googleUser->getEmail(),
                     'name' => $googleUser->getName(),
                     'google_id' => $googleUser->getId(),
                     'password' => bcrypt(Str::random(26)),
                     'email_verified_at' => now(),
                 ]
             );
+            $user->update(['is_active' => true, 'first_login' => now()]);
 
             // Jika user lama belum ada google_id, update
             if (!$user->google_id) {
                 $user->update(['google_id' => $googleUser->getId()]);
             }
 
-            // Tandai user aktif
-            $user->profile()->create();
+            // Tandai user
+            $user->profile()->firstOrCreate([
+                'users_id' => $user->id,
+            ]);
             $user->syncRoles('user');
             $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
-            $user->update(['is_active' => true, 'first_login' => now()]);
             (new \App\Services\UserService())->checkAndBroadcastStatus();
             Auth::login($user, true);
 

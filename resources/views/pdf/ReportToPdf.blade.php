@@ -61,12 +61,12 @@
         .header .title {
             font-size: 22px;
             font-weight: bold;
-            color: #34495e;
+            color: #32465a;
         }
 
         .header .subtitle {
             font-size: 16px;
-            color: #7f8c8d;
+            color: #798586;
         }
 
         .header .info {
@@ -142,9 +142,9 @@
 <body>
 
     <!-- LOGO WATERMARK -->
-    @if (!empty($logo))
+    {{-- @if (!empty($logo))
         <img src="{{ $logo }}" class="logo-watermark">
-    @endif
+    @endif --}}
 
     <!-- HEADER -->
     <div class="header">

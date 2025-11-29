@@ -35,10 +35,7 @@ onMounted((p) => {
         <div id="layoutSidenav_content">
             <main>
                 <div class="container-fluid">
-
-                    <!-- <Breadcrumbs /> -->
                     <slot name="content" />
-
                 </div>
             </main>
             <Footer />

@@ -65,7 +65,7 @@ trait DashboardSummaryStatusReport
             'firstTime' => $reports->first()->report_time,
             'lastTime' => $reports->last()->report_time,
             'lastUpdate' => $reports->last()->updated_at->diffForHumans(),
-            'periode' => now()->format('d-m-Y'),
+            'periode' => now()->format('d/m/Y'),
         ];
     }
 }

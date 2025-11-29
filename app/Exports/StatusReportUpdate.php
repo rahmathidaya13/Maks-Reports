@@ -19,12 +19,21 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
      * @return \Illuminate\Support\Collection
      */
     // Jumlah kolom yang akan diekspor adalah 5 (A hingga E)
+
+    protected $start_date = null;
+    protected $end_date = null;
+    public function __construct($start_date, $end_date)
+    {
+        $this->start_date = $start_date;
+        $this->end_date = $end_date;
+    }
     public function collection()
     {
         // Mengambil data dan memetakan (map) untuk menyesuaikan urutan dan format
-        return StoryStatusReportModel::with('creator')
-            ->where('created_by', auth()->id())
-            ->whereDate('created_at', now()->toDateString())
+        $data =  StoryStatusReportModel::with('creator')
+            ->where('created_by', auth()->user()->id)
+            ->whereNull('deleted_at')
+            ->whereBetween('report_date', [$this->start_date, $this->end_date])
             ->get()
             ->map(function ($report, $index) {
                 return [
@@ -35,6 +44,19 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
                     'Jumlah Status' => $report->count_status,
                 ];
             });
+
+        // Jika tidak ada data, tambahkan 1 baris keterangan
+        if ($data->count() === 0) {
+            return collect([[
+                'No' => '-',
+                'Kode Status' => 'Tidak ada data',
+                'Tanggal' => '-',
+                'Jam' => '-',
+                'Jumlah Status' => 0,
+            ]]);
+        }
+
+        return $data;
     }
 
     public function headings(): array
@@ -43,11 +65,12 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         $branchName = $user->profile->branch->name ?? '-';
         $jobTitle = $user->profile->jobTitle->title ?? '-';
 
-        $today = Carbon::now()->locale('id');
+        $weekStart = Carbon::parse($this->start_date)->weekOfMonth;
+        $weekEnd   = Carbon::parse($this->end_date)->weekOfMonth;
         return [
             ['LAPORAN HARIAN UPDATE STATUS'],
             ['PT. Toko Maksindo Cabang ' . ucwords($branchName)],
-            ['Tanggal Laporan: ' . Carbon::now()->translatedFormat('l, d/m/Y') . ', ' . 'Minggu ke-' . $today->weekOfMonth],
+            ['Tanggal Laporan: ' . Carbon::now()->translatedFormat('l, d/m/Y') . ', ' . 'Minggu ke-' . $weekStart . ($weekStart != $weekEnd ? ' s/d ' . $weekEnd : '')],
             [],
             [
                 'No',
@@ -166,7 +189,11 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // ==============================
 
         // Hitung total jumlah status
-        $total = StoryStatusReportModel::sum('count_status');
+        $total = StoryStatusReportModel::with('creator')
+            ->whereBetween('report_date', [$this->start_date, $this->end_date])
+            ->where('created_by', auth()->user()->id)
+            ->whereNull('deleted_at')
+            ->sum('count_status');
 
         // Baris total berada setelah data terakhir
         $totalRow = $lastRow + 1;
@@ -206,14 +233,16 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
 
 
         // 🌫 Zebra striping
-        for ($row = 6; $row <= $lastRow; $row++) {
-            if ($row % 2 == 0) {
-                $sheet->getStyle("A$row:E$row")->applyFromArray([
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'ebebebfa'], // putih keabu lembut
-                    ],
-                ]);
+        if ($lastRow > 6) {
+            for ($row = 6; $row <= $lastRow; $row++) {
+                if ($row % 2 == 0) {
+                    $sheet->getStyle("A$row:E$row")->applyFromArray([
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['argb' => 'ebebebfa'],
+                        ],
+                    ]);
+                }
             }
         }
 

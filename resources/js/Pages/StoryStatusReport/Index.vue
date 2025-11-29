@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
-import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
 import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
@@ -191,7 +191,6 @@ const exportTo = (type) => {
         window.location.href = route("story_report.print_to_pdf");
     } else if (type === "excel") {
         window.location.href = route("story_report.print_to_excel");
-        // router.get(route("story_report.print_to_excel"));
     }
 };
 
@@ -205,6 +204,30 @@ function openModal() {
 function closeModal() {
     showModal.value = false
 }
+
+// form untuk kirim berdasarkan tanggal
+const form = reactive({
+    start_date: '',
+    end_date: '',
+})
+function downloadPdf() {
+    const params = new URLSearchParams({
+        start_date: form.start_date,
+        end_date: form.end_date
+    });
+    window.location.href = route('story_report.print_to_pdf') + '?' + params.toString();
+}
+function downloadExcel() {
+    const params = new URLSearchParams({
+        start_date: form.start_date,
+        end_date: form.end_date
+    });
+    window.location.href = route('story_report.print_to_excel') + '?' + params.toString();
+}
+
+const isDisableBtnDownload = computed(() => {
+    return !(form.start_date && form.end_date);
+})
 </script>
 <template>
 
@@ -273,19 +296,14 @@ function closeModal() {
                         </transition>
 
                         <div class="d-inline-flex ms-auto gap-1">
-                            <drop-down variant="success" :items="downloadItems" @action="exportTo" />
-
+                            <base-button variant="success" icon="fas fa-download" @click="openModal" class="bg-gradient"
+                                name="unduh" label="Unduh" />
                             <div class="position-relative">
                                 <base-button @click="createReport" class="bg-gradient" name="create"
                                     label="Buat Laporan" icon="fas fa-plus" />
                             </div>
                         </div>
                     </div>
-
-                    <button @click="openModal"> Klik me</button>
-                    <modal v-if="showModal" :show="showModal" title="Contoh Modal" @update:show="showModal = $event"
-                        @closed="closeModal" />
-
                     <div class="card mb-4 overflow-hidden rounded-3 shadow-sm">
                         <div v-if="isLoading">
                             <loader-horizontal message="Sedang memproses data" />
@@ -430,6 +448,99 @@ function closeModal() {
 
                 </div>
             </div>
+
+            <modal :footer="false" icon="fas fa-download" v-if="showModal" :show="showModal" title="Unduh Laporan"
+                @update:show="showModal = $event" @closed="closeModal">
+                <template #body>
+                    <div class="btn-group w-100" role="group" aria-label="Basic example">
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="dropdown" aria-expanded="false">
+                            Hari Ini
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <button
+                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                    Unduh PDF <i class="fas fa-file-pdf text-danger"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                    Unduh Excel <i class="fas fa-file-excel text-success"></i>
+                                </button>
+                            </li>
+                        </ul>
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="dropdown" aria-expanded="false">
+                            Minggu Ini
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <button
+                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                    Unduh PDF <i class="fas fa-file-pdf text-danger"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                    Unduh Excel <i class="fas fa-file-excel text-success"></i>
+                                </button>
+                            </li>
+                        </ul>
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="dropdown" aria-expanded="false">
+                            Bulan Ini
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <button
+                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                    Unduh PDF <i class="fas fa-file-pdf text-danger"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                    Unduh Excel <i class="fas fa-file-excel text-success"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="row g-2 mb-3 text-bg-grey border p-2 rounded-3 pb-4 mt-3 shadow-sm">
+                            <div class="col-xl-6">
+                                <input-label class="fw-bold" for="start_date" value="Tanggal Awal" />
+                                <text-input type="date" name="start_date" v-model="form.start_date" />
+                            </div>
+                            <div class="col-xl-6">
+                                <input-label class="fw-bold" for="end_date" value="Tanggal Akhir" />
+                                <text-input type="date" name="end_date" v-model="form.end_date" />
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6>Informasi</h6>
+                            <p class="small text-muted">
+                                Pastikan rentang tanggal valid untuk mengunduh laporan.
+                            </p>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex gap-2 justify-content-end ">
+                            <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
+                                icon="fas fa-file-pdf" variant="danger" class="bg-gradient" name="print_pdf"
+                                label="Unduh PDF" />
+                            <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
+                                icon="fas fa-file-excel" variant="success" class="bg-gradient" name="print_excel"
+                                label="Unduh Excel" />
+                        </div>
+                    </div>
+
+                </template>
+            </modal>
         </template>
     </app-layout>
 </template>

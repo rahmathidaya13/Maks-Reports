@@ -15,6 +15,7 @@ class StoryStatusReportRepository extends BaseCacheRepository
     {
         $query = StoryStatusReportModel::with('creator')
             ->where('created_by', auth()->user()->id)
+            ->whereNull('deleted_at')
             ->when(empty($filters['start_date']) && empty($filters['end_date']), function ($q) {
                 // Jika user TIDAK memberikan filter → ambil data hari ini
                 $q->whereDate('report_date', now()->toDateString());

@@ -8,9 +8,21 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    position: {
+        type: String,
+        default: '',
+    },
+    icon: {
+        type: String,
+        default: null,
+    },
+    footer: {
+        type: Boolean,
+        default: true
+    }
 })
 
-const emit = defineEmits(["update:show", "opened", "closed"])
+const emit = defineEmits(["update:show", "opened", "closed", "save"])
 
 const modalEl = ref(null)
 let modalInstance = null
@@ -19,9 +31,9 @@ let modalInstance = null
 onMounted(() => {
     modalInstance = new Modal(modalEl.value, {
         backdrop: true,
-        keyboard: true
+        keyboard: false,
+        focus: true
     })
-
     if (props.show) {
         modalInstance.show()
     }
@@ -31,6 +43,7 @@ onMounted(() => {
     })
 
     modalEl.value.addEventListener('hidden.bs.modal', () => {
+
         emit("update:show", false)
         emit("closed")
     })
@@ -53,20 +66,21 @@ watch(() => props.show, (v) => {
 
 <template>
     <div class="modal custom-modal fade" tabindex="-1" ref="modalEl">
-        <div class="modal-dialog" :class="size">
+        <div :class="['modal-dialog ', position, size]">
             <div class="modal-content smooth-content">
 
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ title }}</h5>
+                <div class="modal-header text-bg-grey">
+                    <h5 class="modal-title fw-bold"> <i v-if="icon" :class="icon"></i> {{ title }}</h5>
                     <button type="button" class="btn-close" @click="emit('update:show', false)"></button>
                 </div>
 
                 <div class="modal-body">
-                    <slot />
+                    <slot name="body" />
                 </div>
 
-                <div class="modal-footer">
+                <div v-if="footer" class="modal-footer d-flex justify-content-between">
                     <slot name="footer">
+                        <button class="btn btn-primary" @click="emit('save')">Save</button>
                         <button class="btn btn-secondary" @click="emit('update:show', false)">Close</button>
                     </slot>
                 </div>

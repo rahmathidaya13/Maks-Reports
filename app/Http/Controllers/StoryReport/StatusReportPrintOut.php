@@ -12,21 +12,26 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class StatusReportPrintOut extends Controller
 {
-    public function printToExcel()
+    public function printToExcel(Request $request)
     {
-        // dd('hello world');
-        $fileName = 'Laporan_Status_Update_' . now()->format('Ymd_His') . '.xlsx';
-        return Excel::download(new StatusReportUpdate, $fileName);
+        $start_date = $request->input('start_date');
+        $end_date   = $request->input('end_date');
+
+        $fileName = 'Laporan_Update_Status_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(new StatusReportUpdate($start_date, $end_date), $fileName);
     }
-    public function printToPdf()
+    public function printToPdf(Request $request)
     {
+        $start_date = $request->input('start_date');
+        $end_date   = $request->input('end_date');
+
         $user = auth()->user();
         $branchName = $user->profile->branch->name ?? '-';
         $jobTitle = $user->profile->jobTitle->title ?? '-';
 
         $reportStatus = StoryStatusReportModel::with('creator')
             ->where('created_by', $user->id)
-            ->whereDate('created_at', now()->toDateString())
+            ->whereBetween('report_date', [$start_date, $end_date])
             ->get()
             ->map(function ($report, $index) {
                 return [
@@ -38,6 +43,9 @@ class StatusReportPrintOut extends Controller
                 ];
             });
 
+        $weekStart = Carbon::parse($start_date)->weekOfMonth;
+        $weekEnd   = Carbon::parse($end_date)->weekOfMonth;
+
         $pdfLoad = Pdf::loadView('pdf.ReportToPdf', [
             'headers' => ['No', 'Kode Status', 'Tanggal', 'Jam', 'Jumlah'],
             'data' => $reportStatus,
@@ -47,17 +55,17 @@ class StatusReportPrintOut extends Controller
             'total' => $reportStatus->sum('jumlah_status'),
             'info' => [
                 'Tanggal: ' . Carbon::now()->translatedFormat('l, d/m/Y'),
-                'Periode: Minggu ke-' . Carbon::now()->weekOfMonth,
+                'Periode: Minggu ke-' . $weekStart . ($weekStart != $weekEnd ? ' s/d ' . $weekEnd : ''),
                 'Divisi: ' . $jobTitle,
             ],
             'logo' => public_path('storage/logo/logo.jpg'),
             'logo_width' => '420px',
-            'logo_opacity' => 0.06,
+            'logo_opacity' => 0.05,
             'logo_top' => '50%',
             'logo_left' => '50%',
 
         ]);
         $pdfLoad->setPaper('A4', 'portrait');
-        return $pdfLoad->stream('laporan_update_status ' . now()->format('Ymd_His') . '.pdf');
+        return $pdfLoad->stream('Laporan_Update_Status ' . now()->format('Ymd_His') . '.pdf');
     }
 }
