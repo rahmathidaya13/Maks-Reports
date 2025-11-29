@@ -104,6 +104,7 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     Route::controller(StatusReportPrintOut::class)->group(function () {
         Route::get('/story_report/export_to_excel', 'printToExcel')->name('story_report.print_to_excel');
         Route::get('/story_report/export_to_pdf', 'printToPdf')->name('story_report.print_to_pdf');
+        Route::get('/story_report/information', 'information')->name('story_report.information');
     });
 
 });
@@ -156,6 +157,6 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
     });
 });
 
-Route::get("/laporan/pdf", function(){
+Route::get("/laporan/pdf", function () {
     return view('pdf.status_report');
 })->name("print.pdf");

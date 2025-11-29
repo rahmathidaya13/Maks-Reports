@@ -15,7 +15,7 @@ class StatusReportPrintOut extends Controller
     public function printToExcel(Request $request)
     {
         $start_date = $request->input('start_date');
-        $end_date   = $request->input('end_date');
+        $end_date = $request->input('end_date');
 
         $fileName = 'Laporan_Update_Status_' . now()->format('Ymd_His') . '.xlsx';
         return Excel::download(new StatusReportUpdate($start_date, $end_date), $fileName);
@@ -23,7 +23,7 @@ class StatusReportPrintOut extends Controller
     public function printToPdf(Request $request)
     {
         $start_date = $request->input('start_date');
-        $end_date   = $request->input('end_date');
+        $end_date = $request->input('end_date');
 
         $user = auth()->user();
         $branchName = $user->profile->branch->name ?? '-';
@@ -44,7 +44,7 @@ class StatusReportPrintOut extends Controller
             });
 
         $weekStart = Carbon::parse($start_date)->weekOfMonth;
-        $weekEnd   = Carbon::parse($end_date)->weekOfMonth;
+        $weekEnd = Carbon::parse($end_date)->weekOfMonth;
 
         $pdfLoad = Pdf::loadView('pdf.ReportToPdf', [
             'headers' => ['No', 'Kode Status', 'Tanggal', 'Jam', 'Jumlah'],
@@ -67,5 +67,34 @@ class StatusReportPrintOut extends Controller
         ]);
         $pdfLoad->setPaper('A4', 'portrait');
         return $pdfLoad->stream('Laporan_Update_Status ' . now()->format('Ymd_His') . '.pdf');
+    }
+
+    public function information(Request $request)
+    {
+        $start_date = $request->input('start_date');
+        $end_date = $request->input('end_date');
+
+        if (!$start_date || !$end_date) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid date'
+            ]);
+        }
+
+        $user = auth()->user();
+        $reportStatus = StoryStatusReportModel::with('creator')
+            ->where('created_by', $user->id)
+            ->whereBetween('report_date', [$start_date, $end_date])
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'total_rows' => $reportStatus->count(),
+            'total_status' => $reportStatus->sum('count_status'),
+            'first_date' => Carbon::parse($start_date)->translatedFormat('l, d-m-Y'),
+            'last_date' => Carbon::parse($end_date)->translatedFormat('l, d-m-Y'),
+            'week_start' => Carbon::parse($start_date)->weekOfMonth,
+            'week_end' => Carbon::parse($end_date)->weekOfMonth,
+        ]);
     }
 }

@@ -4,6 +4,7 @@ import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
 import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
+import axios from "axios";
 
 moment.locale('id');
 
@@ -211,23 +212,44 @@ const form = reactive({
     end_date: '',
 })
 function downloadPdf() {
-    const params = new URLSearchParams({
-        start_date: form.start_date,
-        end_date: form.end_date
-    });
-    window.location.href = route('story_report.print_to_pdf') + '?' + params.toString();
+    window.open(
+        route('story_report.print_to_pdf', {
+            start_date: form.start_date,
+            end_date: form.end_date
+        }),
+        '_blank'
+    )
 }
 function downloadExcel() {
-    const params = new URLSearchParams({
-        start_date: form.start_date,
-        end_date: form.end_date
-    });
-    window.location.href = route('story_report.print_to_excel') + '?' + params.toString();
+    window.open(
+        route('story_report.print_to_excel', {
+            start_date: form.start_date,
+            end_date: form.end_date
+        }),
+        '_self'
+    )
 }
 
 const isDisableBtnDownload = computed(() => {
     return !(form.start_date && form.end_date);
 })
+const information = ref(null);
+watch(() => [form.start_date, form.end_date],
+    async ([start_date, end_date]) => {
+        if (!start_date || !end_date) {
+            information.value = null;
+            return;
+        }
+        const { data } = await axios.get(route('story_report.information'), {
+            params: {
+                start_date: start_date,
+                end_date: end_date
+            }
+        })
+        if (data.status) {
+            information.value = data;
+        }
+    })
 </script>
 <template>
 
@@ -452,91 +474,53 @@ const isDisableBtnDownload = computed(() => {
             <modal :footer="false" icon="fas fa-download" v-if="showModal" :show="showModal" title="Unduh Laporan"
                 @update:show="showModal = $event" @closed="closeModal">
                 <template #body>
-                    <div class="btn-group w-100" role="group" aria-label="Basic example">
 
-                        <button type="button" class="btn btn-primary" data-bs-toggle="dropdown" aria-expanded="false">
-                            Hari Ini
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button
-                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                    Unduh PDF <i class="fas fa-file-pdf text-danger"></i>
-                                </button>
-                            </li>
-                            <li>
-                                <button
-                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                    Unduh Excel <i class="fas fa-file-excel text-success"></i>
-                                </button>
-                            </li>
-                        </ul>
-
-                        <button type="button" class="btn btn-primary" data-bs-toggle="dropdown" aria-expanded="false">
-                            Minggu Ini
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button
-                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                    Unduh PDF <i class="fas fa-file-pdf text-danger"></i>
-                                </button>
-                            </li>
-                            <li>
-                                <button
-                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                    Unduh Excel <i class="fas fa-file-excel text-success"></i>
-                                </button>
-                            </li>
-                        </ul>
-
-                        <button type="button" class="btn btn-primary" data-bs-toggle="dropdown" aria-expanded="false">
-                            Bulan Ini
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button
-                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                    Unduh PDF <i class="fas fa-file-pdf text-danger"></i>
-                                </button>
-                            </li>
-                            <li>
-                                <button
-                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                    Unduh Excel <i class="fas fa-file-excel text-success"></i>
-                                </button>
-                            </li>
-                        </ul>
+                    <div class="callout callout-info shadow-sm">
+                        <h6> <i class="fas fa-bullhorn"></i> Informasi</h6>
+                        <p class="small">
+                            Pastikan rentang tanggal valid untuk mengunduh laporan.
+                        </p>
                     </div>
-                    <div>
-                        <div class="row g-2 mb-3 text-bg-grey border p-2 rounded-3 pb-4 mt-3 shadow-sm">
-                            <div class="col-xl-6">
-                                <input-label class="fw-bold" for="start_date" value="Tanggal Awal" />
-                                <text-input type="date" name="start_date" v-model="form.start_date" />
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-xl-6 col-sm-6 col-md-6">
+                                    <input-label class="fw-semibold" for="start_date" value="Tanggal Awal" />
+                                    <text-input type="date" name="start_date" v-model="form.start_date" />
+                                </div>
+                                <div class="col-xl-6 col-md-6 col-sm-6">
+                                    <input-label class="fw-semibold" for="end_date" value="Tanggal Akhir" />
+                                    <text-input type="date" name="end_date" v-model="form.end_date" />
+                                </div>
                             </div>
-                            <div class="col-xl-6">
-                                <input-label class="fw-bold" for="end_date" value="Tanggal Akhir" />
-                                <text-input type="date" name="end_date" v-model="form.end_date" />
-                            </div>
                         </div>
+                    </div>
+                    <hr />
+                    <div v-if="information" class="text-bg-grey border rounded-3 p-3 mb-4 shadow-sm">
+                        <ul class="list-unstyled small mb-0">
+                            <li><b>Periode:</b>
+                                {{ information.first_date }} s/d {{ information.last_date }}
+                            </li>
+                            <li><b>Total Baris Data:</b> {{ information.total_rows }}</li>
+                            <li><b>Total Jumlah Status:</b> {{ information.total_status }}</li>
+                            <li>
+                                <b>Minggu Ke:</b>
+                                {{ information.week_start }}
+                                <template v-if="information.week_start !== information.week_end">
+                                    s/d {{ information.week_end }}
+                                </template>
+                            </li>
+                        </ul>
 
-                        <div class="alert alert-info">
-                            <h6>Informasi</h6>
-                            <p class="small text-muted">
-                                Pastikan rentang tanggal valid untuk mengunduh laporan.
-                            </p>
-                        </div>
+                    </div>
 
-                        <hr>
-
-                        <div class="d-flex gap-2 justify-content-end ">
-                            <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
-                                icon="fas fa-file-pdf" variant="danger" class="bg-gradient" name="print_pdf"
-                                label="Unduh PDF" />
-                            <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
-                                icon="fas fa-file-excel" variant="success" class="bg-gradient" name="print_excel"
-                                label="Unduh Excel" />
-                        </div>
+                    <div class="d-flex gap-2 justify-content-end ">
+                        <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
+                            icon="fas fa-file-pdf" :variant="!isDisableBtnDownload ? 'danger' : 'secondary'"
+                            class="bg-gradient" name="print_pdf" label="Unduh PDF" />
+                        <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
+                            icon="fas fa-file-excel" :variant="!isDisableBtnDownload ? 'success' : 'secondary'"
+                            class="bg-gradient" name="print_excel" label="Unduh Excel" />
                     </div>
 
                 </template>

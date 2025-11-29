@@ -74,7 +74,7 @@ watch(() => props.show, (v) => {
                     <button type="button" class="btn-close" @click="emit('update:show', false)"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body p-0 px-3 pb-3">
                     <slot name="body" />
                 </div>
 
