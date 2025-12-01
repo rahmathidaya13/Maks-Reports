@@ -46,6 +46,7 @@ class ProfileController extends Controller
             unset($profile->images);
         }
         $profile->users_id = auth()->user()->id;
+        $profile->id_number_employee = $request->input('id_number');
         $profile->job_title_id = $request->input('roles');
         $profile->branches_id = $request->input('branches');
         $profile->date_of_entry = $request->input('date_of_entry');

@@ -368,22 +368,22 @@ body {
 }
 
 .dropdown-menu {
-    min-width: 13rem;
+    min-width: 14rem;
     border-radius: 0.5rem;
     border: 1px solid #c9c9c9;
     overflow: hidden;
-    box-shadow: 0 4px 8px rgba(85, 80, 80, 0.377);
-    padding: 0;
+    box-shadow: 0 5px 8px rgba(85, 80, 80, 0.377);
+    padding: 10px 0;
 }
 
 .dropdown-menu .dropdown-item {
-    padding: 5px 15px;
-    transition: background-color 0.2s ease-in-out, color 0.2
+    padding: 4px 15px;
+    transition: background-color 0.2s ease-in-out, color 0.2;
 }
 
 .dropdown-menu .dropdown-item:hover {
-    background-color: #dfe2e7;
-    color: #000000;
+    background-color: #314668;
+    color: #ffffff;
 }
 
 .dropdown-menu .dropdown-header {

@@ -9,6 +9,7 @@ trait ProfileValidation
     public function validationText($request)
     {
         return Validator::make($request, [
+            'id_number' => 'required|string|unique:profile,id_number_employee',
             'roles' => 'required|exists:job_title,job_title_id',
             'branches' => 'required|exists:branches,branches_id',
             'date_of_entry' => 'required|date',
@@ -19,6 +20,9 @@ trait ProfileValidation
             'address' => 'required|string|max:250',
             'images' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ], [
+            'id_number.required' => 'ID Karyawan wajib diisi.',
+            'id_number.string' => 'ID Karyawan tidak valid.',
+            'id_number.unique' => 'ID Karyawan sudah terdaftar.',
             'roles.required' => 'Jabatan wajib dipilih.',
             'roles.exists' => 'Jabatan yang dipilih tidak valid.',
             'branches.required' => 'Lokasi wajib dipilih.',

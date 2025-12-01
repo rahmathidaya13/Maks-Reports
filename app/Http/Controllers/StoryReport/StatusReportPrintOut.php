@@ -22,6 +22,12 @@ class StatusReportPrintOut extends Controller
     }
     public function printToPdf(Request $request)
     {
+        $request->validate([
+            'start_date_dw' => 'date',
+            'end_date_dw' => 'date',
+        ]);
+
+
         $start_date = $request->input('start_date');
         $end_date = $request->input('end_date');
 
@@ -47,7 +53,7 @@ class StatusReportPrintOut extends Controller
         $weekEnd = Carbon::parse($end_date)->weekOfMonth;
 
         $pdfLoad = Pdf::loadView('pdf.ReportToPdf', [
-            'headers' => ['No', 'Kode Status', 'Tanggal', 'Jam', 'Jumlah'],
+            'headers' => ['No', 'ID Status', 'Tanggal', 'Jam', 'Jumlah'],
             'data' => $reportStatus,
             'title' => 'Laporan Harian Update Status',
             'subtitle' => 'PT. Toko Maksindo Cabang ' . ucwords($branchName),

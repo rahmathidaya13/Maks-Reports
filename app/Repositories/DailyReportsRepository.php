@@ -15,6 +15,11 @@ class DailyReportsRepository extends BaseCacheRepository
     {
         $query = DailyReportModel::with('creator')
             ->where('created_by', auth()->user()->id)
+            ->whereNull('deleted_at')
+            ->when(empty($filters['start_date']) && empty($filters['end_date']), function ($q) {
+                // Jika user TIDAK memberikan filter → ambil data hari ini
+                $q->whereDate('date', now()->toDateString());
+            })
             ->when(!empty($filters['start_date']) && !empty($filters['end_date']), function ($q) use ($filters) {
                 // filter rentang tanggal
                 $q->whereBetween('date', [
@@ -22,7 +27,11 @@ class DailyReportsRepository extends BaseCacheRepository
                     $filters['end_date']
                 ]);
             });
-        return $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
+
+        // Ambil data paginasi
+        $dailyReport = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 1);
+
+        return $dailyReport;
     }
 }

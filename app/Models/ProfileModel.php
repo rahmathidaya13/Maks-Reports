@@ -16,6 +16,7 @@ class ProfileModel extends Model
 
     protected $fillable = [
         'users_id',
+        'id_number_employee',
         'branches_id',
         'job_title_id',
         'date_of_entry',

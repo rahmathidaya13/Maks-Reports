@@ -96,7 +96,10 @@ class StoryStatusReportController extends Controller
     {
         $storyReport = $storyStatusReportModel::findOrFail($id);
         $this->storyReportRepository->clearCache(auth()->id());
-        return Inertia::render('StoryStatusReport/Form/pageForm', compact('storyReport'));
+        return Inertia::render('StoryStatusReport/Form/pageForm', [
+            'storyReport' => $storyReport,
+            'date' => now()->toDateString(),
+        ]);
     }
 
     /**

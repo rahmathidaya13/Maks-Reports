@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->uuid("profile_id")->primary();
             $table->foreignUuid('users_id')->constrained('users', 'id')->cascadeOnDelete();
             $table->foreignUuid('branches_id')->nullable()->constrained('branches', 'branches_id')->onDelete('set null');
+            $table->string('id_number_employee', 13)->nullable();
             $table->date('date_of_entry')->nullable();
             $table->date('birthdate')->nullable();
             $table->string('education', 25)->nullable();

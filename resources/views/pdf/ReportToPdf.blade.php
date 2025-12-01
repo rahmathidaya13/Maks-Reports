@@ -66,7 +66,7 @@
 
         .header .subtitle {
             font-size: 16px;
-            color: #798586;
+            color: #423f3f;
         }
 
         .header .info {

@@ -38,10 +38,10 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ->map(function ($report, $index) {
                 return [
                     'No' => $index + 1,
-                    'Kode Status' => $report->report_code,
+                    'ID Status' => $report->report_code,
                     'Tanggal' => Carbon::parse($report->report_date)->translatedFormat('l, d-m-Y'),
                     'Jam' => Carbon::parse($report->report_time)->format('H:i'),
-                    'Jumlah Status' => $report->count_status,
+                    'Jumlah' => $report->count_status,
                 ];
             });
 
@@ -49,10 +49,10 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         if ($data->count() === 0) {
             return collect([[
                 'No' => '-',
-                'Kode Status' => 'Tidak ada data',
+                'ID Status' => 'Tidak ada data',
                 'Tanggal' => '-',
                 'Jam' => '-',
-                'Jumlah Status' => 0,
+                'Jumlah' => 0,
             ]]);
         }
 
@@ -70,14 +70,14 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         return [
             ['LAPORAN HARIAN UPDATE STATUS'],
             ['PT. Toko Maksindo Cabang ' . ucwords($branchName)],
-            ['Tanggal Laporan: ' . Carbon::now()->translatedFormat('l, d/m/Y') . ', ' . 'Minggu ke-' . $weekStart . ($weekStart != $weekEnd ? ' s/d ' . $weekEnd : '')],
+            ['Tanggal Laporan: ' . Carbon::now()->translatedFormat('l, d/m/Y') . ', ' . 'Minggu ke ' . $weekStart . ($weekStart != $weekEnd ? ' s/d ' . $weekEnd : '')],
             [],
             [
                 'No',
-                'Kode Status',
+                'ID Status',
                 'Tanggal',
                 'Jam',
-                'Jumlah Status',
+                'Jumlah',
             ] // Header tabel (Baris 5)
         ];
     }
@@ -115,7 +115,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
                 'bold' => true,
                 'size' => 14,
                 'name' => 'Calibri',
-                'color' => ['argb' => 'ff000000'],
+                'color' => ['argb' => 'ff424242'],
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,

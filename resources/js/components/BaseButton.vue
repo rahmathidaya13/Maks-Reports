@@ -25,6 +25,7 @@ defineProps({
         default: "Please wait...",
     },
 });
+
 </script>
 <template>
     <button :class="['btn', `btn-${variant}`]" :name="name.toLowerCase()" :id="name.toLowerCase()" :disabled="loading">

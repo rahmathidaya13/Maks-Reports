@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 const props = defineProps({
     name: {
-        type: [String,Number,Array],
+        type: [String, Number, Array],
         default: "",
     },
     isValid: {
@@ -15,19 +15,19 @@ const props = defineProps({
     },
 });
 const modelValue = defineModel(); // default name: modelValue
-const input = ref(null);
+const inputRef = ref(null);
 onMounted(() => {
-    if (input.value && input.value.hasAttribute("autofocus")) {
-        input.value.focus();
+    if (inputRef.value && inputRef.value.hasAttribute("autofocus")) {
+        inputRef.value.focus();
     }
 });
-defineExpose({ focus: () => input.value?.focus() });
+defineExpose({ focus: () => inputRef.value?.focus() });
 </script>
 
 <template>
-    <input type="text" :class="['form-control', {
+    <input v-bind="$attrs" type="text" :class="['form-control', {
         'is-invalid': isInvalid && $page.props.errors[props.name],
         'is-valid': isValid && modelValue && !$page.props.errors[props.name]
     }]" v-model="modelValue" @input="$emit('update:modelValue', $event.target.value)" :name="props.name"
-        :id="props.name" ref="input" :value="modelValue" />
+        :id="props.name" ref="inputRef" :value="modelValue" />
 </template>

@@ -65,7 +65,6 @@ const isSubmit = () => {
 const title = ref("");
 const icon = ref("");
 const url = ref("");
-const loaderActive = ref(null);
 onMounted(() => {
     if (props.storyReport && props.storyReport?.story_status_id) {
         title.value = "Ubah Laporan Update Status"
@@ -80,6 +79,7 @@ onMounted(() => {
 })
 
 // override button kembali
+const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
     router.get(url.value, {}, {
@@ -167,7 +167,7 @@ function daysOnlyConvert(dayValue) {
 
             <div class="row">
                 <div class="col-xl-12 col-sm-12 pb-3">
-                    <div class="card overflow-hidden rounded-4">
+                    <div class="card overflow-hidden rounded-3 shadow-sm">
                         <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
                             <i class="fas fa-clipboard me-1 text-light"></i>
                             Laporan Update Status:
@@ -190,7 +190,7 @@ function daysOnlyConvert(dayValue) {
 
                                         <div class="py-2 px-3 d-flex justify-content-between border-bottom">
                                             <h4 class="fw-bold">Form Laporan {{ index + 1 }}</h4>
-                                            <button title="Hapus Form" class="btn btn-sm border-0 btn-danger"
+                                            <button title="Hapus Form" class="btn btn-sm btn-danger"
                                                 @click.prevent="removeForm(index)" v-if="forms.length > 1">
                                                 <i class="fas fa-times"></i>
                                             </button>
@@ -198,24 +198,18 @@ function daysOnlyConvert(dayValue) {
 
                                         <div class="px-3 py-2">
                                             <div class="mb-2">
-                                                <input-label class="fw-bold" for="report_time" value="Jam" />
+                                                <input-label class="fw-bold" :for="index" value="Jam" />
                                                 <text-input autofocus class="form-control-lg" :tabindex="index * 2 + 1"
-                                                    placeholder="00:00" :name="[`report.${index}.report_time`]"
+                                                    placeholder="00:00" :name="`report.${index}.report_time`"
                                                     type="time" v-model="fieldItems.report_time" />
                                                 <input-error :message="form.errors[`report.${index}.report_time`]" />
-                                                <div class="mt-2" v-if="!form.errors[`report.${index}.report_time`]">
-                                                    <!-- keterangan disini -->
-                                                </div>
                                             </div>
                                             <div class="mb-2">
                                                 <input-label class="fw-bold" for="count_status" value="Jumlah" />
                                                 <input-number class="form-control-lg" :tabindex="index * 2 + 2"
-                                                    placeholder="0" :name="[`report.${index}.count_status`]" type="text"
+                                                    placeholder="0" :name="`report.${index}.count_status`" type="text"
                                                     v-model="fieldItems.count_status" />
                                                 <input-error :message="form.errors[`report.${index}.count_status`]" />
-                                                <div class="mt-2" v-if="!form.errors[`report.${index}.count_status`]">
-                                                    <!-- keterangan disini -->
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -223,7 +217,7 @@ function daysOnlyConvert(dayValue) {
                             </div>
                             <div class="d-grid d-xl-flex" :class="{ 'sticky-submit': forms.length > 1 }">
                                 <base-button @click="isSubmit" waiting="Memproses..." :loading="form.processing"
-                                    class="rounded-3 bg-gradient px-5"
+                                    class="rounded-3 bg-gradient px-5 btn-height-2"
                                     :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-edit' : 'fas fa-save'"
                                     :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
                                     type="submit"

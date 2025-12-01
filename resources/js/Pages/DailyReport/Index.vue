@@ -95,7 +95,7 @@ function daysOnlyConvert(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('DD MMMM YYYY - HH:mm');
+    const dateFormat = moment(dayValue).format('DD/MM/YYYY');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
 
@@ -104,7 +104,7 @@ const isDisableBtnDatePicker = computed(() => {
     return !(filters.start_date && filters.end_date);
 })
 const isLoading = ref(false)
-const searchByDate = debounce((e) => {
+const searchByDate = debounce(() => {
     router.get(route("daily_report"), filters, {
         preserveScroll: true,
         replace: true,
@@ -151,6 +151,22 @@ watch([() => filters.limit, () => filters.order_by], () => {
     deep: true
 })
 
+const loaderActive = ref(null)
+
+const goToEdit = (id) => {
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route("daily_report.edit", id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+const goToCreate = () => {
+    loaderActive.value?.show("Memproses...");
+    router.get(route("daily_report.create"), {}, {
+        onFinish: () => {
+            loaderActive.value?.hide()
+        }
+    });
+}
 
 </script>
 <template>
@@ -158,7 +174,8 @@ watch([() => filters.limit, () => filters.order_by], () => {
     <Head title="Halaman Laporan Harian" />
     <app-layout>
         <template #content>
-            <bread-crumbs :home="false" icon="fas fa-clipboard" title="Laporan Harian"
+            <loader-page ref="loaderActive" />
+            <bread-crumbs :home="false" icon="fas fa-clipboard" title="Laporan Leads Harian"
                 :items="[{ text: 'Laporan Harian' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
@@ -234,124 +251,153 @@ watch([() => filters.limit, () => filters.order_by], () => {
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
                         <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
                         <div class="d-inline-flex ms-auto gap-1">
-                            <drop-down @download="handleDownload" />
+                            <!-- <drop-down @download="handleDownload" /> -->
                             <div class="position-relative">
-                                <Link :href="route('daily_report.create')" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Buat Laporan
-                                </Link>
+                                <base-button @click="goToCreate" class="bg-gradient" name="create" label="Buat Laporan"
+                                    icon="fas fa-plus" />
                             </div>
                         </div>
                     </div>
 
-                    <div v-if="!dailyReport.data.length && !isLoading"
-                        class="card overflow-hidden rounded-4 shadow-sm py-5 text-center text-muted mb-4">
-                        <span>Tidak ada laporan leads ditemukan</span>
-                    </div>
-                    <div class="card mb-4 overflow-hidden rounded-4 shadow-sm" :class="{ 'py-5': isLoading }"
-                        v-if="isLoading">
-                        <loader-horizontal message="Sedang mempersiapkan data....." />
-                    </div>
+                    <div class="table-overlay">
 
-                    <div class="mb-3" :id="row.daily_report_id" v-for="(row, rowIndex) in dailyReport.data"
-                        :key="rowIndex" v-else>
-
-                        <div class="d-xl-flex align-items-center mb-2 mt-4 justify-content-between d-block">
-                            <h4 class="fw-bold">Laporan Leads:
-                                <span class="text-primary">
-                                    {{ daysOnlyConvert(row.date) }}
-                                </span>
-                            </h4>
-                            <div class="d-flex gap-1">
-                                <Link :href="route('daily_report.edit', row.daily_report_id)"
-                                    class="btn btn-info text-white px-4 bg-gradient">
-                                <i class="fas fa-edit"></i> Ubah</Link>
-                                <button class="btn btn-outline-danger px-4 bg-gradient"
-                                    @click="deleted('daily_report.deleted', row)"><i class="fas fa-trash"></i>
-                                    Hapus</button>
-                                <Link class="btn btn-success px-4 bg-gradient"><i class="fas fa-share"></i> Bagikan
-                                </Link>
+                        <div v-if="!dailyReport.data.length"
+                            class="card overflow-hidden rounded-3 shadow-sm py-5 text-center text-muted mb-4">
+                            <div v-if="isLoading">
+                                <loader-horizontal message="Sedang memperbarui data" />
+                            </div>
+                            <div class="card-body" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                                <span>Tidak ada laporan leads ditemukan</span>
                             </div>
                         </div>
-                        <div class="card mb-0 overflow-hidden rounded-3 shadow-sm">
-                            <div class="card-body p-0">
-                                <table
-                                    class="table align-middle mb-0 table-striped text-wrap table-hover table-bordered">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Kategori</th>
-                                            <th class="text-center">Jumlah</th>
-                                            <th class="text-center">Closing</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="fw-semibold">Leads</td>
-                                            <td class="text-center fw-bold">{{ row.leads }}</td>
-                                            <td class="text-center fw-bold">{{ row.closing }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">FU Konsumen Kemarin (H-1)</td>
-                                            <td class="text-center fw-bold">{{ row.fu_yesterday }}</td>
-                                            <td class="text-center fw-bold">{{ row.fu_yesterday_closing }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">FU Konsumen Kemarennya (H-2)</td>
-                                            <td class="text-center fw-bold">{{ row.fu_before_yesterday }}</td>
-                                            <td class="text-center fw-bold">{{ row.fu_before_yesterday_closing
-                                            }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
-                                            <td class="text-center fw-bold">{{ row.fu_last_week }}</td>
-                                            <td class="text-center fw-bold">{{ row.fu_last_week_closing }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">Engage Konsumen Lama</td>
-                                            <td class="text-center fw-bold">{{ row.engage_old_customer }}</td>
-                                            <td class="text-center fw-bold">{{ row.engage_closing }}</td>
-                                        </tr>
-                                    </tbody>
-                                    <tfoot class="fw-bold table-dark">
-                                        <tr>
-                                            <td>Total</td>
-                                            <td class="text-center">
-                                                {{
-                                                    (row.leads ?? 0) +
-                                                    (row.fu_yesterday ?? 0) +
-                                                    (row.fu_before_yesterday ?? 0) +
-                                                    (row.fu_last_week ?? 0) +
-                                                    (row.engage_old_customer ?? 0)
-                                                }}
-                                            </td>
-                                            <td class="text-center"> {{
-                                                (row.closing ?? 0) +
-                                                (row.fu_yesterday_closing ?? 0) +
-                                                (row.fu_before_yesterday_closing ?? 0) +
-                                                (row.fu_last_week_closing ?? 0) +
-                                                (row.engage_closing ?? 0)
-                                            }}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                                <div class="p-2 border rounded-0 bg-light">
-                                    <strong>Catatan:</strong>
-                                    <div class="mt-1 mb-3">
-                                        <div v-if="row.notes !== null && row.notes.trim() !== '<p><br></p>'"
-                                            class="notes" v-html="row.notes">
-                                        </div>
-                                        <div v-else class="notes text-center align-middle">{{ 'Tidak ada catatan' }}
+
+                        <div class="mb-3" :id="row.daily_report_id" v-for="(row, rowIndex) in dailyReport.data"
+                            :key="rowIndex">
+
+                            <div :class="['blur-area', isLoading ? 'is-blurred' : '']"
+                                class="d-xl-flex d-md-flex d-sm-block align-items-center mb-2 mt-2 justify-content-between">
+                                <h4 class="fw-bold">Laporan Leads:
+                                    <span class="text-primary">
+                                        {{ daysOnlyConvert(row.date) }}
+                                    </span>
+                                </h4>
+                                <div class="dropdown">
+                                    <button class="btn btn-danger bg-gradient" type="button" data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        <i class="fas fa-eye"></i> Aksi
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <button @click="goToEdit(row.daily_report_id)"
+                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button @click="deleted('daily_report.deleted', row)"
+                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                Bagikan <i class="bi bi-share-fill text-primary fs-5"></i>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="card mb-0 overflow-hidden rounded-3 shadow-sm">
+                                <div v-if="isLoading">
+                                    <loader-horizontal message="Sedang memproses data" />
+                                </div>
+                                <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                                    <div class="table-responsive">
+                                        <table class="table align-middle mb-0 table-striped text-nowrap table-hover">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th class="text-start">Kategori</th>
+                                                    <th class="text-center">Jumlah</th>
+                                                    <th class="text-center">Closing</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+
+                                                <tr>
+                                                    <td class="fw-semibold">Leads</td>
+                                                    <td class="text-center fw-semibold">{{ row.leads }}</td>
+                                                    <td class="text-center fw-semibold">{{ row.closing }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="fw-semibold">FU Konsumen Kemarin (H-1)</td>
+                                                    <td class="text-center fw-semibold">{{ row.fu_yesterday }}</td>
+                                                    <td class="text-center fw-semibold">{{ row.fu_yesterday_closing }}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="fw-semibold">FU Konsumen Kemarennya (H-2)</td>
+                                                    <td class="text-center fw-semibold">{{ row.fu_before_yesterday }}
+                                                    </td>
+                                                    <td class="text-center fw-semibold">{{
+                                                        row.fu_before_yesterday_closing
+                                                        }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
+                                                    <td class="text-center fw-semibold">{{ row.fu_last_week }}</td>
+                                                    <td class="text-center fw-semibold">{{ row.fu_last_week_closing }}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="fw-semibold">Engage Konsumen Lama</td>
+                                                    <td class="text-center fw-semibold">{{ row.engage_old_customer }}
+                                                    </td>
+                                                    <td class="text-center fw-semibold">{{ row.engage_closing }}</td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot class="fw-bold table-dark">
+                                                <tr>
+                                                    <td class="border border-0">Total</td>
+                                                    <td class="text-center border border-0">
+                                                        {{
+                                                            (row.leads ?? 0) +
+                                                            (row.fu_yesterday ?? 0) +
+                                                            (row.fu_before_yesterday ?? 0) +
+                                                            (row.fu_last_week ?? 0) +
+                                                            (row.engage_old_customer ?? 0)
+                                                        }}
+                                                    </td>
+                                                    <td class="text-center border border-0"> {{
+                                                        (row.closing ?? 0) +
+                                                        (row.fu_yesterday_closing ?? 0) +
+                                                        (row.fu_before_yesterday_closing ?? 0) +
+                                                        (row.fu_last_week_closing ?? 0) +
+                                                        (row.engage_closing ?? 0)
+                                                        }}
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                        <div class="p-2 border rounded-0 bg-light">
+                                            <strong>Catatan:</strong>
+                                            <div class="mt-1 mb-3">
+                                                <div v-if="row.notes !== null && row.notes.trim() !== '<p><br></p>'"
+                                                    class="notes" v-html="row.notes">
+                                                </div>
+                                                <div v-else class="notes text-center align-middle">
+                                                    Tidak ada catatan
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
-
-                    <div v-if="!isLoading"
-                        class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
+                    <div v-if="props.dailyReport?.data.length > 0" :class="['blur-area', isLoading ? 'is-blurred' : '']"
+                        class="mt-2 d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
                         <div class="mb-2 order-1 order-xl-0 order-lg-0 order-md-0">
                             Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> sampai
                             <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
@@ -364,20 +410,42 @@ watch([() => filters.limit, () => filters.order_by], () => {
                             end_date: filters.end_date,
                         }" />
                     </div>
-
                 </div>
             </div>
         </template>
     </app-layout>
 </template>
 <style scoped>
+.table-overlay {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 6px;
+    position: relative;
+}
+
+
+.blur-area {
+    transition: all 0.3s ease;
+}
+
+.blur-area.is-blurred {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
 .table.table-striped tbody tr:nth-of-type(odd) {
-    background-color: #f6f9fd8a !important;
-    /* warna custom */
+    background-color: #c2dff731;
 }
 
 .table.table-striped tbody tr:nth-of-type(even) {
-    background-color: #ffffff !important;
+    background-color: #ffffff;
+}
+
+.table.table-hover tbody tr:hover {
+    background-color: rgba(0, 183, 255, 0.171);
+    transition: all 0.15s ease-in-out;
 }
 
 .line-table {

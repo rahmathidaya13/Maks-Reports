@@ -1,11 +1,10 @@
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
 import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
 import axios from "axios";
-
 moment.locale('id');
 
 const page = usePage();
@@ -43,7 +42,7 @@ const filters = reactive({
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
         title: 'Hapus',
-        text: `Kamu yakin ingin menghapus laporan ini?`,
+        text: `Kamu yakin ingin menghapus laporan ID ${data.report_code} ? Tindakan ini tidak dapat kembalikan data yang terhapus!`,
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
             router.delete(route(nameRoute, data.story_status_id), { preserveScroll: false, replace: true });
@@ -56,8 +55,6 @@ const deleted = (nameRoute, data) => {
 const isDisableBtnDatePicker = computed(() => {
     return !(filters.start_date && filters.end_date);
 })
-
-
 function daysTranslate(dayValue) {
     const dayConvert = {
         "Sunday": "Minggu",
@@ -69,12 +66,8 @@ function daysTranslate(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
+    const dateFormat = moment(dayValue).format('DD/MM/YYYY');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
-}
-function dateFormat(date, format) {
-    const dates = moment(date).format(format);
-    return dates;
 }
 
 const isLoading = ref(false)
@@ -83,7 +76,7 @@ const searchByDate = debounce((e) => {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["storyReport", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
+        only: ["storyReport", "filters"], // optional: lebih hemat bandwidth jika pakai Inertia partial reload
         onFinish: () => {
             // Selesai apapun hasilnya → loader hilang
             isLoading.value = false
@@ -181,41 +174,48 @@ const goEdit = (id) => {
     });
 }
 
-const downloadItems = [
-    { id: 'pdf', text: 'Unduh PDF', icon: 'fas fa-file-pdf text-danger' },
-    { id: 'excel', text: 'Unduh Excel', icon: 'fas fa-file-excel text-success' },
-];
+// const downloadItems = [
+//     { id: 'pdf', text: 'Unduh PDF', icon: 'fas fa-file-pdf text-danger' },
+//     { id: 'excel', text: 'Unduh Excel', icon: 'fas fa-file-excel text-success' },
+// ];
 
-const exportTo = (type) => {
-    console.log(type);
-    if (type === "pdf") {
-        window.location.href = route("story_report.print_to_pdf");
-    } else if (type === "excel") {
-        window.location.href = route("story_report.print_to_excel");
-    }
-};
+// const exportTo = (type) => {
+//     console.log(type);
+//     if (type === "pdf") {
+//         window.location.href = route("story_report.print_to_pdf");
+//     } else if (type === "excel") {
+//         window.location.href = route("story_report.print_to_excel");
+//     }
+// };
 
+// =========Tampilkan Modal========== //
 const showModal = ref(false);
-// buka modal
+const start_dateRef = ref(null)
 function openModal() {
     showModal.value = true
+    nextTick(() => {
+        start_dateRef.value?.$el?.focus?.(); // untuk custom component
+        start_dateRef.value?.focus?.();      // fallback jika native input
+    });
 }
 
 // tutup modal SETELAH Bootstrap selesai animasi
 function closeModal() {
     showModal.value = false
+    form.start_date_dw = '';
+    form.end_date_dw = '';
 }
 
 // form untuk kirim berdasarkan tanggal
 const form = reactive({
-    start_date: '',
-    end_date: '',
+    start_date_dw: '',
+    end_date_dw: '',
 })
 function downloadPdf() {
     window.open(
         route('story_report.print_to_pdf', {
-            start_date: form.start_date,
-            end_date: form.end_date
+            start_date: form.start_date_dw,
+            end_date: form.end_date_dw
         }),
         '_blank'
     )
@@ -223,18 +223,18 @@ function downloadPdf() {
 function downloadExcel() {
     window.open(
         route('story_report.print_to_excel', {
-            start_date: form.start_date,
-            end_date: form.end_date
+            start_date: form.start_date_dw,
+            end_date: form.end_date_dw
         }),
         '_self'
     )
 }
 
 const isDisableBtnDownload = computed(() => {
-    return !(form.start_date && form.end_date);
+    return !(form.start_date_dw && form.end_date_dw);
 })
 const information = ref(null);
-watch(() => [form.start_date, form.end_date],
+watch(() => [form.start_date_dw, form.end_date_dw],
     async ([start_date, end_date]) => {
         if (!start_date || !end_date) {
             information.value = null;
@@ -250,6 +250,12 @@ watch(() => [form.start_date, form.end_date],
             information.value = data;
         }
     })
+
+const resetField = () => {
+    form.start_date_dw = '';
+    form.end_date_dw = '';
+}
+// =========Batas Fungsi untuk Tampilkan Modal========== //
 </script>
 <template>
 
@@ -262,7 +268,6 @@ watch(() => [form.start_date, form.end_date],
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
-
                     <div class="card mb-3 rounded-3 p-1 bg-light overflow-hidden shadow-sm">
                         <div class="row align-items-center p-2 g-2 pb-3">
                             <div class="col-xl-4 col-sm-6 col-md-3">
@@ -308,18 +313,20 @@ watch(() => [form.start_date, form.end_date],
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
                         <transition name="fade">
                             <button v-if="isVisibleButton" @click="deletedAll" type="button"
-                                class="btn btn-outline-danger position-relative">
+                                class="btn btn-danger position-relative bg-gradient">
                                 <i class="fas fa-trash"></i> Hapus
                                 <span v-if="selected.length > 0"
-                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
                                     {{ selected.length }}
                                 </span>
                             </button>
                         </transition>
 
-                        <div class="d-inline-flex ms-auto gap-1">
+                        <div class="d-inline-flex ms-auto gap-1 align-items-center">
+
                             <base-button variant="success" icon="fas fa-download" @click="openModal" class="bg-gradient"
                                 name="unduh" label="Unduh" />
+
                             <div class="position-relative">
                                 <base-button @click="createReport" class="bg-gradient" name="create"
                                     label="Buat Laporan" icon="fas fa-plus" />
@@ -343,7 +350,7 @@ watch(() => [form.start_date, form.end_date],
                                                 </div>
                                             </th>
                                             <th class="text-center">No</th>
-                                            <th class="text-center">Kode Status</th>
+                                            <th class="text-center">ID Status</th>
                                             <th class="text-center">Tanggal</th>
                                             <th class="text-center">Jam</th>
                                             <th class="text-center">Jumlah Status</th>
@@ -367,7 +374,7 @@ watch(() => [form.start_date, form.end_date],
                                         ]" :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
                                             :key="rowIndex">
 
-                                            <td class="text-center" style="width: 5%;">
+                                            <td class="text-center">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input type="checkbox" class="form-check-input"
                                                         :name="row.story_status_id" :id="row.story_status_id"
@@ -404,7 +411,7 @@ watch(() => [form.start_date, form.end_date],
                                             </td>
                                             <td class="text-center">
                                                 <div class="dropdown dropstart">
-                                                    <button class="btn btn-secondary" type="button"
+                                                    <button class="btn btn-secondary bg-gradient" type="button"
                                                         data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="fas fa-cog"></i>
                                                     </button>
@@ -412,19 +419,20 @@ watch(() => [form.start_date, form.end_date],
                                                         <li>
                                                             <button @click="goEdit(row.story_status_id)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Ubah <i class="fas fa-edit text-info"></i>
+                                                                Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
                                                             </button>
                                                         </li>
                                                         <li>
                                                             <button @click="deleted('story_report.deleted', row)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Hapus <i class="fas fa-trash-alt text-danger"></i>
+                                                                Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
                                                             </button>
                                                         </li>
                                                         <li>
                                                             <button
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Bagikan <i class="fas fa-share-alt text-primary"></i>
+                                                                Bagikan <i
+                                                                    class="bi bi-share-fill text-primary fs-5"></i>
                                                             </button>
                                                         </li>
                                                     </ul>
@@ -434,22 +442,24 @@ watch(() => [form.start_date, form.end_date],
                                     </tbody>
                                     <tfoot class="fw-bold table-dark">
                                         <tr>
-                                            <td></td>
-                                            <td class="text-center">Total</td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-center">
+                                            <td class="text-center border-0 border">
+                                            </td>
+                                            <td class="text-center border-0 border">Total</td>
+                                            <td class="text-center border-0 border"></td>
+                                            <td class="text-center border-0 border"></td>
+                                            <td class="text-center border-0 border"></td>
+                                            <td class="text-center border-0 border">
                                                 {{ props.totalToday ?? props.totalWithFilter }}
                                             </td>
-                                            <td class="text-center"></td>
-                                            <td class="text-center"></td>
-                                            <td class="text-center"></td>
+                                            <td class="text-center border-0 border"></td>
+                                            <td class="text-center border-0 border"></td>
+                                            <td class="text-center border-0 border"></td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
-                            <div
+
+                            <div v-if="props.storyReport?.data.length > 0"
                                 class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row px-2">
                                 <div class="mb-2 order-1 order-xl-0">
                                     Menampilkan <strong>{{ props.storyReport?.from ?? 0 }}</strong> sampai
@@ -463,7 +473,6 @@ watch(() => [form.start_date, form.end_date],
                                     end_date: filters.end_date,
                                 }" />
                             </div>
-
                         </div>
                     </div>
 
@@ -471,60 +480,83 @@ watch(() => [form.start_date, form.end_date],
                 </div>
             </div>
 
-            <modal :footer="false" icon="fas fa-download" v-if="showModal" :show="showModal" title="Unduh Laporan"
-                @update:show="showModal = $event" @closed="closeModal">
-                <template #body>
 
-                    <div class="callout callout-info shadow-sm">
-                        <h6> <i class="fas fa-bullhorn"></i> Informasi</h6>
-                        <p class="small">
-                            Pastikan rentang tanggal valid untuk mengunduh laporan.
-                        </p>
-                    </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row g-2">
-                                <div class="col-xl-6 col-sm-6 col-md-6">
-                                    <input-label class="fw-semibold" for="start_date" value="Tanggal Awal" />
-                                    <text-input type="date" name="start_date" v-model="form.start_date" />
-                                </div>
-                                <div class="col-xl-6 col-md-6 col-sm-6">
-                                    <input-label class="fw-semibold" for="end_date" value="Tanggal Akhir" />
-                                    <text-input type="date" name="end_date" v-model="form.end_date" />
+            <div class="row">
+                <div class="col-xl-12 col-sm-12">
+                    <modal @opened="openModal" size="modal-lg" :footer="false" icon="fas fa-download" v-if="showModal"
+                        :show="showModal" title="Unduh Laporan" @update:show="showModal = $event" @closed="closeModal">
+                        <template #body>
+
+                            <div class="callout callout-info shadow-sm">
+                                <h5><i class="fas fa-bullhorn"></i> Informasi</h5>
+                                <ul class="small ps-3 mb-0">
+                                    <li>Pastikan rentang tanggal valid untuk mengunduh laporan.</li>
+                                    <li>Data laporan akan difilter sesuai <b>Tanggal Awal</b> dan <b>Tanggal Akhir</b>
+                                        yang
+                                        pilih.</li>
+                                    <li>Sistem akan menghitung otomatis <b>Total Baris Data</b> dan <b>Total Jumlah
+                                            Status</b>.
+                                    </li>
+                                    <li>Jika tidak ada data pada periode tersebut, laporan tetap dapat diunduh namun
+                                        berisi
+                                        informasi kosong.</li>
+                                    <li>Laporan dapat diunduh dalam format <b>PDF</b> atau <b>Excel</b>.</li>
+                                </ul>
+                            </div>
+                            <div class="card text-bg-grey">
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <div class="col-xl-6 col-sm-6 col-md-6">
+                                            <input-label ref="start_dateRef" class="fw-semibold" for="start_date_dw"
+                                                value="Tanggal Awal" />
+                                            <text-input type="date" name="start_date_dw" v-model="form.start_date_dw" />
+                                        </div>
+                                        <div class="col-xl-6 col-md-6 col-sm-6">
+                                            <input-label class="fw-semibold" for="end_date_dw" value="Tanggal Akhir" />
+                                            <text-input type="date" name="end_date_dw" v-model="form.end_date_dw" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <hr />
-                    <div v-if="information" class="text-bg-grey border rounded-3 p-3 mb-4 shadow-sm">
-                        <ul class="list-unstyled small mb-0">
-                            <li><b>Periode:</b>
-                                {{ information.first_date }} s/d {{ information.last_date }}
-                            </li>
-                            <li><b>Total Baris Data:</b> {{ information.total_rows }}</li>
-                            <li><b>Total Jumlah Status:</b> {{ information.total_status }}</li>
-                            <li>
-                                <b>Minggu Ke:</b>
-                                {{ information.week_start }}
-                                <template v-if="information.week_start !== information.week_end">
-                                    s/d {{ information.week_end }}
-                                </template>
-                            </li>
-                        </ul>
+                            <hr />
+                            <div v-if="information" class="text-bg-grey border rounded-3 p-3 mb-4 shadow-sm">
+                                <ul class="list-unstyled small mb-0">
+                                    <li><b>Periode:</b>
+                                        {{ information.first_date }} s/d {{ information.last_date }}
+                                    </li>
+                                    <li><b>Total Baris Data:</b> {{ information.total_rows }}</li>
+                                    <li><b>Total Jumlah Status:</b> {{ information.total_status }}</li>
+                                    <li>
+                                        <b>Minggu Ke:</b>
+                                        {{ information.week_start }}
+                                        <template v-if="information.week_start !== information.week_end">
+                                            s/d {{ information.week_end }}
+                                        </template>
+                                    </li>
+                                </ul>
 
-                    </div>
+                            </div>
 
-                    <div class="d-flex gap-2 justify-content-end ">
-                        <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
-                            icon="fas fa-file-pdf" :variant="!isDisableBtnDownload ? 'danger' : 'secondary'"
-                            class="bg-gradient" name="print_pdf" label="Unduh PDF" />
-                        <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
-                            icon="fas fa-file-excel" :variant="!isDisableBtnDownload ? 'success' : 'secondary'"
-                            class="bg-gradient" name="print_excel" label="Unduh Excel" />
-                    </div>
+                            <div class="d-flex justify-content-between ">
+                                <base-button class="mb-2" @click="resetField" type="button" name="cancel" label="Batal"
+                                    variant="outline-danger" />
+                                <div class="d-flex gap-2">
+                                    <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
+                                        icon="fas fa-file-pdf" :variant="!isDisableBtnDownload ? 'danger' : 'secondary'"
+                                        class="bg-gradient" name="print_pdf" label="Unduh PDF" />
+                                    <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
+                                        icon="fas fa-file-excel"
+                                        :variant="!isDisableBtnDownload ? 'success' : 'secondary'" class="bg-gradient"
+                                        name="print_excel" label="Unduh Excel" />
+                                </div>
+                            </div>
 
-                </template>
-            </modal>
+                        </template>
+                    </modal>
+                </div>
+            </div>
+
+
         </template>
     </app-layout>
 </template>

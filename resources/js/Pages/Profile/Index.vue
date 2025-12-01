@@ -9,6 +9,7 @@ const props = defineProps({
 const form = useForm({
     name: props.profile.user.name ?? "",
     email: props.profile.user.email ?? "",
+    id_number: "",
     roles: "",
     branches: "",
     date_of_entry: "",
@@ -74,13 +75,13 @@ const roleOptions = computed(() => {
                         <form-wrapper @submit="submit">
                             <div class="row g-1">
 
-                                <div class="col-xl-4 mb-2">
+                                <div class="col-xl-4 mb-2 col-md-4 col-sm-12">
                                     <file-upload v-model="form.images" name="images"
                                         :default-image-url="props.profile?.images ? '/storage/' + props.profile?.images : ''" />
                                     <input-error :message="form.errors.images" />
                                 </div>
 
-                                <div class="col-xl-8">
+                                <div class="col-xl-8 col-md-8 col-sm-12">
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="name" value="Nama" />
                                         <div class="input-group">
@@ -88,6 +89,15 @@ const roleOptions = computed(() => {
                                             <text-input type="text" name="name" v-model="form.name" />
                                         </div>
                                         <input-error :message="form.errors.name" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <input-label class="fw-bold" for="id_number" value="ID Karyawan" />
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-id-card-alt"></i></span>
+                                            <text-input placeholder="1234567890" type="text" name="id_number"
+                                                v-model="form.id_number" />
+                                        </div>
+                                        <input-error :message="form.errors.id_number" />
                                     </div>
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="birthdate" value="Tanggal Lahir" />
@@ -106,7 +116,9 @@ const roleOptions = computed(() => {
                                         </div>
                                         <input-error :message="form.errors.date_of_entry" />
                                     </div>
+                                </div>
 
+                                <div class="col-xl-12 col-sm-12 col-md-12 ">
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="gender" value="Jenis Kelamin" />
                                         <div class="input-group">
@@ -120,9 +132,6 @@ const roleOptions = computed(() => {
                                         </div>
                                         <input-error :message="form.errors.gender" />
                                     </div>
-                                </div>
-
-                                <div class="col-xl-12">
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="email" value="Email" />
                                         <div class="input-group">

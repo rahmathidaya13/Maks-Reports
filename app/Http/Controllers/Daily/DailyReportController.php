@@ -41,7 +41,9 @@ class DailyReportController extends Controller
     public function create()
     {
         $this->dailyReports->clearCache(auth()->id());
-        return Inertia::render('DailyReport/Form/pageForm');
+        return Inertia::render('DailyReport/Form/pageForm', [
+            'date' => now()->toDateString(),
+        ]);
     }
 
     /**
@@ -52,7 +54,7 @@ class DailyReportController extends Controller
         $this->validationText($request->all());
         $dailyReport = new DailyReportModel();
         $dailyReport->created_by = auth()->id();
-        $dailyReport->date = now();
+        $dailyReport->date = now()->toDateString();
         $dailyReport->leads = $request->integer('leads');
         $dailyReport->closing = $request->integer('closing');
         $dailyReport->fu_yesterday = $request->integer('fu_yesterday');
@@ -84,7 +86,10 @@ class DailyReportController extends Controller
     {
         $dailyReport = $dailyReportModel::findOrFail($id);
         $this->dailyReports->clearCache(auth()->id());
-        return Inertia::render('DailyReport/Form/pageForm', compact('dailyReport'));
+        return Inertia::render('DailyReport/Form/pageForm', [
+            'dailyReport' => $dailyReport,
+            'date' => now()->toDateString(),
+        ]);
     }
 
     /**
@@ -95,7 +100,7 @@ class DailyReportController extends Controller
         $this->validationText($request->all());
         $dailyReport = $dailyReportModel::findOrFail($id);
         $dailyReport->created_by = auth()->id();
-        $dailyReport->date = now();
+        $dailyReport->date = now()->toDateString();
         $dailyReport->leads = $request->integer('leads');
         $dailyReport->closing = $request->integer('closing');
         $dailyReport->fu_yesterday = $request->integer('fu_yesterday');
