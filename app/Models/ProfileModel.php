@@ -16,16 +16,22 @@ class ProfileModel extends Model
 
     protected $fillable = [
         'users_id',
-        'id_number_employee',
+        'employee_id_number',
+        'national_id_number',
         'branches_id',
         'job_title_id',
         'date_of_entry',
+        'employment_status',
         'birthdate',
+        'birthplace',
         'education',
+        'major',
         'gender',
         'number_phone',
         'address',
+        'postal_code',
         'images',
+        'is_completed',
     ];
 
     // public static function booted()

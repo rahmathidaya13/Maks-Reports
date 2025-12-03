@@ -16,6 +16,10 @@ defineProps({
     home: {
         type: Boolean,
         default: true
+    },
+    modeButton: {
+        type: Boolean,
+        default: false
     }
 });
 </script>
@@ -27,18 +31,23 @@ defineProps({
                 {{ title }}
             </h3>
             <ol class="breadcrumb align-items-center small">
-                <li v-if="home" class="breadcrumb-item">
+                <li v-if="modeButton" class="breadcrumb-item">
+                    <slot name="modeButton" />
+                </li>
+                <li v-if="home && !modeButton" class="breadcrumb-item">
                     <Link class="text-decoration-none" :href="route('home')">Home</Link>
                 </li>
-                <li v-for="(item, index) in items" :key="index"
-                    :class="['breadcrumb-item', { 'active': index === items.length - 1 }]">
-                    <template v-if="index === items.length - 1">
-                        {{ item.text }}
-                    </template>
-                    <template v-else>
-                        <Link class="text-decoration-none" :href="item.url">{{ item.text }}</Link>
-                    </template>
-                </li>
+                <template v-if="!modeButton">
+                    <li v-for="(item, index) in items" :key="index"
+                        :class="['breadcrumb-item', { 'active': index === items.length - 1 }]">
+                        <template v-if="index === items.length - 1">
+                            {{ item.text }}
+                        </template>
+                        <template v-else>
+                            <Link class="text-decoration-none" :href="item.url">{{ item.text }}</Link>
+                        </template>
+                    </li>
+                </template>
             </ol>
         </nav>
     </div>

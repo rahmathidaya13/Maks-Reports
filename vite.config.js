@@ -27,7 +27,7 @@ export default defineConfig({
             "window.jQuery": "jquery",
             "window.$": "jquery",
             include: ["**/*.js", "**/*.vue"],
-            exclude: ["**/*.css"],
+            // exclude: ["**/*.css"],
         }),
     ],
 

@@ -12,18 +12,47 @@ return new class extends Migration {
     {
         Schema::create('profile', function (Blueprint $table) {
             $table->uuid("profile_id")->primary();
-            $table->foreignUuid('users_id')->constrained('users', 'id')->cascadeOnDelete();
-            $table->foreignUuid('branches_id')->nullable()->constrained('branches', 'branches_id')->onDelete('set null');
-            $table->string('id_number_employee', 13)->nullable();
-            $table->date('date_of_entry')->nullable();
-            $table->date('birthdate')->nullable();
-            $table->string('education', 25)->nullable();
+
+            $table->foreignUuid('users_id')
+                ->constrained('users', 'id')
+                ->cascadeOnDelete();
+
+            $table->foreignUuid('branches_id')
+                ->nullable()
+                ->constrained('branches', 'branches_id')
+                ->onDelete('set null');
+
+            // --- Basic Information ---
+            $table->string('employee_id_number', 13)->nullable()->index();
+            $table->string('national_id_number', 20)->nullable()->index(); // NIK KTP
             $table->enum('gender', ['male', 'female'])->nullable();
+            $table->date('birthdate')->nullable();
+            $table->string('birthplace', 100)->nullable();
+
+            // --- Contact Information ---
             $table->string('number_phone', 13)->unique()->nullable();
             $table->string('address', 250)->nullable();
+            $table->string('postal_code', 10)->nullable();
+
+            // --- Employment Information ---
+            $table->date('date_of_entry')->nullable();
+            $table->enum('employment_status', [
+                'contract',
+                'permanent',
+                'intern',
+                'freelance'
+            ])->default('contract');
+
+            // --- Education Information ---
+            $table->string('education', 50)->nullable();
+            $table->string('major', 100)->nullable(); // jurusan pendidikan
+
             $table->text('images')->nullable();
             $table->boolean('is_completed')->default(false);
+
+
             $table->index(['users_id', 'branches_id']);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

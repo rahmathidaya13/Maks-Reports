@@ -114,7 +114,7 @@ watch(() => props.show, async (v) => {
 
 /* ANIMASI MASUK (Bootstrap menambahkan .show) */
 .custom-modal.show .smooth-content {
-    transform: translateY(65px);
+    transform: translateY(0);
     opacity: 1;
 }
 </style>

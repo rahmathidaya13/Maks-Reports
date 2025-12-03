@@ -4,20 +4,25 @@ import { computed } from 'vue';
 const props = defineProps({
     profile: Object,
     branches: Array,
-    roles: Array
+    JobTitle: Array
 })
 const form = useForm({
     name: props.profile.user.name ?? "",
     email: props.profile.user.email ?? "",
-    id_number: "",
-    roles: "",
+    employee_id_number: "",
+    national_id_number: "",
+    jobTitle: "",
+    employment_status: "",
     branches: "",
     date_of_entry: "",
     birthdate: "",
+    birthplace: "",
     education: "",
+    major: "",
     gender: "",
     number_phone: "",
     address: "",
+    postal_code: "",
     images: null
 });
 const submit = () => {
@@ -39,8 +44,8 @@ const branchOptions = computed(() => {
         }
     })
 })
-const roleOptions = computed(() => {
-    return props.roles?.map(item => {
+const jobTitleOptions = computed(() => {
+    return props.jobTitle?.map(item => {
         return {
             id: item.job_title_id,
             name: (item.title).replace(/\b\w/g, l => l.toUpperCase())
@@ -73,7 +78,7 @@ const roleOptions = computed(() => {
                 <div class="card bg-light shadow-sm rounded-3 rounded overflow-hidden border-secondary-subtle">
                     <div class="card-body">
                         <form-wrapper @submit="submit">
-                            <div class="row g-1">
+                            <div class="row g-2">
 
                                 <div class="col-xl-4 mb-2 col-md-4 col-sm-12">
                                     <file-upload v-model="form.images" name="images"
@@ -85,44 +90,53 @@ const roleOptions = computed(() => {
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="name" value="Nama" />
                                         <div class="input-group">
-                                            <span class="input-group-text"><i class="fas fa-user"></i></span>
                                             <text-input type="text" name="name" v-model="form.name" />
                                         </div>
                                         <input-error :message="form.errors.name" />
                                     </div>
+
                                     <div class="mb-2">
-                                        <input-label class="fw-bold" for="id_number" value="ID Karyawan" />
+                                        <input-label class="fw-bold" for="nik" value="NIK" />
                                         <div class="input-group">
-                                            <span class="input-group-text"><i class="fas fa-id-card-alt"></i></span>
-                                            <text-input placeholder="1234567890" type="text" name="id_number"
-                                                v-model="form.id_number" />
+                                            <text-input placeholder="14718090909" type="text" name="nik"
+                                                v-model="form.national_id_number" />
                                         </div>
-                                        <input-error :message="form.errors.id_number" />
+                                        <input-error :message="form.errors.national_id_number" />
                                     </div>
+
                                     <div class="mb-2">
-                                        <input-label class="fw-bold" for="birthdate" value="Tanggal Lahir" />
+                                        <input-label class="fw-bold" for="employee_id_number" value="ID Karyawan" />
                                         <div class="input-group">
-                                            <span class="input-group-text"> <i class="fas fa-calendar"></i></span>
-                                            <text-input autofocus type="date" name="birthdate"
-                                                v-model="form.birthdate" />
+                                            <text-input placeholder="1234567890" type="text" name="employee_id_number"
+                                                v-model="form.employee_id_number" />
                                         </div>
-                                        <input-error :message="form.errors.birthdate" />
+                                        <input-error :message="form.errors.employee_id_number" />
                                     </div>
+
                                     <div class="mb-2">
-                                        <input-label class="fw-bold" for="date_of_entry" value="Tanggal Masuk" />
+                                        <input-label class="fw-bold" for="birthplace" value="Tempat Lahir" />
                                         <div class="input-group">
-                                            <span class="input-group-text"> <i class="fas fa-calendar"></i></span>
-                                            <text-input type="date" name="date_of_entry" v-model="form.date_of_entry" />
+                                            <text-input placeholder="contoh: Jakarta dll" type="text" name="birthplace"
+                                                v-model="form.birthplace" />
                                         </div>
-                                        <input-error :message="form.errors.date_of_entry" />
+                                        <input-error :message="form.errors.birthplace" />
                                     </div>
                                 </div>
 
-                                <div class="col-xl-12 col-sm-12 col-md-12 ">
+
+                                <div class="col-xl-12 col-sm-12 col-md-12">
+
+                                    <div class="mb-2">
+                                        <input-label class="fw-bold" for="birthdate" value="Tanggal Lahir" />
+                                        <div class="input-group">
+                                            <text-input type="date" name="birthdate" v-model="form.birthdate" />
+                                        </div>
+                                        <input-error :message="form.errors.birthdate" />
+                                    </div>
+
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="gender" value="Jenis Kelamin" />
                                         <div class="input-group">
-                                            <span class="input-group-text"> <i class="fas fa-venus-mars"></i></span>
                                             <select-input text="Pilih Jenis Kelamin" name="gender" v-model="form.gender"
                                                 :options="[
                                                     { value: 'male', label: 'Laki-laki' },
@@ -133,10 +147,15 @@ const roleOptions = computed(() => {
                                         <input-error :message="form.errors.gender" />
                                     </div>
                                     <div class="mb-2">
+                                        <input-label class="fw-bold" for="date_of_entry" value="Tanggal Masuk" />
+                                        <div class="input-group">
+                                            <text-input type="date" name="date_of_entry" v-model="form.date_of_entry" />
+                                        </div>
+                                        <input-error :message="form.errors.date_of_entry" />
+                                    </div>
+                                    <div class="mb-2">
                                         <input-label class="fw-bold" for="email" value="Email" />
                                         <div class="input-group">
-                                            <span class="input-group-text"><i class="fas fa-envelope"></i>
-                                            </span>
                                             <text-input disabled name="email" v-model="form.email" />
                                         </div>
                                         <input-error :message="form.errors.email" />
@@ -144,8 +163,6 @@ const roleOptions = computed(() => {
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="number_phone" value="No.Handphone" />
                                         <div class="input-group">
-                                            <span class="input-group-text"><i class="fas fa-mobile"></i>
-                                            </span>
                                             <input-number placeholder="0" name="number_phone"
                                                 v-model="form.number_phone" />
                                         </div>
@@ -154,8 +171,6 @@ const roleOptions = computed(() => {
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="education" value="Pendidikan Terakhir" />
                                         <div class="input-group">
-                                            <span class="input-group-text"> <i class="fas fa-graduation-cap"></i>
-                                            </span>
                                             <select-input text="Pilih Pendidikan Terakhir" name="education"
                                                 v-model="form.education" :options="[
                                                     { value: 'SD', label: 'SD' },
@@ -169,25 +184,30 @@ const roleOptions = computed(() => {
                                         </div>
                                         <input-error :message="form.errors.education" />
                                     </div>
+
                                     <div class="mb-2">
-                                        <input-label class="fw-bold" for="roles" value="Jabatan" />
+                                        <input-label class="fw-bold" for="major" value="Jurusan" />
                                         <div class="input-group">
-                                            <span class="input-group-text"> <i class="fas fa-briefcase"></i>
-                                            </span>
-                                            <select-2 name="roles" v-model="form.roles" :options="roleOptions"
+                                            <text-input type="text" name="major" v-model="form.major" />
+                                        </div>
+                                        <input-error :message="form.errors.major" />
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <input-label class="fw-bold" for="jobTitle" value="Jabatan" />
+                                        <div class="input-group">
+                                            <select-2 name="jobTitle" v-model="form.jobTitle" :options="jobTitleOptions"
                                                 :settings="{
                                                     placeholder: 'Pilih Jabatan',
                                                     width: 'auto',
                                                     allowClear: true
                                                 }" />
                                         </div>
-                                        <input-error :message="form.errors.roles" />
+                                        <input-error :message="form.errors.jobTitle" />
                                     </div>
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="branches" value="Lokasi" />
                                         <div class="input-group">
-                                            <span class="input-group-text"> <i class="fas fa-map-marker-alt"></i>
-                                            </span>
                                             <select-2 name="branches" v-model="form.branches" :options="branchOptions"
                                                 :settings="{
                                                     placeholder: 'Pilih Lokasi',
