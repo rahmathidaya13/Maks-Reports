@@ -74,10 +74,9 @@ console.log(hasAnyErrors.value);
     <div class="container py-5">
         <div class="row justify-content-center align-items-center">
             <div class="col-xl-12">
-                <alert :duration="15" :variant="page.status || page.message ? 'info' : 'success'"
-                    :message="page.status || page.message" />
+                <alert :duration="15" :variant="page.message ? 'info' : 'success'" :message="page.message" />
 
-                <div class="bg-light border rounded-4 p-4 mb-4 d-flex align-items-center border-secondary-subtle">
+                <div class="bg-light border rounded-3 p-4 mb-4 d-flex align-items-center border-secondary-subtle">
                     <div class="me-3 text-primary">
                         <i class="fas fa-user-circle fa-5x"></i>
                     </div>
@@ -160,11 +159,11 @@ console.log(hasAnyErrors.value);
                                 <select-input class="input-height-1" text="Pilih Pendidikan Terakhir" name="education"
                                     v-model="form.education" :options="[
                                         { value: 'SD', label: 'SD' },
-                                        { value: 'SMP/Sederajat', label: 'SMP/Sederajat' },
-                                        { value: 'SMA/SMK/Sederajat', label: 'SMA/SMK/Sederajat' },
-                                        { value: 'S1', label: 'S1' },
-                                        { value: 'S2', label: 'S2' },
-                                        { value: 'S3', label: 'S3' },
+                                        { value: 'SMP', label: 'SMP/MTS/Sederajat' },
+                                        { value: 'SMA', label: 'SMA/SMK/MA/PAKET C/Sederajat' },
+                                        { value: 'S1/Sarjana', label: 'S1/Sarjana' },
+                                        { value: 'S2/Magister', label: 'S2/Magister' },
+                                        { value: 'S3/Doktor', label: 'S3/Doktor' },
                                     ]" />
                             </div>
                             <input-error :message="form.errors.education" />
@@ -259,6 +258,21 @@ console.log(hasAnyErrors.value);
                             <file-upload v-model="form.images" name="images"
                                 :default-image-url="props.profile?.images ? '/storage/' + props.profile?.images : ''" />
                             <input-error :message="form.errors.images" />
+                        </div>
+                        <div class="mb-2">
+                            <div class="callout callout-info rounded-0">
+                                <h5 class="fw-bold">
+                                    <i class="fas fa-bullhorn me-2"></i> Informasi
+                                </h5>
+                                <ul class="mb-0 ps-3">
+                                    <li> Pastikan semua data yang Anda masukkan sudah sesuai dengan informasi diri Anda.
+                                    </li>
+                                    <li>Jika terdapat kesalahan, Anda bisa kembali ke langkah sebelumnya untuk
+                                        memperbaiki.</li>
+                                    <li>Data yang lengkap dan benar akan membantu proses administrasi berjalan lancar.
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </template>
 

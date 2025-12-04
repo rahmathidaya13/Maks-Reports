@@ -17,7 +17,8 @@ class profileUncompleted
     public function handle(Request $request, Closure $next): Response
     {
         $user = Auth::user()->profile;
-        if ($user->is_completed) {
+       
+        if ($user->is_completed == true) {
             // Cegah akses ke halaman lain kecuali halaman profile
             if ($request->routeIs('profile', 'profile.update')) {
                 return redirect()->route('home')->with('message', 'Profil Anda sudah lengkap.');

@@ -109,16 +109,16 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
 
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::controller(ProfileController::class)->group(function () {
         Route::get('/profile/uncompleted', 'edit')->name('profile')
             ->middleware('profile.uncompleted');
         Route::post('/profile/update/{id}', 'update')->name('profile.update')
             ->middleware('profile.uncompleted');
 
+        // clone edit from profile
         Route::get('/profile/detail/{id}', 'infoDetail')->name('profile.detail')
             ->middleware(['profile.completed', 'check.profile.ownership']);
-        // clone edit from profile
         Route::get('/profile/edit/{id}', 'modifyAfterCompleted')->name('profile.edit')
             ->middleware(['profile.completed', 'check.profile.ownership']);
         Route::post('/profile/update/after/{id}', 'modifyAfterUpdate')->name('profile.after.update')

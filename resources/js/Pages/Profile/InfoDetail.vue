@@ -76,7 +76,7 @@ const goToEditProfile = (id) => {
                                     <div class="row detail-row basic_info">
                                         <div class="col-sm-6 mb-2">
                                             <p class="mb-0 fw-bold">ID Karyawan:</p>
-                                            <p class="text-muted">{{ props.detail?.id_number_employee ?? '-' }}</p>
+                                            <p class="text-muted">{{ props.detail?.employee_id_number ?? '-' }}</p>
                                         </div>
                                         <div class="col-sm-6 mb-2">
                                             <p class="mb-0 fw-bold">Cabang/Unit:</p>

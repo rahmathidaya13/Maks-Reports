@@ -47,10 +47,9 @@ const canGoNext = () => {
 // 🔥 Navigasi step
 // ------------------------------
 const nextStep = () => {
-    step.value++
-    // if (canGoNext()) {
-    //     step.value++
-    // }
+    if (canGoNext()) {
+        step.value++
+    }
 };
 
 const prevStep = () => step.value--;
@@ -102,18 +101,17 @@ watch(() => props.form.errors, (errors) => {
 
 </script>
 <template>
-    <div class="card shadow border overflow-hidden text-bg-grey">
+    <div class="step-container mb-4">
+        <div v-for="indicator in props.step" :key="indicator" class="step-arrow" :class="{
+            active: step === indicator,
+            completed: step > indicator
+        }">
+            {{ step_indicator[indicator] }}
+        </div>
+    </div>
+    <div class="card shadow border overflow-hidden text-bg-light rounded-3">
         <div class="card-body p-3 p-xl-5">
 
-            <div class="step-container mb-4">
-                <div v-for="indicator in props.step" :key="indicator" class="step-arrow" :class="{
-                    active: step === indicator,
-                    completed: step > indicator
-                }">
-                    {{ step_indicator[indicator] }}
-                </div>
-            </div>
-            <hr />
 
             <div v-if="step <= props.step">
 
@@ -128,7 +126,7 @@ watch(() => props.form.errors, (errors) => {
                     </button>
 
                     <button v-if="step < props.step" class="btn btn-primary ms-auto btn-height-2 bg-gradient"
-                        @click="nextStep">
+                        @click="nextStep" :disabled="!canGoNext()">
                         Selanjutnya
                         <i class="fas fa-arrow-right"></i>
                     </button>
@@ -165,6 +163,7 @@ watch(() => props.form.errors, (errors) => {
     flex: 1;
     text-align: center;
     transition: 0.2s ease-in-out;
+    text-transform: uppercase;
 }
 
 

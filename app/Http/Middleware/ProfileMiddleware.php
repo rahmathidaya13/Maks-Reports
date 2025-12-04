@@ -18,10 +18,10 @@ class ProfileMiddleware
     {
         $user = Auth::user()->profile;
         if (!$user->is_completed) {
-            // Cegah akses ke halaman lain kecuali halaman profile
+            // Cegah akses ke halaman lain kecuali halaman profile jika belum lengkap
             if (!$request->routeIs('profile', 'profile.update')) {
                 return redirect()->route('profile')
-                    ->with('status', 'Lengkapi profil Anda terlebih dahulu sebelum melanjutkan.');
+                    ->with('message', 'Lengkapi profil Anda terlebih dahulu sebelum melanjutkan.');
             }
         }
         return $next($request);
