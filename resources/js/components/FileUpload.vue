@@ -48,7 +48,7 @@ const imageSource = computed(() => {
 
 </script>
 <template>
-    <div class="image-upload-container position-relative ">
+    <div class="image-upload-container position-relative mx-auto">
 
         <img :src="imageSource" class="img-fluid image-previews" :alt="altText">
 
@@ -66,23 +66,23 @@ const imageSource = computed(() => {
 
 <style scoped>
 .image-upload-container {
-    width: 90%;
-    height: 350px;
+    width: 400px;
+    height: 400px;
     overflow: hidden;
     background-color: #e6e6e6;
-    border: 3px solid #999999;
+    /* border: 1px solid #999999; */
     border-radius: 15px;
-    border-style: dotted;
+    /* border-style: dotted; */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .image-upload-container .image-previews {
-    width: 95%;
+    width: 100%;
     height: auto;
     display: block;
-    object-fit: contain;
+    object-fit: cover;
     object-position: center;
     border: 1px solid #c5c5c5;
     border-radius: 15px;
@@ -94,7 +94,7 @@ const imageSource = computed(() => {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: rgba(105, 105, 105, 0.5);
+    background-color: rgba(105, 105, 105, 0.308);
     height: 50px;
     display: flex;
     justify-content: center;

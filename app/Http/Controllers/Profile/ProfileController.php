@@ -20,9 +20,9 @@ class ProfileController extends Controller
     public function edit(ProfileModel $profileModel)
     {
         $branches = BranchesModel::select('branches_id', 'name')->get();
-        $JobTitle = JobTitleModel::select('job_title_id', 'title')->get();
+        $jobTitle = JobTitleModel::select('job_title_id', 'title')->get();
         $profile = $profileModel::with('user')->where('users_id', auth()->user()->id)->first();
-        return Inertia::render('Profile/Index', compact('profile', 'branches', 'JobTitle'));
+        return Inertia::render('Profile/Index', compact('profile', 'branches', 'jobTitle'));
     }
     public function update(Request $request, ProfileModel $profileModel, string $id)
     {
@@ -41,10 +41,15 @@ class ProfileController extends Controller
             unset($profile->images);
         }
         $profile->users_id = auth()->user()->id;
-        $profile->id_number_employee = $request->input('id_number');
+        $profile->employee_id_number = $request->input('employee_id_number');
+        $profile->national_id_number = $request->input('national_id_number');
         $profile->job_title_id = $request->input('jobTitle');
         $profile->branches_id = $request->input('branches');
         $profile->date_of_entry = $request->input('date_of_entry');
+        $profile->employee_status = $request->input('employee_status');
+        $profile->major = $request->input('major');
+        $profile->birthplace = $request->input('birthplace');
+        $profile->religion = $request->input('religion');
         $profile->birthdate = $request->input('birthdate');
         $profile->education = $request->input('education');
         $profile->gender = $request->input('gender');
