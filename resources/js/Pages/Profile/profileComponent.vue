@@ -109,7 +109,7 @@ watch(() => props.form.errors, (errors) => {
             {{ step_indicator[indicator] }}
         </div>
     </div>
-    <div class="card shadow border overflow-hidden text-bg-light rounded-3">
+    <div class="card shadow border overflow-hidden text-bg-grey rounded-3">
         <div class="card-body p-3 p-xl-5">
 
 

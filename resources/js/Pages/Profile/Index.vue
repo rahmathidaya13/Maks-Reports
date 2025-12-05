@@ -35,7 +35,6 @@ const submit = () => {
 };
 const page = usePage().props.flash;
 
-console.log(page.status);
 const branchOptions = computed(() => {
     return props.branches?.map(item => {
         return {
@@ -64,7 +63,7 @@ const labels = {
     3: "Photo",
 };
 const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
-console.log(hasAnyErrors.value);
+// console.log(hasAnyErrors.value);
 </script>
 
 <template>

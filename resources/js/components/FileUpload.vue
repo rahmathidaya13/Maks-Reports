@@ -1,6 +1,8 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
 import { ref, defineProps, defineEmits, computed } from 'vue';
 
+const page = usePage();
 const props = defineProps({
     modelValue: File,
     defaultImageUrl: {
@@ -34,7 +36,7 @@ const handleFileChange = (event) => {
         previewUrl.value = null;
         emit('update:modelValue', null);
     }
-};
+}
 
 const imageSource = computed(() => {
     if (previewUrl.value) {
@@ -43,9 +45,10 @@ const imageSource = computed(() => {
     if (props.defaultImageUrl) {
         return props.defaultImageUrl
     }
-    return '/storage/img/noimage.png';
-})
+    // return '/storage/img/noimage.png';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(page.props.auth.user.name)}`
 
+})
 </script>
 <template>
     <div class="image-upload-container position-relative mx-auto">
@@ -70,12 +73,13 @@ const imageSource = computed(() => {
     height: 400px;
     overflow: hidden;
     background-color: #e6e6e6;
-    /* border: 1px solid #999999; */
+    border: 1px solid #999999;
     border-radius: 15px;
     /* border-style: dotted; */
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 5;
 }
 
 .image-upload-container .image-previews {

@@ -1,5 +1,8 @@
 <script setup>
 import { computed, ref } from "vue"
+import { usePage } from '@inertiajs/vue3';
+const page = usePage();
+
 const props = defineProps({
     modelValue: {
         type: [File, String, null],
@@ -24,6 +27,22 @@ const props = defineProps({
     pathUrls: {
         type: String,
         default: null
+    },
+    width: {
+        type: Number,
+        default: 250
+    },
+    height: {
+        type: Number,
+        default: 250
+    },
+    objectFit: {
+        type: String,
+        default: 'cover'
+    },
+    objectPosition: {
+        type: String,
+        default: 'center'
     }
 })
 
@@ -58,17 +77,27 @@ const imageSource = computed(() => {
         return props.pathUrls
     }
 
-    return '/storage/img/noimage.png';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(page.props.auth.user.name)}`
 })
 </script>
 
 <template>
-    <div class="mb-2">
-        <img :src="imageSource" alt="Preview" class="img-thumbnail shadow-sm img-preview" />
+    <div class="d-grid">
+        <div class="mb-2">
+            <img :style="{
+                width: props.width + 'px',
+                height: props.height + 'px',
+                objectFit: props.objectFit,
+                objectPosition: props.objectPosition,
+                borderRadius: '50%'
+            }" :src="imageSource" alt="Preview" class="img-thumbnail shadow-sm img-previews" />
+        </div>
+        <!-- <div>{{ nameFile || nameFromPath || 'Belum ada file dipilih' }}</div> -->
+        <label :for="name" class="btn btn-success bg-gradient btn-height-1 align-content-center"><i class="fas fa-images"></i>
+            {{ previewUrl || pathUrls ? 'Ganti Gambar' : 'Pilih Gambar' }}
+            <input type="file" :multiple="multiple" class="d-none" :id="name" :accept="accept" :name="name"
+                @change="onFileChange" />
+        </label>
+
     </div>
-    <div>{{ nameFile || nameFromPath || 'Belum ada file dipilih' }}</div>
-    <label style="width: 165px" :for="name" class="btn btn-secondary"><i class="fas fa-upload"></i> Pilih File
-        <input type="file" :multiple="multiple" class="d-none" :id="name" :accept="accept" :name="name"
-            @change="onFileChange" />
-    </label>
 </template>

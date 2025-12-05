@@ -302,9 +302,9 @@ body {
 }
 
 .img-preview {
-    width: 400px;
-    height: 350px !important;
-    object-fit: cover;
+    width: 350px;
+    height: 450px !important;
+    object-fit: fill;
     object-position: center;
     border-radius: 10px;
 }
