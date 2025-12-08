@@ -33,11 +33,6 @@ trait DailyReport
 
             'engage_old_customer' => ['required', 'integer', 'min:0', 'max:1000'],
             'engage_closing' => ['required', 'integer', 'min:0', 'max:1000'],
-            'notes' => [
-                'nullable',
-                'string',
-                'max:1000'
-            ],
         ], [
 
             'leads.required' => 'Kolom jumlah Leads tidak boleh kosong.',
@@ -91,8 +86,6 @@ trait DailyReport
             'engage_closing.min' => 'Closing dari Engage Pelanggan Lama minimal adalah 0',
             'engage_closing.max' => 'Closing dari Engage Pelanggan Lama melebihi batas maksimal yang diizinkan max:1000.',
 
-            'notes.string' => 'Catatan harus berupa teks yang sesuai.',
-            'notes.max' => 'Panjang catatan tidak boleh melebihi 500 karakter.',
         ])->validate();
     }
 }

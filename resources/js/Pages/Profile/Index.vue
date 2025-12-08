@@ -19,8 +19,10 @@ const form = useForm({
     religion: "",
     birthdate: "",
     birthplace: "",
+    entry_year: "",
     education: "",
     major: "",
+    graduation_year: "",
     gender: "",
     number_phone: "",
     address: "",
@@ -53,14 +55,16 @@ const jobTitleOptions = computed(() => {
 })
 
 const fieldsPerStep = {
-    1: ["name", "birthplace", "religion", "national_id_number", "birthdate", "gender", "address", "education", "major"],
-    2: ["employee_id_number", "date_of_entry", "email", "number_phone", "jobTitle", "branches"],
-    3: ["images"],
+    1: ["name", "birthplace", "religion", "national_id_number", "birthdate", "gender", "address"],
+    2: ["entry_year", "education", "major", "graduation_year"],
+    3: ["employee_id_number", "date_of_entry", "email", "number_phone", "jobTitle", "branches"],
+    4: ["images"],
 };
 const labels = {
     1: "Data Diri",
-    2: "Data Pegawai",
-    3: "Photo",
+    2: "Data Pendidikan",
+    3: "Data Pegawai",
+    4: "Photo",
 };
 const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
 // console.log(hasAnyErrors.value);
@@ -86,7 +90,7 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
                         </p>
                     </div>
                 </div>
-                <ProfileComponent :step_indicator="labels" :step="3" :fieldPerStep="fieldsPerStep" :form="form"
+                <ProfileComponent :step_indicator="labels" :step="4" :fieldPerStep="fieldsPerStep" :form="form"
                     @submit="submit">
 
                     <template #step-1>
@@ -152,6 +156,28 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
                             <input-error :message="form.errors.gender" />
                         </div>
 
+
+
+                        <div class="col-xl-12 col-md-12 col-sm-12">
+                            <div class="mb-3">
+                                <input-label class="fw-bold" for="address" value="Alamat" />
+                                <text-area placeholder="contoh: Jl. Kebon Jeruk, Jakarta, Indonesia" name="address"
+                                    v-model="form.address" :rows="5" :cols="5" />
+                                <input-error :message="form.errors.address" />
+                            </div>
+                        </div>
+                    </template>
+
+                    <template #step-2>
+
+                        <div class="mb-2">
+                            <input-label class="fw-bold" for="entry_year" value="Tahun Masuk" />
+                            <div class="input-group">
+                                <input-years input-class="input-height-1" placeholder="contoh: 2010" name="entry_year"
+                                    v-model="form.entry_year" />
+                            </div>
+                            <input-error :message="form.errors.entry_year" />
+                        </div>
                         <div class="mb-2">
                             <input-label class="fw-bold" for="education" value="Pendidikan Terakhir" />
                             <div class="input-group">
@@ -177,17 +203,18 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
                             <input-error :message="form.errors.major" />
                         </div>
 
-                        <div class="col-xl-12 col-md-12 col-sm-12">
-                            <div class="mb-3">
-                                <input-label class="fw-bold" for="address" value="Alamat" />
-                                <text-area placeholder="contoh: Jl. Kebon Jeruk, Jakarta, Indonesia" name="address"
-                                    v-model="form.address" :rows="5" :cols="5" />
-                                <input-error :message="form.errors.address" />
+                        <div class="mb-2">
+                            <input-label class="fw-bold" for="graduation_year" value="Tahun Lulus" />
+                            <div class="input-group">
+                                <input-years input-class="input-height-1" placeholder="contoh: 2025"
+                                    name="graduation_year" v-model="form.graduation_year" />
                             </div>
+
+                            <input-error :message="form.errors.graduation_year" />
                         </div>
                     </template>
 
-                    <template #step-2>
+                    <template #step-3>
                         <div class="mb-2">
                             <input-label class="fw-bold" for="employee_id_number" value="ID Karyawan" />
                             <div class="input-group">
@@ -252,7 +279,7 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
                             <input-error :message="form.errors.branches" />
                         </div>
                     </template>
-                    <template #step-3>
+                    <template #step-4>
                         <div class="mb-2">
                             <file-upload v-model="form.images" name="images"
                                 :default-image-url="props.profile?.images ? '/storage/' + props.profile?.images : ''" />

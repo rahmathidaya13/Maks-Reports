@@ -18,7 +18,6 @@ const form = useForm({
     fu_last_week_closing: props.dailyReport?.fu_last_week_closing ?? '',
     engage_old_customer: props.dailyReport?.engage_old_customer ?? '',
     engage_closing: props.dailyReport?.engage_closing ?? '',
-    notes: props.dailyReport?.notes ?? '',
 });
 const isSubmit = () => {
     if (props.dailyReport?.daily_report_id) {
@@ -103,7 +102,7 @@ function daysOnlyConvert(dayValue) {
         <template #content>
             <loader-page ref="loaderActive" />
 
-            <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
+            <bread-crumbs :home="false" :icon="icon" :title="title" :items="breadcrumbItems" />
             <div class="callout callout-success">
                 <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Panduan Pengisian Laporan Leads Harian</h5>
                 <ul class="mb-0 ps-3">
@@ -129,10 +128,6 @@ function daysOnlyConvert(dayValue) {
             <div class="row">
                 <div class="col-xl-12 col-sm-12 pb-3">
                     <div class="card overflow-hidden rounded-4 shadow-sm">
-                        <!-- <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
-                            <i class="fas fa-clipboard me-1 text-light"></i>
-                            Form Laporan Leads Harian
-                        </h5> -->
                         <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
                             <i class="fas fa-clipboard me-1 text-light"></i>
                             Laporan Leads Harian:
@@ -230,15 +225,7 @@ function daysOnlyConvert(dayValue) {
 
                                     </div>
                                 </div>
-                                <div class="col-12 mb-3 p-3 rounded-3 border border-dark">
-                                    <div class="mb-2">
-                                        <quill-text placeholder="Opsional: Tulis catatan disini jika ada" height="300px"
-                                            name="notes" v-model="form.notes" />
-                                        <input-error :message="form.errors.notes" />
-                                    </div>
-                                </div>
-
-                                <div class="d-grid d-xl-flex">
+                                <div class="d-grid d-xl-flex justify-content-end">
                                     <base-button waiting="Memproses..." :loading="form.processing"
                                         class="rounded-3 bg-gradient px-5 btn-height-2"
                                         :icon="props.dailyReport && props.dailyReport?.daily_report_id ? 'fas fa-edit' : 'fas fa-save'"

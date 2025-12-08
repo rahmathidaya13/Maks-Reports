@@ -46,7 +46,6 @@
         .header-left {
             max-width: 50%;
             padding-left: 5px;
-            /* supaya teks tidak mepet logo */
         }
 
         .header-right .logo {
@@ -78,20 +77,22 @@
         /* TABLE */
         table {
             width: 100%;
-            border-collapse: collapse;
             margin-top: 15px;
             z-index: 10;
             position: relative;
             text-align: center;
+            border-collapse: collapse;
+            border-spacing: 0 4px
         }
 
         table th {
-            background: #1b1b1b;
+            background: #131313;
             font-weight: bold;
             border: 1px solid #bdc3c7;
             padding: 8px;
             color: #f7f7f7;
             font-size: 12px;
+            
         }
 
         table td {
@@ -99,6 +100,9 @@
             padding: 8px;
             font-size: 12px;
             color: #000000;
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: nowrap !important;
         }
 
         tbody tr:nth-child(odd) td {
@@ -108,6 +112,13 @@
 
         table tr:nth-child(even) {
             background: #ffffff;
+        }
+
+        table tfoot td {
+            background: #131313;
+            color: #f7f7f7;
+            font-weight: bold;
+            border: none !important;
         }
 
         /* SIGNATURES */
@@ -189,13 +200,17 @@
                 </tr>
             @endforelse
         </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="{{ count($headers) - 2 }}" style="border:none !important;"></td>
-                <td><b>Total</b></td>
-                <td><b>{{ $total ?? '0' }}</b></td>
-            </tr>
-        </tfoot>
+        @if (!empty($total) && is_array($total))
+            <tfoot>
+                <tr>
+                    {{-- Loop total --}}
+                    @foreach ($total as $label => $value)
+                        <td><b>{{ $value }}</b></td>
+                    @endforeach
+                </tr>
+            </tfoot>
+        @endif
+
     </table>
 
     <!-- TANDA TANGAN -->

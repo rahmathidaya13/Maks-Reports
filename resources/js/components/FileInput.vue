@@ -93,11 +93,10 @@ const imageSource = computed(() => {
             }" :src="imageSource" alt="Preview" class="img-thumbnail shadow-sm img-previews" />
         </div>
         <!-- <div>{{ nameFile || nameFromPath || 'Belum ada file dipilih' }}</div> -->
-        <label :for="name" class="btn btn-success bg-gradient btn-height-1 align-content-center"><i class="fas fa-images"></i>
+        <label :for="name" class="btn btn-success btn-sm bg-gradient align-content-center"><i class="fas fa-images"></i>
             {{ previewUrl || pathUrls ? 'Ganti Gambar' : 'Pilih Gambar' }}
             <input type="file" :multiple="multiple" class="d-none" :id="name" :accept="accept" :name="name"
                 @change="onFileChange" />
         </label>
-
     </div>
 </template>

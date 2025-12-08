@@ -37,6 +37,7 @@ import { VueDatePicker } from "@vuepic/vue-datepicker";
 import '@vuepic/vue-datepicker/dist/main.css'
 import InputTime from "./components/inputTime.vue";
 import LoaderPerPage from "./components/LoaderPerPage.vue";
+import InputYears from "./components/inputYears.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
@@ -57,6 +58,7 @@ export default {
         app.component("input-quantity", InputQuantity);
         app.component("input-date", VueDatePicker);
         app.component("input-time", InputTime);
+        app.component("input-years", InputYears);
         app.component("text-area", TextArea);
         app.component("text-input", TextInput);
         app.component("quill-text", QuillText);

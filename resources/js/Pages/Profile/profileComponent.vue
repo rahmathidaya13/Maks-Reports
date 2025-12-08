@@ -61,7 +61,6 @@ Object.values(props.fieldPerStep).flat().forEach(field => {
     watch(
         () => props.form[field],
         (newVal) => {
-
             // Jika error ada, cek apakah value SUDAH TIDAK KOSONG
             if (props.form.errors[field]) {
 
@@ -84,7 +83,6 @@ Object.values(props.fieldPerStep).flat().forEach(field => {
 // 🔥 AUTO-JUMP KE STEP YANG ADA ERROR
 //
 watch(() => props.form.errors, (errors) => {
-    console.log(errors);
     if (!errors || Object.keys(errors).length === 0) return;
 
     // Cari step pertama yang ada error

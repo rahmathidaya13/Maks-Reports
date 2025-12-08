@@ -1,9 +1,10 @@
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
 import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
+import axios from "axios";
 moment.locale('id');
 
 const page = usePage();
@@ -20,18 +21,6 @@ const filters = reactive({
     start_date: props.filters.start_date ?? '',
     end_date: props.filters.end_date ?? '',
 })
-
-const header = [
-    { label: "No", key: "__index" },
-    { label: "Tanggal", key: "date" },
-    { label: "Leads", key: "leads" },
-    { label: "FU Kemarin", key: "fu_yesterday" },
-    { label: "FU Kemarinnya", key: "fu_before_yesterday" },
-    { label: "FU Minggu Kemarinnya", key: "fu_last_week" },
-    { label: "Engage Konsumen Lama", key: "engage_old_customer" },
-    { label: "Catatan", key: "notes" },
-    { label: "Aksi", key: "-" },
-];
 
 
 const selectedRow = ref([]);
@@ -168,6 +157,73 @@ const goToCreate = () => {
     });
 }
 
+// =========Tampilkan Modal========== //
+const showModal = ref(false);
+const start_dateRef = ref(null)
+function openModal() {
+    showModal.value = true
+    nextTick(() => {
+        start_dateRef.value?.$el?.focus?.(); // untuk custom component
+        start_dateRef.value?.focus?.();      // fallback jika native input
+    });
+}
+
+// tutup modal SETELAH Bootstrap selesai animasi
+function closeModal() {
+    showModal.value = false
+    form.start_date_dw = '';
+    form.end_date_dw = '';
+}
+
+// form untuk kirim berdasarkan tanggal
+const form = reactive({
+    start_date_dw: '',
+    end_date_dw: '',
+})
+function downloadPdf() {
+    window.open(
+        route('daily_report.print_to_pdf', {
+            start_date: form.start_date_dw,
+            end_date: form.end_date_dw
+        }),
+        '_blank'
+    )
+}
+function downloadExcel() {
+    window.open(
+        route('daily_report.print_to_excel', {
+            start_date: form.start_date_dw,
+            end_date: form.end_date_dw
+        }),
+        '_self'
+    )
+}
+
+const isDisableBtnDownload = computed(() => {
+    return !(form.start_date_dw && form.end_date_dw);
+})
+const information = ref(null);
+watch(() => [form.start_date_dw, form.end_date_dw],
+    async ([start_date, end_date]) => {
+        if (!start_date || !end_date) {
+            information.value = null;
+            return;
+        }
+        const { data } = await axios.get(route('daily_report.information'), {
+            params: {
+                start_date: start_date,
+                end_date: end_date
+            }
+        })
+        if (data.status) {
+            information.value = data;
+        }
+    })
+const resetField = () => {
+    form.start_date_dw = '';
+    form.end_date_dw = '';
+}
+// =========Batas Fungsi untuk Tampilkan Modal========== //
 </script>
 <template>
 
@@ -251,7 +307,8 @@ const goToCreate = () => {
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
                         <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
                         <div class="d-inline-flex ms-auto gap-1">
-                            <!-- <drop-down @download="handleDownload" /> -->
+                            <base-button variant="success" icon="fas fa-download" @click="openModal" class="bg-gradient"
+                                name="unduh" label="Unduh" />
                             <div class="position-relative">
                                 <base-button @click="goToCreate" class="bg-gradient" name="create" label="Buat Laporan"
                                     icon="fas fa-plus" />
@@ -282,9 +339,9 @@ const goToCreate = () => {
                                     </span>
                                 </h4>
                                 <div class="dropdown">
-                                    <button class="btn btn-danger bg-gradient" type="button" data-bs-toggle="dropdown"
-                                        aria-expanded="false">
-                                        <i class="fas fa-eye"></i> Aksi
+                                    <button class="btn btn-secondary bg-gradient px-3 btn-sm" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-cog"></i>
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li>
@@ -380,17 +437,6 @@ const goToCreate = () => {
                                                 </tr>
                                             </tfoot>
                                         </table>
-                                        <div class="p-2 border rounded-0 bg-light">
-                                            <strong>Catatan:</strong>
-                                            <div class="mt-1 mb-3">
-                                                <div v-if="row.notes !== null && row.notes.trim() !== '<p><br></p>'"
-                                                    class="notes" v-html="row.notes">
-                                                </div>
-                                                <div v-else class="notes text-center align-middle">
-                                                    Tidak ada catatan
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -412,12 +458,95 @@ const goToCreate = () => {
                     </div>
                 </div>
             </div>
+
+            <!-- modal open -->
+            <div class="row">
+                <div class="col-xl-12 col-sm-12">
+                    <modal @opened="openModal" size="modal-lg" :footer="false" icon="fas fa-download" v-if="showModal"
+                        :show="showModal" title="Unduh Laporan Leads Harian" @update:show="showModal = $event"
+                        @closed="closeModal">
+                        <template #body>
+
+                            <div class="callout callout-info shadow-sm">
+                                <h5><i class="fas fa-bullhorn"></i> Informasi</h5>
+                                <ul class="small ps-3 mb-0">
+                                    <li>Pastikan rentang tanggal valid untuk mengunduh laporan.</li>
+                                    <li>Data laporan akan difilter sesuai <b>Tanggal Awal</b> dan <b>Tanggal Akhir</b>
+                                        yang
+                                        pilih.</li>
+                                    <li>Jika tidak ada data pada periode tersebut, laporan tetap dapat diunduh namun
+                                        berisi
+                                        informasi kosong.</li>
+                                    <li>Laporan dapat diunduh dalam format <b>PDF</b> atau <b>Excel</b>.</li>
+
+                                    <li>Untuk mencetak laporan pada hari ini masukan <b>Tanggal Awal</b> dan
+                                        <b>Tanggal Akhir</b> sesuai dengan Tanggal hari ini.</li>
+                                </ul>
+                            </div>
+                            <div class="card text-bg-grey">
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <div class="col-xl-6 col-sm-6 col-md-6">
+                                            <input-label ref="start_dateRef" class="fw-semibold" for="start_date_dw"
+                                                value="Tanggal Awal" />
+                                            <text-input type="date" name="start_date_dw" v-model="form.start_date_dw" />
+                                        </div>
+                                        <div class="col-xl-6 col-md-6 col-sm-6">
+                                            <input-label class="fw-semibold" for="end_date_dw" value="Tanggal Akhir" />
+                                            <text-input type="date" name="end_date_dw" v-model="form.end_date_dw" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr />
+                            <div v-if="information" class="text-bg-grey border rounded-3 p-3 mb-4 shadow-sm">
+                                <ul class="list-unstyled small mb-0">
+                                    <li><b>Periode:</b>
+                                        {{ information.first_date }} s/d {{ information.last_date }}
+                                    </li>
+                                    <li>
+                                        <b>Minggu Ke:</b>
+                                        {{ information.week_start }}
+                                        <template v-if="information.week_start !== information.week_end">
+                                            s/d {{ information.week_end }}
+                                        </template>
+                                    </li>
+                                    <li><b>Total Baris Data:</b> {{ information.total_rows }}</li>
+                                    <li><b>Total Leads:</b> {{ information.total_leads ?? '-' }}</li>
+                                    <li><b>Total Closing:</b> {{ information.total_closing ?? '-' }}</li>
+                                    <li><b>Total Followup:</b> {{ information.total_fu ?? '-' }}</li>
+                                    <li><b>Total Followup Closing:</b> {{ information.total_fu_closing ?? '-' }}</li>
+                                    <li><b>Total Engage Old Customer:</b> {{ information.total_engage_old_customer ??
+                                        '-' }}</li>
+                                    <li><b>Total Engage Closing:</b> {{ information.total_engage_closing ?? '-' }}</li>
+                                </ul>
+
+                            </div>
+
+                            <div class="d-flex justify-content-between ">
+                                <base-button class="mb-2" @click="resetField" type="button" name="cancel" label="Batal"
+                                    variant="outline-danger" />
+                                <div class="d-flex gap-2">
+                                    <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
+                                        icon="fas fa-file-pdf" :variant="!isDisableBtnDownload ? 'danger' : 'secondary'"
+                                        class="bg-gradient" name="print_pdf" label="Unduh PDF" />
+                                    <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
+                                        icon="fas fa-file-excel"
+                                        :variant="!isDisableBtnDownload ? 'success' : 'secondary'" class="bg-gradient"
+                                        name="print_excel" label="Unduh Excel" />
+                                </div>
+                            </div>
+
+                        </template>
+                    </modal>
+                </div>
+            </div>
         </template>
     </app-layout>
 </template>
 <style scoped>
 .table-overlay {
-    max-height: 60vh;
+    max-height: 70vh;
     overflow-y: auto;
     padding-right: 6px;
     position: relative;

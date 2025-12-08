@@ -107,6 +107,14 @@ const jobTitle = page.props.auth.user.profile.job_title;
                     Laporan Status
                     </Link>
 
+                    <Link :href="route('sales_record')" class="nav-link"
+                        :class="{ 'active active-link': is('sales_record*') }">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-sticky-note"></i>
+                    </div>
+                    Catatan Penjualan
+                    </Link>
+
                     <Link v-if="roles" class="nav-link" :class="{ 'active active-link': is('job_title*') }"
                         :href="route('job_title')">
                     <div class="sb-nav-link-icon">

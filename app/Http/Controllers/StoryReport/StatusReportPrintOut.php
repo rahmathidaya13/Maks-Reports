@@ -58,7 +58,6 @@ class StatusReportPrintOut extends Controller
             'title' => 'Laporan Harian Update Status',
             'subtitle' => 'PT. Toko Maksindo Cabang ' . ucwords($branchName),
             'dibuat' => $user->name,
-            'total' => $reportStatus->sum('jumlah_status'),
             'info' => [
                 'Tanggal: ' . Carbon::now()->translatedFormat('l, d/m/Y'),
                 'Periode: Minggu ke-' . $weekStart . ($weekStart != $weekEnd ? ' s/d ' . $weekEnd : ''),
@@ -69,6 +68,14 @@ class StatusReportPrintOut extends Controller
             'logo_opacity' => 0.05,
             'logo_top' => '50%',
             'logo_left' => '50%',
+            'totalCheck' => true,
+            'total' => [
+                '',
+                '',
+                '',
+                'Total',
+                $reportStatus->sum('jumlah_status'),
+            ],
 
         ]);
         $pdfLoad->setPaper('A4', 'portrait');

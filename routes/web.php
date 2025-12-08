@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\ConfirmPasswordController;
+use App\Http\Controllers\Daily\DailyReportPrintOut;
+use App\Http\Controllers\Sales\SalesRecordsController;
+use App\Http\Controllers\Scraped\ScrapedController;
 use App\Http\Controllers\StoryReport\StatusReportPrintOut;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
@@ -101,10 +104,30 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::post('/story_report/delete_all', 'destroy_all')->name('story_report.destroy_all');
     });
 
+    Route::controller(SalesRecordsController::class)->group(function () {
+        Route::get('/sales_record/list', 'index')->name('sales_record');
+        Route::get('/sales_record/create', 'create')->name('sales_record.create');
+        Route::post('/sales_record/store', 'store')->name('sales_record.store');
+        Route::get('/sales_record/edit/{id}', 'edit')->name('sales_record.edit');
+        Route::put('/sales_record/update/{id}', 'update')->name('sales_record.update');
+        Route::delete('/sales_record/destroy/{id}', 'destroy')->name('sales_record.deleted');
+        Route::post('/sales_record/delete_all', 'destroy_all')->name('sales_record.destroy_all');
+    });
+
+    // cetak laporan
     Route::controller(StatusReportPrintOut::class)->group(function () {
         Route::get('/story_report/export_to_excel', 'printToExcel')->name('story_report.print_to_excel');
         Route::get('/story_report/export_to_pdf', 'printToPdf')->name('story_report.print_to_pdf');
         Route::get('/story_report/information', 'information')->name('story_report.information');
+    });
+
+    Route::controller(DailyReportPrintOut::class)->group(function () {
+        Route::get('/daily_report_leads/export_to_excel', 'printToExcel')->name('daily_report.print_to_excel');
+        Route::get('/daily_report_leads/export_to_pdf', 'printToPdf')->name('daily_report.print_to_pdf');
+        Route::get('/daily_report_leads/information', 'information')->name('daily_report.information');
+    });
+    Route::controller(ScrapedController::class)->group(function () {
+        Route::get('/scraped/products', 'scrape')->name('scrape');
     });
 
 });

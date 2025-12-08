@@ -14,7 +14,7 @@ class DailyReportModel extends Model
     protected $primaryKey = 'daily_report_id';
     protected $keyType = 'string';
     public $incrementing = false;
-    protected $dates    = ["deleted_at"];
+    protected $dates = ["deleted_at"];
     protected $fillable = [
         'created_by',
         'date',
@@ -28,7 +28,6 @@ class DailyReportModel extends Model
         'fu_last_week_closing',
         'engage_old_customer',
         'engage_closing',
-        'notes',
     ];
     public function creator()
     {

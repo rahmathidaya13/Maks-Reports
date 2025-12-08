@@ -48,8 +48,10 @@ return new class extends Migration {
             ])->default('contract');
 
             // --- Education Information ---
+            $table->string('entry_year', 4)->nullable(); // tahun masuk pendidikan;
             $table->string('education', 50)->nullable();
             $table->string('major', 100)->nullable(); // jurusan pendidikan
+            $table->string('graduation_year', 4)->nullable(); // tahun lulus pendidikan
 
             $table->text('images')->nullable();
             $table->boolean('is_completed')->default(false);

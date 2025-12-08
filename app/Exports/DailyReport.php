@@ -2,24 +2,22 @@
 
 namespace App\Exports;
 
-use App\Models\StoryStatusReportModel;
+use App\Models\DailyReportModel;
 use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 
-class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
+class DailyReport implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
     /**
      * @return \Illuminate\Support\Collection
      */
-    // Jumlah kolom yang akan diekspor adalah 5 (A hingga E)
-
     protected $start_date = null;
     protected $end_date = null;
     public function __construct($start_date, $end_date)
@@ -30,32 +28,46 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
     public function collection()
     {
         // Mengambil data dan memetakan (map) untuk menyesuaikan urutan dan format
-        $data =  StoryStatusReportModel::with('creator')
+        $data = DailyReportModel::with('creator')
             ->where('created_by', auth()->user()->id)
             ->whereNull('deleted_at')
-            ->whereBetween('report_date', [$this->start_date, $this->end_date])
+            ->whereBetween('date', [$this->start_date, $this->end_date])
             ->get()
             ->map(function ($report, $index) {
                 return [
-                    'No' => $index + 1,
-                    'ID Status' => $report->report_code,
-                    'Tanggal' => Carbon::parse($report->report_date)->translatedFormat('l, d-m-Y'),
-                    'Jam' => Carbon::parse($report->report_time)->format('H:i'),
-                    'Jumlah' => $report->count_status,
+                    'no' => $index + 1,
+                    'tanggal' => Carbon::parse($report->date)->translatedFormat('d-m-Y'),
+                    'leads' => (int) $report->leads ?? 0,
+                    'closing' => (int) $report->closing ?? 0,
+                    'fu_yesterday' => $report->fu_yesterday ?? 0,
+                    'fu_yesterday_closing' => $report->fu_yesterday_closing ?? 0,
+                    'fu_before_yesterday' => $report->fu_before_yesterday ?? 0,
+                    'fu_before_yesterday_closing' => $report->fu_before_yesterday_closing ?? 0,
+                    'fu_last_week' => $report->fu_last_week ?? 0,
+                    'fu_last_week_closing' => $report->fu_last_week_closing ?? 0,
+                    'engage_old_customer' => $report->engage_old_customer ?? 0,
+                    'engage_closing' => $report->engage_closing ?? 0,
                 ];
             });
-
         // Jika tidak ada data, tambahkan 1 baris keterangan
         if ($data->count() === 0) {
-            return collect([[
-                'No' => '-',
-                'ID Status' => 'Tidak ada data',
-                'Tanggal' => '-',
-                'Jam' => '-',
-                'Jumlah' => 0,
-            ]]);
+            return collect([
+                [
+                    'No' => '',
+                    'tanggal' => 'Tidak ada data',
+                    'leads' => '',
+                    'closing' => '',
+                    'fu_yesterday' => '',
+                    'fu_yesterday_closing' => '',
+                    'fu_before_yesterday' => '',
+                    'fu_before_yesterday_closing' => '',
+                    'fu_last_week' => '',
+                    'fu_last_week_closing' => '',
+                    'engage_old_customer' => '',
+                    'engage_closing' => '',
+                ]
+            ]);
         }
-
         return $data;
     }
 
@@ -65,33 +77,43 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         $branchName = $user->profile->branch->name ?? '-';
 
         $weekStart = Carbon::parse($this->start_date)->weekOfMonth;
-        $weekEnd   = Carbon::parse($this->end_date)->weekOfMonth;
+        $weekEnd = Carbon::parse($this->end_date)->weekOfMonth;
         return [
-            ['LAPORAN HARIAN UPDATE STATUS'],
+            ['LAPORAN LEADS HARIAN'],
             ['PT. Toko Maksindo Cabang ' . ucwords($branchName)],
             ['Tanggal Laporan: ' . Carbon::now()->translatedFormat('l, d/m/Y') . ', ' . 'Minggu ke ' . $weekStart . ($weekStart != $weekEnd ? ' s/d ' . $weekEnd : '')],
             [],
             [
                 'No',
-                'ID Status',
                 'Tanggal',
-                'Jam',
-                'Jumlah',
-            ] // Header tabel (Baris 5)
+                'Leads',
+                'Closing',
+                'FU Konsumen Kemarin (H-1)',
+                'Closing',
+                'FU Konsumen Kemarennya (H-2)',
+                'Closing',
+                'FU Konsumen Minggu Kemarennya',
+                'Closing',
+                'Engage Konsumen Lama',
+                'Closing'
+            ]
         ];
     }
-
     public function styles(Worksheet $sheet)
     {
         // =====================================
         //  MERGE UNTUK HEADING UTAMA
         // =====================================
-        foreach (range(1, 4) as $row) {
-            $sheet->mergeCells("A{$row}:E{$row}");
-        }
+        // foreach (range(1, 12) as $row) {
+        //     $sheet->mergeCells("A{$row}:L{$row}");
+        // }
+        $sheet->mergeCells("A1:L1");
+        $sheet->mergeCells("A2:L2");
+        $sheet->mergeCells("A3:L3");
+        $sheet->mergeCells("A4:L4");
 
         // Judul utama (A1)
-        $sheet->getStyle('A1')->applyFromArray([
+        $sheet->getStyle('A1:L1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 21,
@@ -109,7 +131,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         ]);
 
         // Sub Judul (A2 & A3)
-        $sheet->getStyle('A2:A4')->applyFromArray([
+        $sheet->getStyle('A2:L4')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 14,
@@ -137,7 +159,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // ==============================
         // 🎨 HEADER TABLE (Baris 5)
         // ==============================
-        $sheet->getStyle('A5:E5')->applyFromArray([
+        $sheet->getStyle('A5:L5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['argb' => 'FFFFFFFF'], // putih
@@ -164,8 +186,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // 📄 ISI DATA
         // ==============================
         $lastRow = $sheet->getHighestRow();
-
-        $sheet->getStyle("A6:E$lastRow")->applyFromArray([
+        $sheet->getStyle("A6:L$lastRow")->applyFromArray([
             'font' => [
                 'size' => 12,
                 'name' => 'Calibri'
@@ -184,32 +205,43 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
 
 
         // ==============================
-        // 🔢 TOTAL JUMLAH STATUS
+        // 🔢 TOTAL JUMLAH 
         // ==============================
 
+
         // Hitung total jumlah status
-        $total = StoryStatusReportModel::with('creator')
-            ->whereBetween('report_date', [$this->start_date, $this->end_date])
+        $total = DailyReportModel::with('creator')
+            ->whereBetween('date', [$this->start_date, $this->end_date])
             ->where('created_by', auth()->user()->id)
             ->whereNull('deleted_at')
-            ->sum('count_status');
+            ->get();
 
         // Baris total berada setelah data terakhir
         $totalRow = $lastRow + 1;
 
         // Tulis label TOTAL (A–D)
-        $sheet->setCellValue("D$totalRow", "Total");
+        $sheet->setCellValue("B$totalRow", "Total");
+
         // $sheet->mergeCells("A$totalRow:D$totalRow");
 
         // Tulis totalnya (kolom E)
-        $sheet->setCellValue("E$totalRow", $total);
+        $sheet->setCellValue("C$totalRow", $total->sum('leads'));
+        $sheet->setCellValue("D$totalRow", $total->sum('closing'));
+        $sheet->setCellValue("E$totalRow", $total->sum('fu_yesterday'));
+        $sheet->setCellValue("F$totalRow", $total->sum('fu_yesterday_closing'));
+        $sheet->setCellValue("G$totalRow", $total->sum('fu_before_yesterday'));
+        $sheet->setCellValue("H$totalRow", $total->sum('fu_before_yesterday_closing'));
+        $sheet->setCellValue("I$totalRow", $total->sum('fu_last_week'));
+        $sheet->setCellValue("J$totalRow", $total->sum('fu_last_week_closing'));
+        $sheet->setCellValue("K$totalRow", $total->sum('engage_old_customer'));
+        $sheet->setCellValue("L$totalRow", $total->sum('engage_closing'));
 
         // Styling baris total
-        $sheet->getStyle("D$totalRow:E$totalRow")->applyFromArray([
+        $sheet->getStyle("A$totalRow:L$totalRow")->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 12,
-                'color' => ['argb' => 'ff000000'],
+                'color' => ['argb' => 'FFFFFFFF'],
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -217,7 +249,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FFFFFFFF'],
+                'startColor' => ['argb' => 'ff2d7244'],
             ],
             'borders' => [
                 'allBorders' => [
@@ -235,7 +267,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         if ($lastRow > 6) {
             for ($row = 6; $row <= $lastRow; $row++) {
                 if ($row % 2 == 0) {
-                    $sheet->getStyle("A$row:E$row")->applyFromArray([
+                    $sheet->getStyle("A$row:L$row")->applyFromArray([
                         'fill' => [
                             'fillType' => Fill::FILL_SOLID,
                             'startColor' => ['argb' => 'ebebebfa'],
@@ -249,7 +281,7 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         // TANDA TANGAN (TTD)
         // =====================================
 
-        $ttdStart = $totalRow + 3;
+        // $ttdStart = $totalRow + 3;
         // Tanggal + Kota
         // $sheet->getStyle("C{$ttdStart}")->applyFromArray([
         //     'font' => [
@@ -262,49 +294,49 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         //     ],
         // ]);
         // Label: Dibuat oleh - Diketahui oleh
-        $ttdRow1 = $ttdStart + 2;
+        // $ttdRow1 = $ttdStart + 2;
 
-        $sheet->mergeCells("A{$ttdRow1}:B{$ttdRow1}");
+        // $sheet->mergeCells("A{$ttdRow1}:B{$ttdRow1}");
 
-        $sheet->setCellValue("A{$ttdRow1}", "Dibuat oleh,");
-        $sheet->setCellValue("C{$ttdRow1}", "Diketahui oleh,");
-        $sheet->setCellValue("E{$ttdRow1}", "Disetujui oleh,");
+        // $sheet->setCellValue("A{$ttdRow1}", "Dibuat oleh,");
+        // $sheet->setCellValue("C{$ttdRow1}", "Diketahui oleh,");
+        // $sheet->setCellValue("E{$ttdRow1}", "Disetujui oleh,");
 
-        $sheet->getStyle("A{$ttdRow1}:E{$ttdRow1}")->applyFromArray([
-            'font' => [
-                'bold' => false,
-                'size' => 12,
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-        ]);
+        // $sheet->getStyle("A{$ttdRow1}:E{$ttdRow1}")->applyFromArray([
+        //     'font' => [
+        //         'bold' => false,
+        //         'size' => 12,
+        //     ],
+        //     'alignment' => [
+        //         'horizontal' => Alignment::HORIZONTAL_CENTER,
+        //         'vertical' => Alignment::VERTICAL_CENTER,
+        //     ],
+        // ]);
 
-        // Ruang untuk tanda tangan (kosong)
-        $ttdRow2 = $ttdRow1 + 4;
+        // // Ruang untuk tanda tangan (kosong)
+        // $ttdRow2 = $ttdRow1 + 4;
 
-        $sheet->mergeCells("A{$ttdRow2}:B{$ttdRow2}");
+        // $sheet->mergeCells("A{$ttdRow2}:B{$ttdRow2}");
 
-        // Nama user dan jabatan tertentu
-        $sheet->setCellValue("A{$ttdRow2}", auth()->user()->name);
-        $sheet->setCellValue("C{$ttdRow2}", "__________________");
-        $sheet->setCellValue("E{$ttdRow2}", "__________________");
+        // // Nama user dan jabatan tertentu
+        // $sheet->setCellValue("A{$ttdRow2}", auth()->user()->name);
+        // $sheet->setCellValue("C{$ttdRow2}", "__________________");
+        // $sheet->setCellValue("E{$ttdRow2}", "__________________");
 
-        $sheet->getStyle("A{$ttdRow2}:E{$ttdRow2}")->applyFromArray([
-            'font' => [
-                'bold' => true,
-                'size' => 12,
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-        ]);
+        // $sheet->getStyle("A{$ttdRow2}:E{$ttdRow2}")->applyFromArray([
+        //     'font' => [
+        //         'bold' => true,
+        //         'size' => 12,
+        //     ],
+        //     'alignment' => [
+        //         'horizontal' => Alignment::HORIZONTAL_CENTER,
+        //         'vertical' => Alignment::VERTICAL_CENTER,
+        //     ],
+        // ]);
 
-        $sheet->getStyle("A{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("C{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("E{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        // $sheet->getStyle("A{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        // $sheet->getStyle("C{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        // $sheet->getStyle("E{$ttdRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
 
 
@@ -316,4 +348,5 @@ class StatusReportUpdate implements FromCollection, WithHeadings, ShouldAutoSize
         }
         return [];
     }
+
 }

@@ -44,7 +44,8 @@ defineProps({
                             {{ item.text }}
                         </template>
                         <template v-else>
-                            <Link class="text-decoration-none" :href="item.url">{{ item.text }}</Link>
+                            <Link class="text-decoration-none" :href="item.url">{{
+                            item.text }}</Link>
                         </template>
                     </li>
                 </template>

@@ -65,7 +65,6 @@ class DailyReportController extends Controller
         $dailyReport->fu_last_week_closing = $request->integer('fu_last_week_closing');
         $dailyReport->engage_old_customer = $request->integer('engage_old_customer');
         $dailyReport->engage_closing = $request->integer('engage_closing');
-        $dailyReport->notes = $request->input('notes');
         $dailyReport->save();
         $this->dailyReports->clearCache(auth()->id());
         return redirect()->route('daily_report')->with('message', 'Laporan Leads harian kamu berhasil dibuat');
@@ -111,7 +110,6 @@ class DailyReportController extends Controller
         $dailyReport->fu_last_week_closing = $request->integer('fu_last_week_closing');
         $dailyReport->engage_old_customer = $request->integer('engage_old_customer');
         $dailyReport->engage_closing = $request->integer('engage_closing');
-        $dailyReport->notes = $request->input('notes');
         $dailyReport->update();
         $this->dailyReports->clearCache(auth()->id());
         return redirect()->route('daily_report')->with('message', 'Laporan Leads harian kamu berhasil diperbarui');
@@ -125,7 +123,7 @@ class DailyReportController extends Controller
         $dailyReport = $dailyReportModel::find($id);
         $dailyReport->delete();
         $this->dailyReports->clearCache(auth()->id());
-        return redirect()->route('daily_report')->with('message', 'Laporan harian kamu berhasil dihapus');
+        return redirect()->route('daily_report')->with('message', 'Laporan Leads harian kamu berhasil dihapus');
     }
 
     public function destroy_all(DailyReportModel $dailyReportModel, Request $request)

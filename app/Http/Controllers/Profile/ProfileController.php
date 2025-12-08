@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Profile;
 
+use App\Repositories\ProfileRepository;
 use App\Traits\ProfileValidation;
 use Inertia\Inertia;
 use App\Models\ProfileModel;
@@ -17,16 +18,25 @@ class ProfileController extends Controller
      * Display a listing of the resource.
      */
     use ProfileValidation;
-    public function edit(ProfileModel $profileModel)
+    protected $profilRepository;
+    public function __construct(ProfileRepository $profile)
+    {
+        $this->profilRepository = $profile;
+    }
+    public function edit()
     {
         $branches = BranchesModel::select('branches_id', 'name')->get();
         $jobTitle = JobTitleModel::select('job_title_id', 'title')->get();
-        $profile = $profileModel::with('user')->where('users_id', auth()->user()->id)->first();
+        // optimalisasi cache profile
+        $usersId = auth()->user()->id;
+        $profile = $this->profilRepository->getCached($usersId, ['users_id' => $usersId])
+            ->items()[0];
         return Inertia::render('Profile/Index', compact('profile', 'branches', 'jobTitle'));
     }
     public function update(Request $request, ProfileModel $profileModel, string $id)
     {
         $this->validationText($request->all());
+        $usersId = auth()->user()->id;
         $profile = $profileModel::findOrFail($id);
         if ($request->hasFile('images')) {
             // Hapus gambar lama
@@ -47,11 +57,13 @@ class ProfileController extends Controller
         $profile->branches_id = $request->input('branches');
         $profile->date_of_entry = $request->input('date_of_entry');
         $profile->employee_status = $request->input('employee_status');
-        $profile->major = $request->input('major');
         $profile->birthplace = $request->input('birthplace');
         $profile->religion = $request->input('religion');
         $profile->birthdate = $request->input('birthdate');
+        $profile->entry_year = $request->input('entry_year');
+        $profile->graduation_year = $request->input('graduation_year');
         $profile->education = $request->input('education');
+        $profile->major = $request->input('major');
         $profile->gender = $request->input('gender');
         $profile->number_phone = $request->input('number_phone');
         $profile->address = $request->input('address');
@@ -61,14 +73,16 @@ class ProfileController extends Controller
         auth()->user()->update([
             'name' => $request->input('name'),
         ]);
+        // Clear cache
+        $this->profilRepository->clearCache($usersId);
         return redirect()->route('home')->with('message', 'Profil berhasil diperbarui');
     }
 
-    public function infoDetail(ProfileModel $profileModel, string $id)
+    public function infoDetail(string $id)
     {
-        $detail = $profileModel::with(['user', 'branch', 'jobTitle'])
-            ->where('users_id', $id)
-            ->first();
+        // optimalisasi cache profile
+        $detail = $this->profilRepository->getCached($id, ['users_id' => $id])
+            ->items()[0];
         return Inertia::render('Profile/InfoDetail', [
             'detail' => $detail
         ]);
@@ -80,6 +94,7 @@ class ProfileController extends Controller
         $profile = $profileModel::with(['user', 'branch', 'jobTitle'])
             ->where('users_id', $id)
             ->first();
+        $this->profilRepository->clearCache($id);
         return Inertia::render('Profile/ModifyAfterCompleted', [
             'profile' => $profile,
             'branches' => $branches,
@@ -106,20 +121,27 @@ class ProfileController extends Controller
             unset($profile->images);
         }
         $profile->users_id = auth()->user()->id;
-        $profile->id_number_employee = $request->input('id_number');
+        $profile->employee_id_number = $request->input('employee_id_number');
+        $profile->national_id_number = $request->input('national_id_number');
         $profile->job_title_id = $request->input('jobTitle');
         $profile->branches_id = $request->input('branches');
         $profile->date_of_entry = $request->input('date_of_entry');
+        $profile->employee_status = $request->input('employee_status');
+        $profile->birthplace = $request->input('birthplace');
+        $profile->religion = $request->input('religion');
         $profile->birthdate = $request->input('birthdate');
+        $profile->entry_year = $request->input('entry_year');
+        $profile->graduation_year = $request->input('graduation_year');
         $profile->education = $request->input('education');
+        $profile->major = $request->input('major');
         $profile->gender = $request->input('gender');
         $profile->number_phone = $request->input('number_phone');
         $profile->address = $request->input('address');
         $profile->update();
-
         auth()->user()->update([
             'name' => $request->input('name'),
         ]);
+        $this->profilRepository->clearCache($id);
         return redirect()->route('profile.detail', $id)->with('message', 'Profil berhasil diperbarui');
     }
 }

@@ -17,6 +17,8 @@ trait ProfileValidation
             'branches' => 'required|exists:branches,branches_id',
             'date_of_entry' => 'required|date',
             'birthdate' => 'required|date|before:today',
+            'entry_year' => 'required|string|max:4',
+            'graduation_year' => 'required|string|max:4',
             'education' => 'required|string|max:50',
             'major' => 'required|string|max:100',
             'birthplace' => 'required|string|max:100',
@@ -54,6 +56,14 @@ trait ProfileValidation
             'birthdate.required' => 'Tanggal lahir wajib diisi.',
             'birthdate.date' => 'Tanggal lahir tidak valid.',
             'birthdate.before' => 'Tanggal lahir tidak boleh melebihi tanggal hari ini.',
+
+            'entry_year.required' => 'Tahun masuk wajib diisi.',
+            'entry_year.string' => 'Tahun masuk harus berupa angka.',
+            'entry_year.max' => 'Tahun masuk maksimal 4 karakter.',
+
+            'graduation_year.required' => 'Tahun lulus wajib diisi.',
+            'graduation_year.string' => 'Tahun lulus harus berupa angka.',
+            'graduation_year.max' => 'Tahun lulus maksimal 4 karakter.',
 
             'major.required' => 'Jurusan wajib diisi.',
             'major.string' => 'Jurusan harus berupa teks.',
