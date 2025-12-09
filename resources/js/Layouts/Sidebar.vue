@@ -37,6 +37,12 @@ const dailyReport = () => {
         onFinish: () => loaderActive.value?.hide()
     });
 }
+const product = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('product'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
 const dashboard = () => {
     loaderActive.value?.show("Sedang membuka...");
     router.get(route('home'), {}, {
@@ -113,6 +119,14 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         <i class="fas fa-sticky-note"></i>
                     </div>
                     Catatan Penjualan
+                    </Link>
+
+                    <Link @click.prevent="product" :href="route('product')" class="nav-link"
+                        :class="{ 'active active-link': is('product*') }">
+                    <div class="sb-nav-link-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    Daftar Produk
                     </Link>
 
                     <Link v-if="roles" class="nav-link" :class="{ 'active active-link': is('job_title*') }"

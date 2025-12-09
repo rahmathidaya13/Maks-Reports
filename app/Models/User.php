@@ -79,4 +79,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(StoryStatusReportModel::class, 'created_by', 'id');
     }
 
+    public function products()
+    {
+        return $this->hasMany(ProductModel::class, 'created_by', 'id');
+    }
 }

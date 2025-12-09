@@ -1,5 +1,6 @@
 <script setup>
 import { router } from "@inertiajs/vue3";
+import { size } from "lodash";
 // Menerima properti `links` dari induk
 const props = defineProps({
     links: Array,
@@ -14,6 +15,10 @@ const props = defineProps({
     additionalQuery: {
         type: Object,
         default: () => ({}),
+    },
+    size: {
+        type: String,
+        default: '',
     },
 })
 
@@ -44,7 +49,7 @@ const goToPage = (url) => {
 </script>
 <template>
     <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-end pagination-sm">
+        <ul :class="['pagination justify-content-end', props.size]">
 
             <li :class="{ 'page-item': true, disabled: !links[0].url }">
                 <button class="page-link" @click.prevent="goToPage(links[0].url)" :disabled="!links[0].url">

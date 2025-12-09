@@ -21,6 +21,7 @@ use App\Http\Controllers\Branches\BranchesController;
 use App\Http\Controllers\Daily\DailyReportController;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Job\JobTitleController;
+use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Roles\RolesController;
 use App\Http\Controllers\StoryReport\StoryStatusReportController;
@@ -114,6 +115,17 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::post('/sales_record/delete_all', 'destroy_all')->name('sales_record.destroy_all');
     });
 
+    Route::controller(ProductController::class)->group(function () {
+        Route::get('/product/list', 'index')->name('product');
+        Route::get('/product/create', 'create')->name('product.create');
+        Route::post('/product/store', 'store')->name('product.store');
+        Route::get('/product/edit/{id}', 'edit')->name('product.edit');
+        Route::get('/product/show/{id}', 'show')->name('product.show');
+        Route::put('/product/update/{id}', 'update')->name('product.update');
+        Route::delete('/product/destroy/{id}', 'destroy')->name('product.deleted');
+        Route::post('/product/delete_all', 'destroy_all')->name('product.destroy_all');
+    });
+
     // cetak laporan
     Route::controller(StatusReportPrintOut::class)->group(function () {
         Route::get('/story_report/export_to_excel', 'printToExcel')->name('story_report.print_to_excel');
@@ -129,7 +141,6 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     Route::controller(ScrapedController::class)->group(function () {
         Route::get('/scraped/products', 'scrape')->name('scrape');
     });
-
 });
 
 Route::middleware('auth')->group(function () {

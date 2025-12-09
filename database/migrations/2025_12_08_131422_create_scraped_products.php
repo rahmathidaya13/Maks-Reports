@@ -13,11 +13,11 @@ return new class extends Migration {
         Schema::create('scraped_products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('category')->index(); // Untuk filter kategori cepat
             $table->string('price')->nullable();
             $table->string('link', 500)->unique();
             $table->string('image_link', 500)->nullable();
-            $table->string('category')->index(); // Untuk filter kategori cepat 
-
+            $table->string('image_url', 500)->nullable();
             $table->fullText('name');  // Untuk live search super cepat
             $table->timestamps();
         });
