@@ -73,10 +73,11 @@ watch(() => getById.value,
         }
         const { data } = await axios.get(route('product.show', newId));
         if (data.status) {
-            imageGallery.value = data.galleryImages;
+            imageGallery.value = Array.isArray(data.galleryImages)
+                ? data.galleryImages
+                : JSON.parse(data.galleryImages);
         }
         console.log(imageGallery.value);
-
     })
 // =========Batas Fungsi untuk Tampilkan Modal========== //
 </script>
@@ -202,7 +203,8 @@ watch(() => getById.value,
                             </div> -->
 
                             <div class="row">
-                                <div class="col-4 p-3 col-xl-4 col-md-6" v-for="(img, index) in imageGallery" :key="index">
+                                <div class="col-4 p-3 col-xl-4 col-md-6" v-for="(img, index) in imageGallery"
+                                    :key="index">
                                     <img :src="img ?? 'https://via.placeholder.com/600'"
                                         class="img-fluid img-thumbnail h-h-50" />
                                 </div>

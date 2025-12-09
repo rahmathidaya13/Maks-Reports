@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Products;
 
 use Inertia\Inertia;
 use App\Models\ProductModel;
-use App\Models\ScrapedModel;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Repositories\ProductRepository;
@@ -59,7 +58,6 @@ class ProductController extends Controller
      */
     public function show(ProductModel $productModel, string $id)
     {
-
         $galleryImages = $productModel::findOrFail($id);
         return response()->json([
             'status' => true,
