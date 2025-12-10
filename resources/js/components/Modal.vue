@@ -72,7 +72,7 @@ watch(() => props.show, async (v) => {
 <template>
     <div class="modal custom-modal fade" tabindex="-1" ref="modalEl">
         <div :class="['modal-dialog ', position, size]">
-            <div class="modal-content smooth-content">
+            <div class="modal-content smooth-content ">
 
                 <div class="modal-header text-bg-grey">
                     <h5 class="modal-title fw-bold"> <i v-if="icon" :class="icon"></i> {{ title }}</h5>
@@ -81,7 +81,7 @@ watch(() => props.show, async (v) => {
                     </button>
                 </div>
 
-                <div class="modal-body p-0 px-3 pb-3">
+                <div class="modal-body p-0 px-3 pb-3 overflow-hidden">
                     <slot name="body" />
                 </div>
 

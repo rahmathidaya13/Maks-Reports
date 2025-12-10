@@ -23,19 +23,205 @@ class ScrapeProducts extends Command
      *
      * @var string
      */
-    protected $description = 'Scraping data produk dari tokomein.com';
+    protected $description = 'Scraping data produk dari tokomesin.com';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
+        // === CLIENT DENGAN TIMEOUT, RETRY, REFERER ===
+        $client = new Client(HttpClient::create([
+            'headers' => [
+                'User-Agent' => $this->randomUserAgent(),
+                'Referer' => 'https://www.google.com',
+                'Accept-Language' => 'en-US,en;q=0.9',
+            ],
+            'timeout' => 15,
+        ]));
+
         $categories = $this->categoryProduct();
+        $baseUrl = 'https://www.tokomesin.com/product-category';
+        $results = [];
         foreach ($categories as $category) {
-            ScrapeProductJob::dispatch($category);
-            Log::info("✔ Job dikirim untuk category: {$category}");
+
+            Log::info("\n=== SCRAPING CATEGORY: $category ===");
+            $this->info("\n=== SCRAPING CATEGORY: $category ===");
+
+            $page = 1;
+            $prevFirstProduct = null;
+
+
+            while (true) {
+                $url = $page == 1
+                    ? "$baseUrl/$category"
+                    : "$baseUrl/$category/page/$page";
+
+                Log::info("Scraping: $url");
+                $this->info("Scraping: $url");
+
+                // === REQUEST PAGE ===
+                try {
+                    $crawler = $client->request('GET', $url);
+                } catch (\Exception $e) {
+                    Log::error("Request failed: $url - " . $e->getMessage());
+                    $this->error("Request failed: $url - " . $e->getMessage());
+                    break;
+                }
+
+                // === PROCESS PRODUCTS ===
+                $productNodes = $crawler->filter('li.product');
+                if ($productNodes->count() === 0) {
+                    Log::info("Tidak ada produk lagi di category {$category}. STOP.");
+                    $this->info("Tidak ada produk lagi di category {$category}. STOP.");
+                    break;
+                }
+                // === CEGAH PAGINATION LOOPING ===
+                $currentFirstProduct = trim(
+                    $productNodes->first()->filter('.woocommerce-loop-product__title')->text()
+                );
+
+                // Cegah infinite loop
+                if ($prevFirstProduct === $currentFirstProduct) {
+                    Log::info("Halaman sama → STOP ({$category})");
+                    $this->info("Halaman sama → STOP ({$category})");
+                    break;
+                }
+
+                $prevFirstProduct = $currentFirstProduct;
+
+                // ================================================================
+                //  LOOP PRODUK
+                // ================================================================
+                $productNodes->each(function ($node) use (&$client, &$category, &$results) {
+
+                    // nama produk
+                    $namaNode = $node->filter('.woocommerce-loop-product__title');
+                    if (!$namaNode->count()) return;
+                    $nama = trim($namaNode->text());
+                    // end nama produk
+
+                    // --- harga produk ---
+                    $hargaNode = $node->filter('.price');
+                    $priceOriginal = null;
+                    $priceDiscount = null;
+                    if ($hargaNode->count()) {
+                        $origNode = $hargaNode->filter('del .woocommerce-Price-amount');
+                        $discNode = $hargaNode->filter('ins .woocommerce-Price-amount');
+
+                        if ($origNode->count())
+                            $priceOriginal = (int) preg_replace('/[^\d]/', '', $origNode->text());
+
+                        if ($discNode->count())
+                            $priceDiscount = (int) preg_replace('/[^\d]/', '', $discNode->text());
+
+                        if (!$priceOriginal && !$priceDiscount) {
+                            $priceOriginal = (int) preg_replace('/[^\d]/', '', $hargaNode->text());
+                        }
+                    }
+                    // --- end harga produk ---
+
+                    // --- link produk ---
+                    $link = $node->filter('a')->first()->attr('href') ?? null;
+                    // --- end link produk ---
+
+                    // gambar utama
+                    $imgNode = $node->filter('img')->first();
+                    $img = $imgNode->attr('data-src')
+                        ?? $imgNode->attr('data-lazy-src')
+                        ?? $imgNode->attr('src');
+                    // end gambar utama
+
+                    // --- gallery images ---
+                    $galleryImages = $this->scrapeGallery($client, $link);
+                    // --- end gallery images ---
+
+                    // --- deskripsi ---
+                    $deskripsi = $this->scrapeDescription($client, $link);
+                    // --- end deskripsi ---
+
+                    // ✔ Gunakan updateOrCreate agar tidak ganda
+                    try {
+                        $existing = ProductModel::where('link', $link)->first();
+
+                        if (!$existing) {
+                            ProductModel::create([
+                                'link' => $link,
+                                'name' => $nama,
+                                'price_original' => $priceOriginal,
+                                'price_discount' => $priceDiscount,
+                                'image_link' => $img,
+                                'image_url' => $galleryImages,
+                                'category' => $category,
+                                'description' => $deskripsi,
+                            ]);
+
+                            Log::info("\n[BARU] {$nama}" . " → Galleri: " . count($galleryImages) . " gambar");
+                            $this->info("\n[BARU] {$nama}" . " → Galleri: " . count($galleryImages) . " gambar");
+                            return;
+                        }
+
+                        $changes = [];
+
+                        $fields = [
+                            'name' => $nama,
+                            'price_original' => $priceOriginal,
+                            'price_discount' => $priceDiscount,
+                            'image_link' => $img,
+                            'image_url' => $galleryImages,
+                            'category' => $category,
+                            'description' => $deskripsi,
+                        ];
+
+                        foreach ($fields as $key => $newValue) {
+
+                            $oldValue = $existing->{$key};
+
+                            // bandingkan array gallery
+                            if ($key === 'image_url') {
+                                if ($oldValue !== $newValue) {
+                                    $changes[$key] = $newValue;
+                                }
+                                continue;
+                            }
+
+                            // bandingkan normal field
+                            if ($oldValue != $newValue) {
+                                $changes[$key] = $newValue;
+                            }
+                        }
+
+                        if (!empty($changes)) {
+                            $existing->update($changes);
+
+                            Log::info("\n[UPDATE] {$nama} → Perubahan: " . implode(", ", array_keys($changes)));
+                            $this->info("\n[UPDATE] {$nama} → Perubahan: " . implode(", ", array_keys($changes)));
+                        } else {
+                            Log::info("\n[SKIP] {$nama} (tidak ada perubahan)");
+                            $this->info("\n[SKIP] {$nama} (tidak ada perubahan)");
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error("Gagal simpan ($nama): " . $e->getMessage());
+                        $this->error("Gagal simpan ($nama): " . $e->getMessage());
+                    }
+                    $results[] = [
+                        'name' => $nama,
+                        'price_original' => $priceOriginal,
+                        'price_discount' => $priceDiscount,
+                        'link' => $link,
+                        'image_link' => $img,
+                        'image_url' => $galleryImages,
+                        'category' => $category,
+                        'description' => $deskripsi,
+                    ];
+                });
+                $page++;
+                sleep(rand(1, 3));
+            }
         }
-        return 0;
+
+        Log::info("Scraping selesai. Total produk: " . count($results));
+        $this->info("Scraping selesai. Total produk: " . count($results));
     }
 
     private function categoryProduct()
@@ -71,5 +257,107 @@ class ScrapeProducts extends Command
             'mesin-pertanian/penetas-telur',
         ];
         return $categories;
+    }
+
+    private function scrapeGallery($client, $url)
+    {
+        try {
+            $crawler = $client->request('GET', $url);
+        } catch (\Exception $e) {
+            return [];
+        }
+
+        $images = [];
+
+        $crawler->filter('.woocommerce-product-gallery__wrapper img')->each(function ($node) use (&$images) {
+            $src =  $node->attr('data-src') ??
+                $node->attr('data-large_image') ??
+                $node->attr('data-lazy-src') ??
+                $node->attr('src');
+
+            if ($src) $images[] = $src;
+        });
+
+        return array_unique($images);
+    }
+    private function scrapeDescription($client, $url)
+    {
+        try {
+            $crawler = $client->request('GET', $url);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $descNode = $crawler->filter('#tab-description');
+        if (!$descNode->count()) return null;
+
+        $html = $descNode->html();
+
+        // =============================
+        // 1. Fix YouTube iframe
+        // =============================
+        $html = preg_replace_callback('/<iframe[^>]+>/i', function ($matches) {
+            $tag = $matches[0];
+
+            preg_match('/data-src="([^"]*)"/i', $tag, $dataSrc);
+
+            if (!empty($dataSrc[1])) {
+                $src = $dataSrc[1];
+
+                // Hapus src lama jika ada
+                $tag = preg_replace('/src="[^"]*"/i', '', $tag);
+
+                // Tambahkan src baru
+                $tag = str_replace('<iframe', '<iframe src="' . $src . '"', $tag);
+            }
+
+            return $tag;
+        }, $html);
+
+        // =============================
+        // 2. Fix lazyload images
+        // =============================
+        // ambil data-src jika src kosong
+        $html = preg_replace_callback('/<img[^>]+>/i', function ($matches) {
+            $tag = $matches[0];
+
+            preg_match('/src="([^"]*)"/i', $tag, $srcMatch);
+            preg_match('/data-src="([^"]*)"/i', $tag, $dataSrcMatch);
+            preg_match('/data-large_image="([^"]*)"/i', $tag, $largeMatch);
+            preg_match('/data-lazy-src="([^"]*)"/i', $tag, $lazyMatch);
+
+            $realSrc =
+                $srcMatch[1] ?? null ??
+                $dataSrcMatch[1] ?? null ??
+                $largeMatch[1] ?? null ??
+                $lazyMatch[1] ?? null;
+
+            if (!$realSrc) return $tag;
+
+            // replace semua src lama dengan src baru
+            $tag = preg_replace('/src="[^"]*"/i', 'src="' . $realSrc . '"', $tag);
+
+            return $tag;
+        }, $html);
+
+        // =============================
+        // 3. Remove baby divs sampah WP
+        // =============================
+        $html = preg_replace('/<div id="__.*?<\/div>/s', '', $html);
+
+        return trim($html);
+    }
+
+
+    private function randomUserAgent()
+    {
+        // === ROTATING USER AGENT ===
+        $agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14 Safari/605.1.15',
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+            'Mozilla/5.0 (Linux; Android 11; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0 Mobile Safari/537.36',
+        ];
+        return $agents[array_rand($agents)];
     }
 }

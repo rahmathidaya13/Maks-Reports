@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('link')->unique();
             $table->string('image_link')->nullable();
             $table->json('image_url')->nullable();
+            $table->longText('description')->nullable();
 
             $table->timestamps();
         });

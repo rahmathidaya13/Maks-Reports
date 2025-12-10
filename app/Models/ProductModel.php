@@ -19,7 +19,8 @@ class ProductModel extends Model
         'link',
         'image_link',
         'image_url',
-        'category'
+        'category',
+        'description',
     ];
     protected $casts = [
         'image_url' => 'array',

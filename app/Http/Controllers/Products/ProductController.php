@@ -59,9 +59,11 @@ class ProductController extends Controller
     public function show(ProductModel $productModel, string $id)
     {
         $galleryImages = $productModel::findOrFail($id);
+        $this->productRepository->clearCache(auth()->id());
         return response()->json([
             'status' => true,
             'galleryImages' => $galleryImages->image_url,
+            'description' => $galleryImages->description,
         ]);
     }
 
