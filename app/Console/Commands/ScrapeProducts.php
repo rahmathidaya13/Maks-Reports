@@ -51,14 +51,13 @@ class ScrapeProducts extends Command
             $page = 1;
             $prevFirstProduct = null;
 
-
             while (true) {
                 $url = $page == 1
                     ? "$baseUrl/$category"
                     : "$baseUrl/$category/page/$page";
 
-                Log::info("Scraping: $url");
-                $this->info("Scraping: $url");
+                Log::info("\n[SCRAPING FROM] $url");
+                $this->info("\n[SCRAPING FROM] $url");
 
                 // === REQUEST PAGE ===
                 try {
@@ -136,9 +135,9 @@ class ScrapeProducts extends Command
                     $galleryImages = $this->scrapeGallery($client, $link);
                     // --- end gallery images ---
 
-                    // --- deskripsi ---
-                    $deskripsi = $this->scrapeDescription($client, $link);
-                    // --- end deskripsi ---
+                    // --- description ---
+                    $description = $this->scrapeDescription($client, $link);
+                    // --- end description ---
 
                     // ✔ Gunakan updateOrCreate agar tidak ganda
                     try {
@@ -153,11 +152,11 @@ class ScrapeProducts extends Command
                                 'image_link' => $img,
                                 'image_url' => $galleryImages,
                                 'category' => $category,
-                                'description' => $deskripsi,
+                                'description' => $description,
                             ]);
 
-                            Log::info("\n[BARU] {$nama}" . " → Galleri: " . count($galleryImages) . " gambar");
-                            $this->info("\n[BARU] {$nama}" . " → Galleri: " . count($galleryImages) . " gambar");
+                            Log::info("\n[BARU] {$nama}" . " → Jumlah Galleri: " . count($galleryImages) . " gambar");
+                            $this->info("\n[BARU] {$nama}" . " → Jumlah Galleri: " . count($galleryImages) . " gambar");
                             return;
                         }
 
@@ -170,7 +169,7 @@ class ScrapeProducts extends Command
                             'image_link' => $img,
                             'image_url' => $galleryImages,
                             'category' => $category,
-                            'description' => $deskripsi,
+                            'description' => $description,
                         ];
 
                         foreach ($fields as $key => $newValue) {
@@ -212,7 +211,7 @@ class ScrapeProducts extends Command
                         'image_link' => $img,
                         'image_url' => $galleryImages,
                         'category' => $category,
-                        'description' => $deskripsi,
+                        'description' => $description,
                     ];
                 });
                 $page++;

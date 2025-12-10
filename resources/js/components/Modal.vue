@@ -85,11 +85,8 @@ watch(() => props.show, async (v) => {
                     <slot name="body" />
                 </div>
 
-                <div v-if="footer" class="modal-footer d-flex justify-content-between">
-                    <slot name="footer">
-                        <button class="btn btn-primary" @click="emit('save')">Save</button>
-                        <button class="btn btn-secondary" @click="closeModal">Close</button>
-                    </slot>
+                <div v-if="footer" class="modal-footer text-bg-grey">
+                    <slot name="footer" />
                 </div>
 
             </div>

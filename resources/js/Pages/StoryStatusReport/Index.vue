@@ -466,7 +466,7 @@ const resetField = () => {
                                     <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari total
                                     <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
                                 </div>
-                                <pagination :links="props.storyReport?.links" routeName="story_report" :additionalQuery="{
+                                <pagination size="pagination-sm" :links="props.storyReport?.links" routeName="story_report" :additionalQuery="{
                                     order_by: filters.order_by,
                                     limit: filters.limit,
                                     start_date: filters.start_date,

@@ -1,6 +1,5 @@
 <script setup>
 import { router } from "@inertiajs/vue3";
-import { size } from "lodash";
 // Menerima properti `links` dari induk
 const props = defineProps({
     links: Array,

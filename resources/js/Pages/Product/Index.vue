@@ -159,7 +159,7 @@ const setMainImage = (img) => {
                 v-if="!product?.data.length">
                 <span class="fw-bold">Tidak ada data ditemukan</span>
             </div>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-5 g-3">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 g-3">
                 <div class="col-auto" :id="row.id" v-for="(row, rowIndex) in product?.data" :key="rowIndex">
 
 
@@ -220,7 +220,7 @@ const setMainImage = (img) => {
 
             <div class="row">
                 <div class="col-xl-12 col-sm-12 col-md-12 col-lg-12">
-                    <modal :footer="false" @opened="openModal" size="modal-xl" icon="fas fa-images" v-if="showModal"
+                    <modal :footer="true" @opened="openModal" size="modal-xl" icon="fas fa-images" v-if="showModal"
                         :show="showModal" title="Galleri Produk" @update:show="showModal = $event" @closed="closeModal">
                         <template #body>
                             <div class="row layout-overlay">
@@ -239,7 +239,6 @@ const setMainImage = (img) => {
                                 </div>
                                 <div v-html="description"></div>
                             </div>
-
                         </template>
                     </modal>
                 </div>
@@ -289,7 +288,7 @@ const setMainImage = (img) => {
 }
 
 .layout-overlay {
-    max-height: 70vh;
+    max-height: 75vh;
     overflow-y: auto;
     padding-right: 6px;
     position: relative;

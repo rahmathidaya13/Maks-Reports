@@ -9,7 +9,6 @@ const message = computed(() => {
 const props = defineProps({
     summaryStatusReport: Object
 })
-console.log(props.summaryStatusReport);
 </script>
 <template>
 

@@ -23,6 +23,7 @@ class DailyReportController extends Controller
     }
     public function index(Request $request)
     {
+        $this->authorize('view', DailyReportModel::class);
         $filters = $request->only([
             'limit',
             'page',
@@ -40,6 +41,7 @@ class DailyReportController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', DailyReportModel::class);
         $this->dailyReports->clearCache(auth()->id());
         return Inertia::render('DailyReport/Form/pageForm', [
             'date' => now()->toDateString(),
@@ -51,6 +53,7 @@ class DailyReportController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', DailyReportModel::class);
         $this->validationText($request->all());
         $dailyReport = new DailyReportModel();
         $dailyReport->created_by = auth()->id();
@@ -83,6 +86,7 @@ class DailyReportController extends Controller
      */
     public function edit(DailyReportModel $dailyReportModel, string $id)
     {
+        $this->authorize('update', DailyReportModel::class);
         $dailyReport = $dailyReportModel::findOrFail($id);
         $this->dailyReports->clearCache(auth()->id());
         return Inertia::render('DailyReport/Form/pageForm', [
@@ -96,6 +100,7 @@ class DailyReportController extends Controller
      */
     public function update(Request $request, DailyReportModel $dailyReportModel, string $id)
     {
+        $this->authorize('update', DailyReportModel::class);
         $this->validationText($request->all());
         $dailyReport = $dailyReportModel::findOrFail($id);
         $dailyReport->created_by = auth()->id();
@@ -120,6 +125,7 @@ class DailyReportController extends Controller
      */
     public function destroy(DailyReportModel $dailyReportModel, string $id)
     {
+        $this->authorize('delete', DailyReportModel::class);
         $dailyReport = $dailyReportModel::find($id);
         $dailyReport->delete();
         $this->dailyReports->clearCache(auth()->id());

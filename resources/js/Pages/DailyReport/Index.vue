@@ -449,7 +449,7 @@ const resetField = () => {
                             <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
                             <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
                         </div>
-                        <pagination :links="props.dailyReport?.links" routeName="daily_report" :additionalQuery="{
+                        <pagination size="pagination-sm" :links="props.dailyReport?.links" routeName="daily_report" :additionalQuery="{
                             limit: filters.limit,
                             order_by: filters.order_by,
                             start_date: filters.start_date,

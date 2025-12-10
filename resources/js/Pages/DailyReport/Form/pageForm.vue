@@ -113,8 +113,6 @@ function daysOnlyConvert(dayValue) {
                         masing-masing kategori.</li>
                     <li>Pastikan tidak ada kolom yang dibiarkan kosong — isi dengan angka <strong>0</strong> jika tidak
                         ada aktivitas.</li>
-                    <li>Gunakan kolom <strong>Catatan</strong> untuk menuliskan kendala, progres penting, atau update
-                        konsumen tertentu.</li>
                     <li>Periksa kembali semua data sebelum menekan tombol <strong>Simpan</strong>.</li>
                 </ul>
             </div>
