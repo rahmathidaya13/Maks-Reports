@@ -79,7 +79,7 @@ class RegisterController extends Controller
             'users_id' => $user->id,
         ]);
         $user->syncRoles('user');
-        $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
+        // $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
         event(new Registered($user));
 
         Auth::login($user, true);

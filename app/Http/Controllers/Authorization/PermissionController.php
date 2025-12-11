@@ -25,7 +25,10 @@ class PermissionController extends Controller
             'order_by',
         ]);
         $permissions = $this->permissions->getCached(auth()->id(), $filters);
-        return Inertia::render('Authorization/Permissions/Index', compact('filters', 'permissions'));
+        return Inertia::render('Authorization/Permissions/Index', [
+            'permissions' => $permissions,
+            'filters' => $filters,
+        ]);
     }
 
     public function create()
@@ -49,10 +52,15 @@ class PermissionController extends Controller
                 'guard_name.string' => 'Guard name wajib tidak sesuai',
             ]
         );
-        Permission::create([
-            'name' => Str::slug($validated['name']),
-            'guard_name' => $validated['guard_name']
-        ]);
+
+        $nameOrigin = Str::snake($validated['name']);
+        $nameChanges = Str::replace('_', '.', $nameOrigin);
+
+        $permission = new Permission();
+        $permission->name = $nameChanges;
+        $permission->guard_name = $validated['guard_name'];
+        $permission->save();
+
         $this->permissions->clearCache(auth()->id());
         return redirect()->route('permissions')->with('message', 'Permission ' . $validated['name'] . ' Berhasil ditambahkan.');
     }
@@ -79,11 +87,14 @@ class PermissionController extends Controller
                 'guard_name.string' => 'Guard name wajib tidak sesuai',
             ]
         );
-        $permissions = Permission::findOrFail($id);
-        $permissions->update([
-            'name' => Str::slug($validated['name']),
-            'guard_name' => $validated['guard_name']
-        ]);
+        $nameOrigin = Str::snake($validated['name']);
+        $nameChanges = Str::replace('_', '.', $nameOrigin);
+
+        $permission = Permission::findOrFail($id);
+        $permission->name = $nameChanges;
+        $permission->guard_name = $validated['guard_name'];
+        $permission->update();
+
         $this->permissions->clearCache(auth()->id());
         return redirect()->route('permissions')->with('message', 'Permission ' . $validated['name'] . ' Berhasil diperbarui');
     }

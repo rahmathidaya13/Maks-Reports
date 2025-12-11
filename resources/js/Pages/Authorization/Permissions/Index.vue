@@ -81,6 +81,26 @@ const deleted = (nameRoute, data) => {
     })
 }
 
+function cleanAndCapitalize(str) {
+    if (!str) return '';
+
+    // 1. Hapus semua titik
+    const noDots = str.replaceAll('.', ' '); // Hasil: "Dailyreportmodelview"
+
+    // 2. Sisipkan spasi sebelum setiap huruf kapital (kecuali yang pertama)
+    // Regex: /(?=[A-Z])/
+    const spacedString = noDots.replace(/([A-Z])/g, ' $1').trim();
+    // Hasil: "Daily Report Model View"
+
+    // 3. (Opsional, untuk keamanan) Kapitalisasi setiap kata.
+    const words = spacedString.toLowerCase().split(' ');
+    const result = words.map(word => {
+        if (!word) return '';
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+
+    return result;
+}
 </script>
 <template>
 
@@ -121,7 +141,7 @@ const deleted = (nameRoute, data) => {
                             </div>
                             <div class="col-xl-2 col-12 mb-xl-0 mb-0 d-flex">
                                 <Link :href="route('permissions.create')" class="btn btn-primary bg-gradient px-5">
-                                <i class="fas fa-plus" style="font-size:18px"></i>
+                                    <i class="fas fa-plus" style="font-size:18px"></i>
                                 </Link>
                             </div>
                         </div>
@@ -134,7 +154,7 @@ const deleted = (nameRoute, data) => {
                                 <template #cell="{ row, keyName }">
                                     <template v-if="keyName === 'name'">
                                         <div class="fw-bold"
-                                            v-html="formatTextFromSlug(highlight(row.name, filters.keyword))">
+                                            v-html="highlight(cleanAndCapitalize(row.name), filters.keyword)">
                                         </div>
                                     </template>
                                     <template v-if="keyName === '-'">

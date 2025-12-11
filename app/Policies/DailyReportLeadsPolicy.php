@@ -3,64 +3,8 @@
 namespace App\Policies;
 
 use App\Models\DailyReportModel;
-use App\Models\User;
-use Illuminate\Auth\Access\Response;
-
-class DailyReportLeadsPolicy
+class DailyReportLeadsPolicy extends BasePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
-    {
-        return $user->can('view_any');
-    }
-
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, DailyReportModel $dailyReportModel): bool
-    {
-        return $user->can('view');
-    }
-
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
-    {
-        return $user->can('create');
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, DailyReportModel $dailyReportModel): bool
-    {
-        return $user->can('update');
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, DailyReportModel $dailyReportModel): bool
-    {
-        return $user->can('delete');
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, DailyReportModel $dailyReportModel): bool
-    {
-        return $user->can('restore');
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, DailyReportModel $dailyReportModel): bool
-    {
-        return $user->can('force_delete');
-    }
+    // Tentukan model yang akan digunakan dalam policy ini
+    protected string $model = DailyReportModel::class;
 }

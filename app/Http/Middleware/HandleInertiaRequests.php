@@ -42,7 +42,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => auth()->user()->name,
                     'profile' => auth()->user()->profile->load('branch', 'jobTitle'),
                     'roles' => auth()->user()->getRoleNames(),
-                    'permissions' => auth()->user()?->getAllPermissions()->pluck('name')->toArray()
+                    'permissions' => auth()->user()?->getPermissionsViaRoles()->pluck('name')
 
                 ] : null,
             ],

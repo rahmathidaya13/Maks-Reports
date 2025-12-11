@@ -99,15 +99,16 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         Dashboard
                     </Link>
 
-                    <Link v-if="permissions.includes('view')" @click.prevent="dailyReport" class="nav-link"
-                        :class="{ 'active active-link': is('daily_report*') }" :href="route('daily_report')">
+                    <Link v-if="permissions.includes('daily.report.model.view')" @click.prevent="dailyReport"
+                        class="nav-link" :class="{ 'active active-link': is('daily_report*') }"
+                        :href="route('daily_report')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-clipboard"></i>
                         </div>
                         Laporan Leads
                     </Link>
 
-                    <Link v-if="permissions.includes('view')" @click.prevent="storyReport" class="nav-link"
+                    <Link @click.prevent="storyReport" class="nav-link"
                         :class="{ 'active active-link': is('story_report*') }" :href="route('story_report')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-sticky-note"></i>

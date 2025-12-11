@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
 
         // Assign role ke user
         $user->syncRoles($role);
-        $user->syncPermissions($role->permissions()->pluck('name')->toArray());
+        // $user->syncPermissions($role->permissions()->pluck('name')->toArray());
 
         $user->profile()->updateOrCreate(
             ['users_id' => $user->id],

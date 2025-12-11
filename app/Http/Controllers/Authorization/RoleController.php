@@ -43,7 +43,6 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request->all());
         $validated = $request->validate(
             [
                 'name' => 'required|string|unique:roles,name',
@@ -61,14 +60,15 @@ class RoleController extends Controller
             ]
         );
 
-        $role = Role::create([
-            'name' => Str::slug($validated['name']),
-        ]);
-        if (!empty($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions'] ?? []);
+        $role = new Role();
+        $role->name = Str::slug($validated['name']);
+        $role->save();
+
+        $checkRole =  Role::where('name', $role->name)->first();
+        if ($checkRole) {
+            $checkRole->syncPermissions($validated['permissions']);
         }
         $this->roleRepository->clearCache(auth()->id());
-
         return redirect()->route('roles')->with('message', 'Role ' . $validated['name'] . ' Berhasil ditambahkan.');
     }
     public function edit(Role $roles, string $id)
@@ -99,11 +99,12 @@ class RoleController extends Controller
         );
 
         $role = $roles::findOrFail($id);
-        $role->update([
-            'name' => Str::slug($validated['name']),
-        ]);
-        if (!empty($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions'] ?? []);
+        $role->name = Str::slug($validated['name']);
+        $role->update();
+
+        $checkRole =  Role::where('name', $role->name)->first();
+        if ($checkRole) {
+            $checkRole->syncPermissions($validated['permissions']);
         }
         $this->roleRepository->clearCache(auth()->id());
 

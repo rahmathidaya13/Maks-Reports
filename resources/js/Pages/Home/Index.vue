@@ -9,6 +9,7 @@ const message = computed(() => {
 const props = defineProps({
     summaryStatusReport: Object
 })
+console.log(page.props.auth.user.permissions);
 </script>
 <template>
 

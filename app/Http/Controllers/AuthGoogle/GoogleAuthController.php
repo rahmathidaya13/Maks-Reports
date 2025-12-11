@@ -57,7 +57,7 @@ class GoogleAuthController extends Controller
                 'users_id' => $user->id,
             ]);
             $user->syncRoles('user');
-            $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
+            // $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
             (new \App\Services\UserService())->checkAndBroadcastStatus();
             Auth::login($user, true);
 

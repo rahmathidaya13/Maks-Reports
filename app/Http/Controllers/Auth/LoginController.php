@@ -16,13 +16,16 @@ use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
-class LoginController extends Controller {
-    public function login() {
-        return Inertia::render( 'Auth/Login' );
+class LoginController extends Controller
+{
+    public function login()
+    {
+        return Inertia::render('Auth/Login');
     }
 
-    public function store( Request $request ): RedirectResponse {
-        $request->validate( [
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:8|max:50',
             // 'g-recaptcha-response' => 'required',
@@ -37,78 +40,83 @@ class LoginController extends Controller {
             'password.max' => 'Password maksimal 50 karakter.',
 
             // 'g-recaptcha-response.required' => 'Harap centang kotak reCAPTCHA terlebih dahulu.',
-        ] );
+        ]);
         // if ( !RecaptchaService::verify( $request->input( 'g-recaptcha-response' ) ) ) {
         //     return back()->withErrors( [ 'recaptcha' => 'Verifikasi reCAPTCHA gagal. Silakan coba lagi.' ] );
         // }
 
-        $this->authenticate( $request );
+        $this->authenticate($request);
         $request->session()->regenerate();
-        ( new \App\Services\UserService() )->checkAndBroadcastStatus();
-        return redirect()->intended( '/home' );
+        (new \App\Services\UserService())->checkAndBroadcastStatus();
+        return redirect()->intended('/home');
     }
 
-    public function authenticate( Request $request ): void {
-        $this->ensureIsNotRateLimited( $request );
-        if ( !Auth::attempt( $request->only( [ 'email', 'password' ] ), $request->boolean( 'remember' ) ) ) {
-            RateLimiter::hit( $this->throttleKey( $request ) );
-            throw ValidationException::withMessages( [
-                'error' => [ 'Email atau password salah.' ],
-            ] );
+    public function authenticate(Request $request): void
+    {
+        $this->ensureIsNotRateLimited($request);
+        if (!Auth::attempt($request->only(['email', 'password']), $request->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey($request));
+            throw ValidationException::withMessages([
+                'error' => ['Email atau password salah.'],
+            ]);
         }
-        $user = User::where( 'email', $request->input( 'email' ) )->first();
 
         // Beri hak akses penuh jika user adalah developer
-        if ( auth()->user()->hasRole( 'developer' ) ) {
-            auth()->user()->syncPermissions( Permission::all()->pluck( 'name' )->toArray() );
-        }
+        // if ( auth()->user()->hasRole( 'developer' ) ) {
+        //     auth()->user()->syncPermissions( Permission::all()->pluck( 'name' )->toArray() );
+        // }
 
-        if ( auth()->user()->hasRole( 'user' ) ) {
-            auth()->user()->syncPermissions( [ 'create', 'read', 'update', 'delete', 'share', 'download' ] );
-        }
-        if ( !$user->is_active ) {
+        // if ( auth()->user()->hasRole( 'user' ) ) {
+        //     auth()->user()->syncPermissions( [ 'create', 'read', 'update', 'delete', 'share', 'download' ] );
+        // }
+
+        $user = User::where('email', $request->input('email'))->first();
+        if (!$user->is_active) {
             $user->status = 'active';
             $user->first_login = now();
             $user->is_active = true;
             $user->save();
         }
-        RateLimiter::clear( $this->throttleKey( $request ) );
+        RateLimiter::clear($this->throttleKey($request));
     }
 
-    public function ensureIsNotRateLimited( Request $request ): void {
-        if ( !RateLimiter::tooManyAttempts( $this->throttleKey( $request ), 3 ) ) {
+    public function ensureIsNotRateLimited(Request $request): void
+    {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey($request), 3)) {
             return;
         }
 
-        event( new Lockout( $request ) );
+        event(new Lockout($request));
 
-        $seconds = RateLimiter::availableIn( $this->throttleKey( $request ) );
-        throw ValidationException::withMessages( [
+        $seconds = RateLimiter::availableIn($this->throttleKey($request));
+        throw ValidationException::withMessages([
             'email' => [
                 'Kredensial ini tidak sesuai dengan data yang ada',
                 "Terlalu banyak percobaan login. Silakan coba lagi dalam {$seconds} detik.",
             ],
-        ] );
+        ]);
     }
 
-    public function throttleKey( Request $request ): string {
-        return Str::transliterate( Str::lower( $request->string( 'email' ) ) . '|' . $request->ip() );
+    public function throttleKey(Request $request): string
+    {
+        return Str::transliterate(Str::lower($request->string('email')) . '|' . $request->ip());
     }
 
-    public function logout( Request $request ): RedirectResponse {
-        $user = User::where( 'email', Auth::user()->email )->first();
-        if ( $user && $user->is_active ) {
+    public function logout(Request $request): RedirectResponse
+    {
+        $user = User::where('email', Auth::user()->email)->first();
+        if ($user && $user->is_active) {
             $user->is_active = false;
             $user->last_login = now();
-            $user->setRememberToken( null );
+            $user->setRememberToken(null);
             $user->save();
         }
-        ( new \App\Services\UserService() )->checkAndBroadcastStatus();
-        Auth::guard( 'web' )->logout();
+        (new \App\Services\UserService())->checkAndBroadcastStatus();
+        Auth::guard('web')->logout();
 
         // Hapus sesi & regenerasi token CSRF
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route( 'login' );
+        return redirect()->route('login');
     }
 }
