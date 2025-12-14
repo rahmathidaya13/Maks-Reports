@@ -7,13 +7,29 @@ use Illuminate\Support\Str;
 
 class BasePolicy
 {
+
+    protected function getPermissionRoot($model)
+    {
+        // ambil model dari contoh DailyReportModel,jika nama model DailyReportModel maka
+        // akan di ubah menjadi daily.report.leads sesuai dengan map yang dibuat
+        $class = is_string($model) ? $model : $model::class;
+
+        $map = config('permission_map'); // map nama model lebih clean
+
+        if (isset($map[$class])) {
+            return $map[$class]; // contoh: report.leads
+        }
+
+        // fallback → default menggunakan nama model seperti sebelumnya
+        $modelName = Str::snake(class_basename($model));
+        return Str::replace('_', '.', $modelName);
+    }
     public function allow(User $user, $model, $ability): bool
     {
-        // Ambil nama model, contoh: DailyReportLeads → daily_report_leads
-        $modelName = Str::snake(class_basename($model));
-        $changeCharacterModel = Str::replace('_', '.', $modelName);
+        $modelName = $this->getPermissionRoot($model);
+
         // Bentuk permission dinamis: daily_report_leads.view
-        $permissions = "{$changeCharacterModel}.{$ability}";
+        $permissions = "{$modelName}.{$ability}";
         // dd($permissions);
         return $user->can($permissions);
     }

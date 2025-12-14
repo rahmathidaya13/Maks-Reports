@@ -71,6 +71,15 @@ class RoleController extends Controller
         $this->roleRepository->clearCache(auth()->id());
         return redirect()->route('roles')->with('message', 'Role ' . $validated['name'] . ' Berhasil ditambahkan.');
     }
+    public function show(Role $roles, string $id)
+    {
+        $role = $roles::with('permissions')->findOrFail($id);
+        $this->roleRepository->clearCache(auth()->id());
+        return response()->json([
+            'status' => true,
+            'roles' => $role,
+        ]);
+    }
     public function edit(Role $roles, string $id)
     {
         return Inertia::render('Authorization/Roles/Form', [

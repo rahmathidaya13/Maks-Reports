@@ -1,68 +1,100 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
-import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
+import { cleanTextFormat } from "@/helpers/cleanTextFormat";
+
 const props = defineProps({
-    permissions: Object,
+    permissions: [Array, Object],
+    default: () => []
 })
+
+// 1. Normalisasi Data ke Array
+// Apapun yang dikirim controller, kita paksa jadi array di frontend
+const iniatialData = Array.isArray(props.permissions)
+    ? props.permissions
+    : (props.permissions ? [props.permissions] : [])
+
+// 2. Setup Form
+const forms = ref(
+    iniatialData.length > 0
+        ? iniatialData.map(newValue => ({
+            id: newValue.id ?? null,
+            name: cleanTextFormat(newValue.name ?? "")
+        }))
+        : [{ id: null, name: "" }]
+)
 const form = useForm({
-    name: formatTextFromSlug(props.permissions?.name) || "",
-    guard_name: props.permissions?.guard_name || "web",
+    permissions: forms.value,
 });
-const isSubmit = () => {
-    if (props.permissions?.id) {
-        form.put(route('permissions.update', props.permissions.id), {
-            onSuccess: () => {
-                form.reset();
-            },
-            preserveScroll: true,
-        })
-    } else {
-        // Create
-        form.post(route('permissions.store'), {
-            onSuccess: () => {
-                form.reset();
-            }
-        });
-    }
-};
-const title = ref("");
-const icon = ref("");
-const url = ref("")
-onMounted(() => {
-    if (props.permissions && props.permissions.id) {
-        title.value = "Ubah Data Permission"
-        icon.value = "fas fa-edit"
-        url.value = route('permissions')
-    } else {
-        title.value = "Buat Data Permission"
-        icon.value = "fas fa-plus-square"
-        url.value = route('permissions')
-    }
+
+// Sinkronisasi ref -> useForm
+watch(forms, () => {
+    form.permissions = forms.value
+}, {
+    deep: true
 })
+
+// 3. Deteksi Mode (Edit vs Create)
+//  cek apakah item pertama punya ID
+const isEditMode = computed(() => !!forms.value[0].id);
+const isSubmit = () => {
+    form.post(route("permissions.store.multiple"), {
+        preserveScroll: true,
+        onSuccess: () => {
+            if (!isEditMode.value) {
+                forms.value = [{ id: null, name: "" }]
+            }
+            form.reset();
+        }
+    })
+};
+const title = computed(() => {
+    if (isEditMode.value) {
+        return forms.value.length > 1
+            ? `Ubah ${forms.value.length} Izin Akses`
+            : "Ubah Izin Akses";
+    }
+    return "Buat Izin Akses Baru";
+});
+const icon = computed(() => isEditMode.value ? "fas fa-edit" : "fas fa-plus-square");
 
 const breadcrumbItems = computed(() => {
-    if (props.permissions && props.permissions.id) {
-        return [
-            { text: "Daftar Permission", url: route("permissions") },
-            { text: "Buat Data Permission", url: route("permissions.create") },
-            { text: title.value }
-        ]
+    const items = [
+        { text: "Daftar Izin Akses", url: route("permissions") },
+    ];
+
+    // Jika edit, tambahkan path create agar breadcrumb rapi (opsional)
+    if (isEditMode.value) {
+        items.push({ text: "Buat Izin Akses Baru", url: route("permissions.create") });
     }
-    return [
-        { text: "Daftar Permission", url: route("permissions") },
-        { text: title.value }
-    ]
-})
+
+    items.push({ text: title.value });
+    return items;
+});
 
 
-// const togglePermission = (perm) => {
-//     if (form.permissions.includes(perm)) {
-//         form.permissions = form.permissions.filter(p => p !== perm)
-//     } else {
-//         form.permissions.push(perm)
-//     }
-// }
+// ─────────────────────────────────────────────
+// 4. Dynamic Form Logic
+// ─────────────────────────────────────────────
+const formRefs = ref([])
+
+const addForm = () => {
+    forms.value.push({
+        id: null,
+        name: "",
+    })
+    nextTick(() => {
+        const lastIndex = forms.value.length - 1;
+        const el = formRefs.value[lastIndex];
+        // Focus otomatis ke input Jam di form baru
+        const input = el?.querySelector("input");
+        input?.focus();
+    })
+}
+const removeForm = (index) => {
+    if (forms.value.length === 1) return;
+    forms.value.splice(index, 1)
+}
 
 
 </script>
@@ -73,45 +105,75 @@ const breadcrumbItems = computed(() => {
         <template #content>
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
-            <div class="d-flex justify-content-between">
-                <Link :href="url" class="btn btn-danger btn-sm mb-3">
-                <i class="fas fa-arrow-left"></i>
-                Kembali
+            <div class=" justify-content-between align-content-center d-flex mb-2">
+                <Link :href="route('permissions')" class="btn btn-danger">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
                 </Link>
+                <div class="gap-1 d-flex">
+                    <button title="Hapus Semua Form" v-if="forms.length > 1 && !form.processing"
+                        class="btn btn-outline-danger position-relative align-items-center"
+                        @click="forms = [{ name: forms[0].name ?? '', id: forms[0].id ?? '' }]"><i
+                            class="fas fa-recycle"></i> Hapus
+                        <span class="badge text-bg-primary">{{ forms.length }}</span>
+                    </button>
+                    <button @click="addForm" class="btn btn-primary btn-gradient"><i class="fas fa-plus"></i>
+                        Tambah</button>
+                </div>
             </div>
-            <div class="card overflow-hidden rounded-4 bg-light">
-                <h5 class="card-header fw-bold text-uppercase p-3 text-bg-secondary">
-                    <i class="fas fa-info-circle me-1 text-light"></i>
-                    Form Permission
-                </h5>
-                <div class="card-body">
-                    <form-wrapper @submit="isSubmit">
-                        <div class="mb-3">
-                            <input-label class="fw-bold" for="name" value="Name Permission" />
-                            <text-input autofocus v-model="form.name" name="name" />
-                            <input-error :message="form.errors.name" />
-                        </div>
-                        <div class="mb-3">
-                            <input-label class="fw-bold" for="guard_name" value="Guard Name" />
-                            <select-input text="Select guard name" :options="[
-                                { value: 'web', label: 'Web' },
-                                { value: 'api', label: 'API' },
-                            ]" v-model="form.guard_name" name="guard_name" />
-                            <input-error :message="form.errors.guard_name" />
-                        </div>
+            <div class="row g-0 pb-3">
+                <div class="col-xl-12">
+                    <div class="card overflow-hidden rounded-2 bg-light">
+                        <h5 class="card-header fw-bold text-uppercase p-3 text-bg-grey">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Form Izin Akses
+                        </h5>
+                        <div class="card-body">
+                            <div class="form-overlay">
+                                <form-wrapper @submit="isSubmit">
+                                    <div
+                                        :class="`row row-cols-xl-${forms.length > 1 ? '2' : '1'} row-cols-md-2 row-cols-1 row-cols-sm-1 g-2`">
+                                        <div class="col-auto" :ref="el => formRefs[index] = el"
+                                            v-for="(field, index) in forms" :key="index">
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <input-label class="fw-bold" :for="`permissions.${index}.name`"
+                                                    :value="`Izin Akses ${index + 1}`" />
+                                                <button title="Hapus Form" class="btn  text-danger"
+                                                    @click.prevent="removeForm(index)" v-if="forms.length > 1">
+                                                    <i class="fas fa-times fs-5"></i>
+                                                </button>
+                                            </div>
 
-
-                        <div class="d-grid d-xl-block">
-                            <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
-                                :icon="props.permissions?.id ? 'fas fa-edit' : 'fas fa-paper-plane'"
-                                :variant="props.permissions?.id ? 'success' : 'primary'" type="submit"
-                                :name="props.permissions?.id ? 'ubah' : 'simpan'"
-                                :label="props.permissions?.id ? 'Ubah' : 'Simpan'" />
+                                            <text-input :placeholder="`Buat izin Akses ${index + 1}`"
+                                                :tabindex="index * 1 + 1" class="input-height-1" type="text"
+                                                v-model="field.name" :name="`permissions.${index}.name`" />
+                                            <input-error :message="form.errors[`permissions.${index}.name`]" />
+                                        </div>
+                                    </div>
+                                </form-wrapper>
+                            </div>
                         </div>
-                    </form-wrapper>
+                        <div class="card-footer">
+                            <div class="d-grid d-xl-flex justify-content-xl-start">
+                                <base-button @click="isSubmit" :loading="form.processing" class="bg-gradient px-5"
+                                    :icon="isEditMode ? 'fas fa-edit' : 'fas fa-save'"
+                                    :variant="isEditMode ? 'success' : 'primary'" type="button"
+                                    :label="isEditMode ? 'Ubah' : 'Simpan'" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
     </app-layout>
 
 </template>
+<style scoped>
+.form-overlay {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 6px;
+    position: relative;
+
+}
+</style>

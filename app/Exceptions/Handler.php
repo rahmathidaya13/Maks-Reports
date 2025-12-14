@@ -25,7 +25,7 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        if ($exception instanceof UnauthorizedException) {
+        if ($exception instanceof UnauthorizedException || $exception instanceof AuthorizationException) {
             // Redirect ke halaman lain, misalnya dashboard, dengan flash message
             return redirect()
                 ->route('home') // Ganti dengan rute sesuai kebutuhanmu

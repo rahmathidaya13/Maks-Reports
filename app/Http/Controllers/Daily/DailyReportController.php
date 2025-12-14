@@ -86,7 +86,7 @@ class DailyReportController extends Controller
      */
     public function edit(DailyReportModel $dailyReportModel, string $id)
     {
-        $this->authorize('update', DailyReportModel::class);
+        $this->authorize('edit', DailyReportModel::class);
         $dailyReport = $dailyReportModel::findOrFail($id);
         $this->dailyReports->clearCache(auth()->id());
         return Inertia::render('DailyReport/Form/pageForm', [
@@ -100,7 +100,7 @@ class DailyReportController extends Controller
      */
     public function update(Request $request, DailyReportModel $dailyReportModel, string $id)
     {
-        $this->authorize('update', DailyReportModel::class);
+        $this->authorize('edit', DailyReportModel::class);
         $this->validationText($request->all());
         $dailyReport = $dailyReportModel::findOrFail($id);
         $dailyReport->created_by = auth()->id();
@@ -134,6 +134,7 @@ class DailyReportController extends Controller
 
     public function destroy_all(DailyReportModel $dailyReportModel, Request $request)
     {
+        $this->authorize('delete', DailyReportModel::class);
         $all_id = $request->input('all_id', []);
         if (!count($all_id))
             return back()->with('message', 'Tidak ada data yang dipilih.');

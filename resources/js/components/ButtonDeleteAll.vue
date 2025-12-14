@@ -11,12 +11,16 @@ const props = defineProps({
     text: {
         type: String,
         default: ''
+    },
+    variant: {
+        type: String,
+        default: 'danger'
     }
 })
 </script>
 <template>
     <Transition name="fade">
-        <button v-if="isVisible" class="btn btn-danger rounded-2" @click="deleted">
+        <button v-if="isVisible" :class="`btn btn-${variant} rounded-2`" @click="deleted">
             <i class="fas fa-trash me-1"></i> {{ text }}
         </button>
     </Transition>

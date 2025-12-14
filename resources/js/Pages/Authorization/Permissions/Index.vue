@@ -1,10 +1,11 @@
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
-import { Head, Link, router, usePage } from "@inertiajs/vue3";
-import { debounce } from "lodash";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
+import { debounce, filter } from "lodash";
 import { highlight } from "@/helpers/highlight";
 import { swalConfirmDelete } from "@/helpers/swalHelpers";
 import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
+import { cleanTextCapitalize } from "@/helpers/cleanTextCapitalize";
 import moment from "moment";
 moment.locale('id');
 const page = usePage();
@@ -30,11 +31,11 @@ const liveSearch = debounce((e) => {
 }, 1000);
 const header = [
     { label: "No", key: "__index" },
-    { label: "Name Permission", key: "name" },
-    { label: "Guard Name", key: "guard_name" },
-    { label: "Created", key: "created_at" },
-    { label: "Updated", key: "updated_at" },
-    { label: "Action", key: "-" },
+    { label: "Nama Izin Akses", key: "name" },
+    { label: "Status", key: "guard_name" },
+    { label: "Dibuat", key: "created_at" },
+    { label: "Diperbarui", key: "updated_at" },
+    { label: "Aksi", key: "-" },
 ];
 watch(
     () => [
@@ -61,7 +62,15 @@ function deleteSelected() {
         },
     })
 }
-
+const goEditMultiple = () => {
+    if (!selectedRow.value.length) {
+        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+    }
+    router.get(route('permissions.edited_all'), { all_id: selectedRow.value }, {
+        preserveScroll: true,
+        preserveState: true,
+    })
+}
 watch(selectedRow, (val) => {
     if (val.length > 0) {
         isVisible.value = true
@@ -81,25 +90,20 @@ const deleted = (nameRoute, data) => {
     })
 }
 
-function cleanAndCapitalize(str) {
-    if (!str) return '';
 
-    // 1. Hapus semua titik
-    const noDots = str.replaceAll('.', ' '); // Hasil: "Dailyreportmodelview"
-
-    // 2. Sisipkan spasi sebelum setiap huruf kapital (kecuali yang pertama)
-    // Regex: /(?=[A-Z])/
-    const spacedString = noDots.replace(/([A-Z])/g, ' $1').trim();
-    // Hasil: "Daily Report Model View"
-
-    // 3. (Opsional, untuk keamanan) Kapitalisasi setiap kata.
-    const words = spacedString.toLowerCase().split(' ');
-    const result = words.map(word => {
-        if (!word) return '';
-        return word.charAt(0).toUpperCase() + word.slice(1);
-    }).join(' ');
-
-    return result;
+function daysTranslate(dayValue) {
+    const dayConvert = {
+        "Sunday": "Minggu",
+        "Monday": "Senin",
+        "Tuesday": "Selasa",
+        "Wednesday": "Rabu",
+        "Thursday": "Kamis",
+        "Friday": "Jumat",
+        "Saturday": "Sabtu",
+    };
+    const dayName = moment(dayValue).format('dddd');
+    const dateFormat = moment(dayValue).format('DD-MM-YYYY, HH:mm:ss');
+    return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
 </script>
 <template>
@@ -107,89 +111,120 @@ function cleanAndCapitalize(str) {
     <Head title="Halaman Izin Akses" />
     <app-layout>
         <template #content>
-            <bread-crumbs :home="false" icon="fas fa-handshake" title="Daftar Izin Akses"
+            <bread-crumbs :home="false" icon="fas fa-cog" title="Daftar Izin Akses"
                 :items="[{ text: 'Daftar Izin Akses' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12">
-                    <div class="card mb-3 overflow-hidden rounded-4 p-1">
-                        <div class="row align-items-center p-3 g-2">
-                            <div class="col-xl-7 col-12 mb-0">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <text-input :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
-                                        placeholder="Pencarian....." />
-                                </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex gap-1">
+                                <transition name="fade">
+                                    <base-button :disabled="!isVisible" @click.prevent="goEditMultiple" label="Ubah"
+                                        icon="fas fa-edit" />
+                                </transition>
+                                <button-delete-all :disabled="!isVisible" variant="danger" text="Hapus"
+                                    :isVisible="true" :deleted="deleteSelected" />
                             </div>
-                            <div class="col-xl-3 col-12 mb-xl-0 mb-0 d-flex gap-2">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
-                                    <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                        { value: 10, label: '10' },
-                                        { value: 25, label: '25' },
-                                        { value: 50, label: '50' },
-                                        { value: 100, label: '100' },
-                                    ]" />
+                            <div class="">
+                                <div class="row g-1 align-items-center">
+                                    <div class="col">
+                                        <div class="input-group">
+                                            <text-input input-class="border-dark border-1 border" :is-valid="false"
+                                                autofocus v-model="filters.keyword" name="keyword"
+                                                placeholder="Pencarian....." />
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <select-input select-class="border-dark border-1 border"
+                                                :is-valid="false" v-model="filters.limit" name="limit" :options="[
+                                                    { value: 10, label: '10' },
+                                                    { value: 25, label: '25' },
+                                                    { value: 50, label: '50' },
+                                                    { value: 100, label: '100' },
+                                                ]" />
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <select-input select-class="border-dark border-1 border" :is-valid="false"
+                                                v-model="filters.order_by" name="order_by" :options="[
+                                                    { value: 'desc', label: 'Terbaru' },
+                                                    { value: 'asc', label: 'Terlama' },
+                                                ]" />
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <Link :href="route('permissions.create')" class="btn btn-success bg-gradient">
+                                            <i class="fas fa-plus"></i> Buat Baru
+                                        </Link>
+                                    </div>
                                 </div>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
-                                    <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
-                                        { value: 'desc', label: 'Terbaru' },
-                                        { value: 'asc', label: 'Terlama' },
-                                    ]" />
-                                </div>
-                            </div>
-                            <div class="col-xl-2 col-12 mb-xl-0 mb-0 d-flex">
-                                <Link :href="route('permissions.create')" class="btn btn-primary bg-gradient px-5">
-                                    <i class="fas fa-plus" style="font-size:18px"></i>
-                                </Link>
+
+
                             </div>
                         </div>
                     </div>
-                    <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
-                    <div class="card mb-4 overflow-hidden rounded-4">
-                        <div class="table-responsive">
-                            <base-table @update:selected="selectedRow = $event" :attributes="{ id: 'id', name: 'name' }"
-                                :data="props.permissions" :headers="header">
-                                <template #cell="{ row, keyName }">
-                                    <template v-if="keyName === 'name'">
-                                        <div class="fw-bold"
-                                            v-html="highlight(cleanAndCapitalize(row.name), filters.keyword)">
-                                        </div>
+
+                    <div class="card mb-4 overflow-hidden rounded-3 shadow">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <base-table variant="secondary" @update:selected="selectedRow = $event"
+                                    :attributes="{ id: 'id', name: 'name' }" :data="props.permissions"
+                                    :headers="header">
+                                    <template #cell="{ row, keyName }">
+                                        <template v-if="keyName === 'name'">
+                                            <div class="fw-semibold text-start"
+                                                v-html="highlight(row.name, filters.keyword)">
+                                            </div>
+                                        </template>
+                                        <template v-if="keyName === '-'">
+                                            <div class="dropdown dropstart">
+                                                <button class="btn btn-secondary bg-gradient" type="button"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <Link :href="route('permissions.edit', row.id)"
+                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                            Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
+                                                        </Link>
+                                                    </li>
+                                                    <li>
+                                                        <button @click.prevent="deleted('permissions.delete', row)"
+                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                            Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </template>
+                                        <template v-if="keyName === 'created_at'">
+                                            {{ daysTranslate(row.created_at) }}
+                                        </template>
+                                        <template v-if="keyName === 'updated_at'">
+                                            {{ daysTranslate(row.updated_at) }}
+                                        </template>
                                     </template>
-                                    <template v-if="keyName === '-'">
-                                        <div class="d-flex gap-1 align-items-center justify-content-center">
-                                            <Link :href="route('permissions.edit', row.id)"
-                                                class="btn btn-sm btn-info text-white px-3"><i class="fas fa-edit"></i>
-                                            </Link>
-                                            <button class="btn btn-sm btn-outline-danger px-3"
-                                                @click="deleted('permissions.delete', row)">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                    <template v-if="keyName === 'created_at'">
-                                        {{ moment(row.created_at).format('LLL') }}
-                                    </template>
-                                    <template v-if="keyName === 'updated_at'">
-                                        {{ moment(row.updated_at).format('LLL') }}
-                                    </template>
-                                </template>
-                            </base-table>
-                        </div>
-                        <div
-                            class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
-                            <div class="mb-2 order-1 order-xl-0">
-                                Menampilkan <strong>{{ props.permissions.from ?? 0 }}</strong> sampai
-                                <strong>{{ props.permissions.to ?? 0 }}</strong> dari total
-                                <strong>{{ props.permissions.total ?? 0 }}</strong> data
+                                </base-table>
                             </div>
-                            <pagination :links="props.permissions?.links" :keyword="filters.keyword"
-                                routeName="permissions" :additionalQuery="{
-                                    order_by: filters.order_by,
-                                    limit: filters.limit,
-                                    keyword: filters.keyword,
-                                }" />
+                            <div
+                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
+                                <div class="mb-2 order-1 order-xl-0">
+                                    Menampilkan <strong>{{ props.permissions.from ?? 0 }}</strong> sampai
+                                    <strong>{{ props.permissions.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.permissions.total ?? 0 }}</strong> data
+                                </div>
+                                <pagination size="pagination-sm" :links="props.permissions?.links"
+                                    :keyword="filters.keyword" routeName="permissions" :additionalQuery="{
+                                        order_by: filters.order_by,
+                                        limit: filters.limit,
+                                        keyword: filters.keyword,
+                                    }" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -197,3 +232,21 @@ function cleanAndCapitalize(str) {
         </template>
     </app-layout>
 </template>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>

@@ -224,6 +224,10 @@ const resetField = () => {
     form.end_date_dw = '';
 }
 // =========Batas Fungsi untuk Tampilkan Modal========== //
+
+// permissions
+const perm = page.props.auth.user;
+console.log(perm.permissions);
 </script>
 <template>
 
@@ -305,12 +309,14 @@ const resetField = () => {
                     </div>
 
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
-                        <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
+                        <button-delete-all v-if="perm.permissions.includes('daily.report.leads.delete')" text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
                         <div class="d-inline-flex ms-auto gap-1">
-                            <base-button variant="success" icon="fas fa-download" @click="openModal" class="bg-gradient"
-                                name="unduh" label="Unduh" />
+                            <base-button v-if="perm.permissions.includes('daily.report.leads.export')" variant="success"
+                                icon="fas fa-download" @click="openModal" class="bg-gradient" name="unduh"
+                                label="Unduh" />
                             <div class="position-relative">
-                                <base-button @click="goToCreate" class="bg-gradient" name="create" label="Buat Laporan"
+                                <base-button v-if="perm.permissions.includes('daily.report.leads.create')"
+                                    @click="goToCreate" class="bg-gradient" name="create" label="Buat Laporan"
                                     icon="fas fa-plus" />
                             </div>
                         </div>
@@ -345,19 +351,21 @@ const resetField = () => {
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li>
-                                            <button @click="goToEdit(row.daily_report_id)"
+                                            <button v-if="perm.permissions.includes('daily.report.leads.edit')"
+                                                @click="goToEdit(row.daily_report_id)"
                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                 Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
                                             </button>
                                         </li>
                                         <li>
-                                            <button @click="deleted('daily_report.deleted', row)"
+                                            <button v-if="perm.permissions.includes('daily.report.leads.delete')"
+                                                @click="deleted('daily_report.deleted', row)"
                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                 Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
                                             </button>
                                         </li>
                                         <li>
-                                            <button
+                                            <button v-if="perm.permissions.includes('daily.report.leads.share')"
                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                 Bagikan <i class="bi bi-share-fill text-primary fs-5"></i>
                                             </button>
@@ -399,7 +407,7 @@ const resetField = () => {
                                                     </td>
                                                     <td class="text-center fw-semibold">{{
                                                         row.fu_before_yesterday_closing
-                                                        }}</td>
+                                                    }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
@@ -432,7 +440,7 @@ const resetField = () => {
                                                         (row.fu_before_yesterday_closing ?? 0) +
                                                         (row.fu_last_week_closing ?? 0) +
                                                         (row.engage_closing ?? 0)
-                                                        }}
+                                                    }}
                                                     </td>
                                                 </tr>
                                             </tfoot>
@@ -449,12 +457,13 @@ const resetField = () => {
                             <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
                             <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
                         </div>
-                        <pagination size="pagination-sm" :links="props.dailyReport?.links" routeName="daily_report" :additionalQuery="{
-                            limit: filters.limit,
-                            order_by: filters.order_by,
-                            start_date: filters.start_date,
-                            end_date: filters.end_date,
-                        }" />
+                        <pagination size="pagination-sm" :links="props.dailyReport?.links" routeName="daily_report"
+                            :additionalQuery="{
+                                limit: filters.limit,
+                                order_by: filters.order_by,
+                                start_date: filters.start_date,
+                                end_date: filters.end_date,
+                            }" />
                     </div>
                 </div>
             </div>
@@ -480,7 +489,8 @@ const resetField = () => {
                                     <li>Laporan dapat diunduh dalam format <b>PDF</b> atau <b>Excel</b>.</li>
 
                                     <li>Untuk mencetak laporan pada hari ini masukan <b>Tanggal Awal</b> dan
-                                        <b>Tanggal Akhir</b> sesuai dengan Tanggal hari ini.</li>
+                                        <b>Tanggal Akhir</b> sesuai dengan Tanggal hari ini.
+                                    </li>
                                 </ul>
                             </div>
                             <div class="card text-bg-grey">

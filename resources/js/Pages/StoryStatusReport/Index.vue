@@ -174,19 +174,6 @@ const goEdit = (id) => {
     });
 }
 
-// const downloadItems = [
-//     { id: 'pdf', text: 'Unduh PDF', icon: 'fas fa-file-pdf text-danger' },
-//     { id: 'excel', text: 'Unduh Excel', icon: 'fas fa-file-excel text-success' },
-// ];
-
-// const exportTo = (type) => {
-//     console.log(type);
-//     if (type === "pdf") {
-//         window.location.href = route("story_report.print_to_pdf");
-//     } else if (type === "excel") {
-//         window.location.href = route("story_report.print_to_excel");
-//     }
-// };
 
 // =========Tampilkan Modal========== //
 const showModal = ref(false);
@@ -256,6 +243,9 @@ const resetField = () => {
     form.end_date_dw = '';
 }
 // =========Batas Fungsi untuk Tampilkan Modal========== //
+
+const perm = page.props.auth.user
+console.log(perm);
 </script>
 <template>
 
@@ -311,23 +301,26 @@ const resetField = () => {
                     </div>
 
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
-                        <transition name="fade">
-                            <button v-if="isVisibleButton" @click="deletedAll" type="button"
-                                class="btn btn-danger position-relative bg-gradient">
-                                <i class="fas fa-trash"></i> Hapus
-                                <span v-if="selected.length > 0"
-                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
-                                    {{ selected.length }}
-                                </span>
-                            </button>
-                        </transition>
+                        <div v-if="perm.permissions.includes('status.report.delete')">
+                            <transition name="fade">
+                                <button v-if="isVisibleButton" @click="deletedAll" type="button"
+                                    class="btn btn-danger position-relative bg-gradient">
+                                    <i class="fas fa-trash"></i> Hapus
+                                    <span v-if="selected.length > 0"
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                        {{ selected.length }}
+                                    </span>
+                                </button>
+                            </transition>
+                        </div>
 
                         <div class="d-inline-flex ms-auto gap-1 align-items-center">
 
-                            <base-button variant="success" icon="fas fa-download" @click="openModal" class="bg-gradient"
-                                name="unduh" label="Unduh" />
+                            <base-button v-if="perm.permissions.includes('status.report.export')" variant="success"
+                                icon="fas fa-download" @click="openModal" class="bg-gradient" name="unduh"
+                                label="Unduh" />
 
-                            <div class="position-relative">
+                            <div v-if="perm.permissions.includes('status.report.create')" class="position-relative">
                                 <base-button @click="createReport" class="bg-gradient" name="create"
                                     label="Buat Laporan" icon="fas fa-plus" />
                             </div>
@@ -343,7 +336,7 @@ const resetField = () => {
                                 <table class="table align-middle table-hover text-nowrap table-striped table-bordered">
                                     <thead class="table-dark position-sticky">
                                         <tr>
-                                            <th>
+                                            <th v-if="perm.permissions.includes('status.report.delete')">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input type="checkbox" class="form-check-input"
                                                         :checked="isAllSelected" @change="toggleAll($event)" />
@@ -362,7 +355,8 @@ const resetField = () => {
 
                                     <tbody>
                                         <tr v-if="!storyReport?.data.length">
-                                            <td colspan="9" class="text-center text-muted">
+                                            <td :colspan="perm.permissions.includes('status.report.delete') ? 8 : 9"
+                                                class="text-center text-muted">
                                                 Tidak ada data ditemukan
                                             </td>
                                         </tr>
@@ -374,7 +368,8 @@ const resetField = () => {
                                         ]" :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
                                             :key="rowIndex">
 
-                                            <td class="text-center">
+                                            <td v-if="perm.permissions.includes('status.report.delete')"
+                                                class="text-center">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input type="checkbox" class="form-check-input"
                                                         :name="row.story_status_id" :id="row.story_status_id"
@@ -416,19 +411,20 @@ const resetField = () => {
                                                         <i class="fas fa-cog"></i>
                                                     </button>
                                                     <ul class="dropdown-menu">
-                                                        <li>
-                                                            <button @click="goEdit(row.story_status_id)"
+                                                        <li v-if="perm.permissions.includes('status.report.edit')">
+                                                            <button @click.prevent="goEdit(row.story_status_id)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                                 Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
                                                             </button>
                                                         </li>
-                                                        <li>
-                                                            <button @click="deleted('story_report.deleted', row)"
+                                                        <li v-if="perm.permissions.includes('status.report.delete')">
+                                                            <button
+                                                                @click.prevent="deleted('story_report.deleted', row)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                                 Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
                                                             </button>
                                                         </li>
-                                                        <li>
+                                                        <li v-if="perm.permissions.includes('status.report.share')">
                                                             <button
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                                 Bagikan <i
@@ -442,8 +438,8 @@ const resetField = () => {
                                     </tbody>
                                     <tfoot class="fw-bold table-dark">
                                         <tr>
-                                            <td class="text-center border-0 border">
-                                            </td>
+                                            <td v-if="perm.permissions.includes('status.report.delete')"
+                                                class="text-center border-0 border"></td>
                                             <td class="text-center border-0 border">Total</td>
                                             <td class="text-center border-0 border"></td>
                                             <td class="text-center border-0 border"></td>
@@ -466,12 +462,13 @@ const resetField = () => {
                                     <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari total
                                     <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
                                 </div>
-                                <pagination size="pagination-sm" :links="props.storyReport?.links" routeName="story_report" :additionalQuery="{
-                                    order_by: filters.order_by,
-                                    limit: filters.limit,
-                                    start_date: filters.start_date,
-                                    end_date: filters.end_date,
-                                }" />
+                                <pagination size="pagination-sm" :links="props.storyReport?.links"
+                                    routeName="story_report" :additionalQuery="{
+                                        order_by: filters.order_by,
+                                        limit: filters.limit,
+                                        start_date: filters.start_date,
+                                        end_date: filters.end_date,
+                                    }" />
                             </div>
                         </div>
                     </div>

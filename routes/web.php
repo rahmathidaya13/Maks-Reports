@@ -177,6 +177,7 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::get('/roles/create', 'create')->name('roles.create');
         Route::post('/roles/store', 'store')->name('roles.store');
         Route::get('/roles/edit/{id}', 'edit')->name('roles.edit');
+        Route::get('/roles/show/{id}', 'show')->name('roles.show');
         Route::put('/roles/update/{id}', 'update')->name('roles.update');
         Route::delete('/roles/destroy/{id}', 'destroy')->name('roles.delete');
         Route::post('/roles/delete_all', 'destroyAll')->name('roles.destroy_all');
@@ -188,7 +189,11 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::get('/permissions/edit/{id}', 'edit')->name('permissions.edit');
         Route::put('/permissions/update/{id}', 'update')->name('permissions.update');
         Route::delete('/permissions/destroy/{id}', 'destroy')->name('permissions.delete');
+
+        // multiple selected
         Route::post('/permissions/delete_all', 'destroyAll')->name('permissions.destroy_all');
+        Route::get('/permissions/edited_all', 'editMultiple')->name('permissions.edited_all');
+        Route::post('/permissions/store_multiple', 'storeMultiple')->name('permissions.store.multiple');
     });
     Route::controller(UsersController::class)->group(function () {
         Route::get('/users/list', 'index')->name('users');
