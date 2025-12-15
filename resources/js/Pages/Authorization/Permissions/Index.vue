@@ -21,12 +21,16 @@ const filters = reactive({
     page: props.filters?.page ?? 1,
 })
 
+const isLoading = ref(false)
 const liveSearch = debounce((e) => {
+    isLoading.value = true
     router.get(route("permissions"), filters, {
         preserveScroll: true,
         replace: true,
         preserveState: true,
         only: ["permissions", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
+        onFinish: () => isLoading.value = false
+
     });
 }, 1000);
 const header = [
@@ -44,8 +48,26 @@ watch(
         filters.order_by,],
     () => liveSearch()
 );
+
+// crud operation
 const selectedRow = ref([]);
 const isVisible = ref(false);
+const loaderActive = ref(null)
+const create = () => {
+    loaderActive.value?.show("Memproses...");
+    router.get(route("permissions.create"), {}, {
+        onFinish: () => {
+            loaderActive.value?.hide()
+        }
+    });
+}
+
+const edit = (id) => {
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route("permissions.edit", id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
 function deleteSelected() {
     if (!selectedRow.value.length) {
         return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
@@ -89,8 +111,7 @@ const deleted = (nameRoute, data) => {
         },
     })
 }
-
-
+// end crud operation
 function daysTranslate(dayValue) {
     const dayConvert = {
         "Sunday": "Minggu",
@@ -111,6 +132,8 @@ function daysTranslate(dayValue) {
     <Head title="Halaman Izin Akses" />
     <app-layout>
         <template #content>
+            <loader-page ref="loaderActive" />
+
             <bread-crumbs :home="false" icon="fas fa-cog" title="Daftar Izin Akses"
                 :items="[{ text: 'Daftar Izin Akses' }]" />
             <alert :duration="10" :message="message" />
@@ -127,51 +150,50 @@ function daysTranslate(dayValue) {
                                 <button-delete-all :disabled="!isVisible" variant="danger" text="Hapus"
                                     :isVisible="true" :deleted="deleteSelected" />
                             </div>
-                            <div class="">
-                                <div class="row g-1 align-items-center">
-                                    <div class="col">
-                                        <div class="input-group">
-                                            <text-input input-class="border-dark border-1 border" :is-valid="false"
-                                                autofocus v-model="filters.keyword" name="keyword"
-                                                placeholder="Pencarian....." />
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="input-group">
-                                            <select-input select-class="border-dark border-1 border"
-                                                :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                                    { value: 10, label: '10' },
-                                                    { value: 25, label: '25' },
-                                                    { value: 50, label: '50' },
-                                                    { value: 100, label: '100' },
-                                                ]" />
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="input-group">
-                                            <select-input select-class="border-dark border-1 border" :is-valid="false"
-                                                v-model="filters.order_by" name="order_by" :options="[
-                                                    { value: 'desc', label: 'Terbaru' },
-                                                    { value: 'asc', label: 'Terlama' },
-                                                ]" />
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <Link :href="route('permissions.create')" class="btn btn-success bg-gradient">
-                                            <i class="fas fa-plus"></i> Buat Baru
-                                        </Link>
+                            <div class="row g-1 align-items-center">
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <text-input input-class="border-dark border-1 border" :is-valid="false"
+                                            autofocus v-model="filters.keyword" name="keyword"
+                                            placeholder="Pencarian....." />
                                     </div>
                                 </div>
-
-
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
+                                            v-model="filters.limit" name="limit" :options="[
+                                                { value: 10, label: '10' },
+                                                { value: 25, label: '25' },
+                                                { value: 50, label: '50' },
+                                                { value: 100, label: '100' },
+                                            ]" />
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
+                                            v-model="filters.order_by" name="order_by" :options="[
+                                                { value: 'desc', label: 'Terbaru' },
+                                                { value: 'asc', label: 'Terlama' },
+                                            ]" />
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <buttom type="button" @click.prevent="create" class="btn btn-success bg-gradient">
+                                        <i class="fas fa-plus"></i> Buat Baru
+                                    </buttom>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="card mb-4 overflow-hidden rounded-3 shadow">
-                        <div class="card-body p-0">
+                        <div v-if="isLoading">
+                            <loader-horizontal message="Sedang memproses data" />
+                        </div>
+                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
                             <div class="table-responsive">
-                                <base-table variant="secondary" @update:selected="selectedRow = $event"
+                                <base-table @update:selected="selectedRow = $event"
                                     :attributes="{ id: 'id', name: 'name' }" :data="props.permissions"
                                     :headers="header">
                                     <template #cell="{ row, keyName }">

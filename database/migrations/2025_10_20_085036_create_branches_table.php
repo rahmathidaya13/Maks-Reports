@@ -12,12 +12,15 @@ return new class extends Migration {
     {
         Schema::create('branches', function (Blueprint $table) {
             $table->uuid('branches_id')->primary();
-            $table->foreignUuid('created_by')->nullable()->constrained('users', 'id')->onDelete('cascade');
+            $table->foreignUuid('created_by')
+                ->nullable()
+                ->constrained('users', 'id')
+                ->onDelete('cascade');
+            $table->string('branch_code',); // nama cabang, contoh: Pekanbaru
             $table->string('name'); // nama cabang, contoh: Pekanbaru
             $table->text('address');
-            $table->string('phone', 13)->unique()->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->index(['branches_id', 'created_by', 'name', 'phone']);
+            $table->index(['branches_id', 'created_by', 'name']);
             $table->softDeletes();
             $table->timestamps();
         });

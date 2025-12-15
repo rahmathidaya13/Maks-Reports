@@ -96,20 +96,28 @@ const removeForm = (index) => {
     forms.value.splice(index, 1)
 }
 
-
+const loaderActive = ref(null);
+const goBack = () => {
+    loaderActive.value?.show("Memproses...");
+    router.get(route("permissions"), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
 </script>
 <template>
 
     <Head :title="title" />
     <app-layout>
         <template #content>
+            <loader-page ref="loaderActive" />
+
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
             <div class=" justify-content-between align-content-center d-flex mb-2">
-                <Link :href="route('permissions')" class="btn btn-danger">
+                <button type="button" @click.prevent="goBack" class="btn btn-danger">
                     <i class="fas fa-arrow-left"></i>
                     Kembali
-                </Link>
+                </button>
                 <div class="gap-1 d-flex">
                     <button title="Hapus Semua Form" v-if="forms.length > 1 && !form.processing"
                         class="btn btn-outline-danger position-relative align-items-center"
@@ -128,7 +136,11 @@ const removeForm = (index) => {
                             <i class="fas fa-info-circle me-1"></i>
                             Form Izin Akses
                         </h5>
-                        <div class="card-body">
+                        <div v-if="form.processing">
+                            <loader-horizontal
+                                :message="props.permissions?.id ? 'Sedang memperbarui data' : 'Sedang menyimpan data'" />
+                        </div>
+                        <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
                             <div class="form-overlay">
                                 <form-wrapper @submit="isSubmit">
                                     <div
@@ -153,7 +165,7 @@ const removeForm = (index) => {
                                 </form-wrapper>
                             </div>
                         </div>
-                        <div class="card-footer">
+                        <div class="card-footer" :class="['blur-area', form.processing ? 'is-blurred' : '']">
                             <div class="d-grid d-xl-flex justify-content-xl-start">
                                 <base-button @click="isSubmit" :loading="form.processing" class="bg-gradient px-5"
                                     :icon="isEditMode ? 'fas fa-edit' : 'fas fa-save'"
@@ -169,6 +181,17 @@ const removeForm = (index) => {
 
 </template>
 <style scoped>
+.blur-area {
+    transition: all 0.3s ease;
+}
+
+.blur-area.is-blurred {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
 .form-overlay {
     max-height: 60vh;
     overflow-y: auto;

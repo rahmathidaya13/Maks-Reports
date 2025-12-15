@@ -15,9 +15,9 @@ class BranchSeeder extends Seeder
     public function run(): void
     {
         $branches = [
-            ['branches_id' => Str::uuid(), 'name' => 'pekanbaru', 'address' => 'Jl. Soekarno Hatta No.10, Pekanbaru', 'phone' => '0761-123456'],
-            ['branches_id' => Str::uuid(), 'name' => 'medan', 'address' => 'Jl. Gajah Mada No.15, Medan', 'phone' => '061-654321'],
-            ['branches_id' => Str::uuid(), 'name' => 'surabaya', 'address' => 'Jl. Ahmad Yani No.7, Surabaya', 'phone' => '031-7654321'],
+            ['branches_id' => Str::uuid(), 'branch_code' => BranchesModel::generateUniqueCode(), 'name' => 'pekanbaru', 'address' => 'Jl. Soekarno Hatta No.10, Pekanbaru'],
+            ['branches_id' => Str::uuid(), 'branch_code' => BranchesModel::generateUniqueCode(), 'name' => 'medan', 'address' => 'Jl. Gajah Mada No.15, Medan'],
+            ['branches_id' => Str::uuid(), 'branch_code' => BranchesModel::generateUniqueCode(), 'name' => 'surabaya', 'address' => 'Jl. Ahmad Yani No.7, Surabaya'],
         ];
 
         foreach ($branches as $branch) {

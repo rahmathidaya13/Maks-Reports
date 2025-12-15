@@ -184,7 +184,7 @@ const setMainImage = (img) => {
                             <div class="text-dark fw-bold mt-1 fs-6 align-items-center d-block">
                                 <small v-if="row.price_discount" class="text-muted text-decoration-line-through me-2">{{
                                     formatCurrency(row.price_original) ?? '-'
-                                }}</small>
+                                    }}</small>
 
                                 {{ formatCurrency(row.price_discount ? row.price_discount : row.price_original)
                                 }}

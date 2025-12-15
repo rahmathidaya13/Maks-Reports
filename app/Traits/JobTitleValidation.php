@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Rules\MaxQuillCharacters;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,7 +25,7 @@ trait JobTitleValidation
                 Rule::unique('job_title', 'title_alias')
                     ->ignore($id, 'job_title_id'),
             ],
-            'description' => ['required', 'string', 'max:500'],
+            'description' => ['required', 'string', new MaxQuillCharacters(500)],
         ], [
             'title.required' => 'Nama jabatan tidak boleh kosong.',
             'title.string' => 'Nama jabatan harus berupa teks.',

@@ -24,11 +24,15 @@ const props = defineProps({
     height: {
         type: String,
         default: '200px'
+    },
+    maxChar: {
+        type: Number,
+        default: null
     }
 })
 const emit = defineEmits(['update:modelValue'])
 const editorContainer = ref(null)
-
+const charCount = ref(0) // ✅ indikator karakter
 // Menggunakan `let` untuk `quill` agar bisa diakses di luar `onMounted` dan di `watch`
 let quill = null;
 
@@ -59,10 +63,17 @@ onMounted(() => {
 
     // 3. Pasang event listener untuk perubahan teks
     quill.on("text-change", () => {
-        // Hanya emit perubahan jika ada
-        if (quill) {
-            emit("update:modelValue", quill.root.innerHTML)
+        const length = quill.getLength() - 1
+
+        // 🔒 Enforce max length (frontend guard)
+        if (props.maxChar && length > props.maxChar) {
+            quill.deleteText(props.maxChar, length)
+            length = props.maxChar
         }
+
+        charCount.value = length
+        emit('update:modelValue', quill.root.innerHTML)
+
     });
 
     // Pindahkan logic watch ke dalam onMounted atau pastikan `quill` diperiksa
@@ -73,11 +84,8 @@ onMounted(() => {
 watch(() => props.modelValue, (value) => {
     // Memastikan `quill` sudah diinisialisasi
     if (quill && value !== quill.root.innerHTML) {
-        // Menggunakan setContent untuk menjaga format yang benar,
-        // tapi jika ingin tetap menggunakan HTML:
-        quill.root.innerHTML = value
-        // Alternatif yang lebih "Quill" jika modelValue adalah Delta/Text:
-        // quill.setText(value, 'silent');
+        quill.root.innerHTML = value || ''
+        charCount.value = quill.getLength() - 1
     }
 }, { immediate: true }) // immediate: true untuk set nilai awal jika diperlukan
 
@@ -86,6 +94,9 @@ watch(() => props.modelValue, (value) => {
     <div class="quill-wrapper" :style="{ height: props.height }">
         <div ref="editorContainer" class="h-100" />
     </div>
+    <small v-if="maxChar" class="text-muted d-flex justify-content-start mt-1">
+        {{ charCount }}/{{ maxChar }}
+    </small>
 </template>
 <style scoped>
 /* Pastikan container editor memiliki tinggi penuh di dalam quill-wrapper */
@@ -118,4 +129,6 @@ watch(() => props.modelValue, (value) => {
     min-height: 100%;
     height: 100%;
 }
+
+
 </style>

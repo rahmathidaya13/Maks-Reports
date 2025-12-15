@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\BranchesModel;
 use App\Models\DailyReportModel;
+use App\Models\JobTitleModel;
 use App\Models\User;
+use App\Policies\BranchPolicy;
 use App\Policies\DailyReportLeadsPolicy;
+use App\Policies\JobTitlePolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -17,6 +21,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         DailyReportModel::class => DailyReportLeadsPolicy::class,
+        JobTitleModel::class => JobTitlePolicy::class,
+        BranchesModel::class => BranchPolicy::class,
     ];
 
     /**

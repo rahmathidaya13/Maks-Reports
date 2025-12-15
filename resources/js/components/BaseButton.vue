@@ -27,18 +27,10 @@ defineProps({
 });
 </script>
 <template>
-    <button
-        :class="['btn', `btn-${variant}`]"
-        :name="name.toLowerCase()"
-        :id="name.toLowerCase()"
-        :disabled="loading"
-    >
-        <span v-if="loading"
-            ><i class="fas fa-spinner fa-spin"></i> {{ waiting }}</span
-        >
+    <button :class="['btn', `btn-${variant}`]" :name="name.toLowerCase()" :id="name.toLowerCase()" :disabled="loading">
+        <span v-if="loading"><i class="fas fa-spinner fa-spin"></i> {{ waiting }}</span>
         <span v-else>
-            <slot
-                ><i v-if="icon" :class="[icon]" style="font-size: large"></i>
+            <slot><i v-if="icon" :class="[icon]"></i>
                 {{ label }}
             </slot>
         </span>

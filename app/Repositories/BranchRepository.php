@@ -2,29 +2,30 @@
 
 namespace App\Repositories;
 
-use App\Models\JobTitleModel;
+use App\Models\BranchesModel;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class JobTitle extends BaseCacheRepository
+class BranchRepository extends BaseCacheRepository
 {
-    protected string $cachePrefix = 'job_title';
+    protected string $cachePrefix = 'branches_cache';
     /**
      * Override: definisikan cara ambil data dari database
      */
     protected function getData(array $filters = []): LengthAwarePaginator
     {
         $user = auth()->user();
-        $query = JobTitleModel::with('creator')
+        $query = BranchesModel::with(['creator', 'branchPhone'])
             ->when(
-                ! $user->hasAnyRole(['admin', 'developer']),
+                ! $user->hasAnyRole(['developer', 'admin']),
                 fn($q) => $q->where('created_by', $user->id) // 🔒 Batasi hanya untuk user biasa
             )
             ->when(!empty($filters['keyword']), function ($q) use ($filters) {
                 $search = $filters['keyword'];
                 $q->where(function ($sub) use ($search) {
-                    $sub->where('title', 'like', "%{$search}%")
-                        ->orWhere('title_alias', 'like', "%{$search}%")
-                        ->orWhere('job_title_code', 'like', "%{$search}%");
+                    $sub->where('name', 'like', "%{$search}%")
+                        ->orWhereHas('branchPhone', function ($phone) use ($search) {
+                            $phone->where('phone', 'like', "%{$search}%");
+                        });
                 });
             });
 

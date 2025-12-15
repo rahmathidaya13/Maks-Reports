@@ -20,7 +20,7 @@ const props = defineProps({
 </script>
 <template>
     <Transition name="fade">
-        <button v-if="isVisible" :class="`btn btn-${variant} rounded-2`" @click="deleted">
+        <button v-if="isVisible" :class="`btn btn-${variant} rounded-2 bg-gradient`" @click="deleted">
             <i class="fas fa-trash me-1"></i> {{ text }}
         </button>
     </Transition>

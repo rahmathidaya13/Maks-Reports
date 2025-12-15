@@ -26,8 +26,6 @@ class JobTitleModel extends Model
         'description',
     ];
     protected $hidden = [
-        'created_at',
-        'updated_at',
         'deleted_at',
     ];
 
@@ -52,9 +50,9 @@ class JobTitleModel extends Model
     {
         return $this->hasMany(ProfileModel::class, 'job_title_id', 'job_title_id');
     }
-    public function users()
+    public function creator()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsTo(User::class, 'created_by', 'id');
     }
     public function role()
     {

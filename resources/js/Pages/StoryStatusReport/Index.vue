@@ -20,15 +20,6 @@ const props = defineProps({
     totalToday: Number,
     summary: Object
 });
-// console.log(props.summary);
-// const data = props.storyReport.data
-// // Reorder data → taruh highlightId di paling atas
-// if (highlightId) {
-//     props.storyReport.data = [
-//         ...data.filter(r => highlightId.includes(r.story_status_id)),
-//         ...data.filter(r => !highlightId.includes(r.story_status_id)),
-//     ];
-// }
 
 const filters = reactive({
     limit: props.filters.limit ?? 10,
@@ -37,7 +28,6 @@ const filters = reactive({
     start_date: props.filters.start_date ?? '',
     end_date: props.filters.end_date ?? '',
 })
-
 
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
@@ -355,7 +345,7 @@ console.log(perm);
 
                                     <tbody>
                                         <tr v-if="!storyReport?.data.length">
-                                            <td :colspan="perm.permissions.includes('status.report.delete') ? 8 : 9"
+                                            <td :colspan="(perm.permissions.includes('status.report.delete') ? 8 : 9) + 1"
                                                 class="text-center text-muted">
                                                 Tidak ada data ditemukan
                                             </td>
@@ -389,7 +379,7 @@ console.log(perm);
                                                 </div>
                                                 <small class="fw-normal text-muted" style="font-size: 12px;">{{
                                                     row.informasi
-                                                }}</small>
+                                                    }}</small>
                                             </td>
                                             <td class="text-center">
                                                 <span>{{ row.report_time.slice(0, 5) }}</span>

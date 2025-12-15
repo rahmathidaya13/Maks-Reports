@@ -97,8 +97,8 @@ watch(selected, (val) => {
             <tr>
                 <th>
                     <div class="form-check d-flex justify-content-center gap-2">
-                        <input type="checkbox" class="form-check-input" @change="toggleSelectAll($event)"
-                            :checked="isAllSelected" />
+                        <input :disabled="!data?.data.length" type="checkbox" class="form-check-input"
+                            @change="toggleSelectAll($event)" :checked="isAllSelected" />
                     </div>
                 </th>
                 <th class="text-center" v-for="(header, index) in headers" :key="index">
@@ -109,7 +109,7 @@ watch(selected, (val) => {
         </thead>
         <tbody>
             <tr v-if="!data.data.length">
-                <td :colspan="headers.length + 2" class="text-center text-muted">
+                <td :colspan="headers.length + 2" class="text-center text-muted py-5">
                     Tidak ada data ditemukan
                 </td>
             </tr>

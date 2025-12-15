@@ -83,7 +83,13 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::post('/job_title/delete_all', 'destroy_all')->name('job_title.destroy_all');
     });
     Route::controller(BranchesController::class)->group(function () {
-        Route::get('/branches/list', 'index')->name('branches');
+        Route::get('/branch/list', 'index')->name('branch');
+        Route::get('/branch/create', 'create')->name('branch.create');
+        Route::post('/branch/store', 'store')->name('branch.store');
+        Route::get('/branch/edit/{id}', 'edit')->name('branch.edit');
+        Route::put('/branch/update/{id}', 'update')->name('branch.update');
+        Route::delete('/branch/destroy/{id}', 'destroy')->name('branch.deleted');
+        Route::post('/branch/delete_all', 'destroy_all')->name('branch.destroy_all');
     });
     // laporan harian
     Route::controller(DailyReportController::class)->group(function () {

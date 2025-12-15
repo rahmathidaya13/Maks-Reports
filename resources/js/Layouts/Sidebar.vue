@@ -10,7 +10,7 @@ const is = (pattern) => {
     return regex.test(currentPath);
 };
 const roles = ref("");
-const priority = ["super-admin", "developer", "admin", "editor"];
+const priority = ["developer", "admin"];
 const textToUppercase = (text) => {
     return text.replace(/\b\w/g, l => l.toUpperCase())
 }
@@ -46,6 +46,18 @@ const product = () => {
 const dashboard = () => {
     loaderActive.value?.show("Sedang membuka...");
     router.get(route('home'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+const job_title = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('job_title'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+const branches = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('branch'), {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
@@ -99,6 +111,21 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         Dashboard
                     </Link>
 
+
+                    <div class="sb-sidenav-menu-heading">Produk
+                    </div>
+
+                    <Link @click.prevent="product" :href="route('product')" class="nav-link"
+                        :class="{ 'active active-link': is('product*') }">
+                        <div class="sb-nav-link-icon">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        Daftar Produk
+                    </Link>
+
+                    <div class="sb-sidenav-menu-heading">Laporan
+                    </div>
+
                     <Link v-if="permissions.includes('daily.report.leads.view')" @click.prevent="dailyReport"
                         class="nav-link" :class="{ 'active active-link': is('daily_report*') }"
                         :href="route('daily_report')">
@@ -108,8 +135,9 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         Laporan Leads
                     </Link>
 
-                    <Link @click.prevent="storyReport" class="nav-link"
-                        :class="{ 'active active-link': is('story_report*') }" :href="route('story_report')">
+                    <Link v-if="permissions.includes('status.report.view')" @click.prevent="storyReport"
+                        class="nav-link" :class="{ 'active active-link': is('story_report*') }"
+                        :href="route('story_report')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-sticky-note"></i>
                         </div>
@@ -124,26 +152,30 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         Catatan Penjualan
                     </Link>
 
-                    <Link @click.prevent="product" :href="route('product')" class="nav-link"
-                        :class="{ 'active active-link': is('product*') }">
-                        <div class="sb-nav-link-icon">
-                            <i class="fas fa-tags"></i>
-                        </div>
-                        Daftar Produk
-                    </Link>
 
-                    <Link v-if="roles" class="nav-link" :class="{ 'active active-link': is('job_title*') }"
-                        :href="route('job_title')">
+                    <div v-if="roles === 'developer' || roles === 'admin'" class="sb-sidenav-menu-heading">Manajemen
+                    </div>
+
+                    <Link @click.prevent="job_title" v-if="roles && permissions.includes('job.title.view')" class="nav-link"
+                        :class="{ 'active active-link': is('job_title*') }" :href="route('job_title')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-briefcase"></i>
                         </div>
                         Jabatan
                     </Link>
 
-                    <div v-if="page.props.auth.user.roles == 'developer'" class="sb-sidenav-menu-heading">Otorisasi
+                    <Link @click.prevent="branches" v-if="roles && permissions.includes('branches.view')" class="nav-link"
+                        :class="{ 'active active-link': is('branch*') }" :href="route('branch')">
+                        <div class="sb-nav-link-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        Daftar Cabang
+                    </Link>
+
+                    <div v-if="roles === 'developer'" class="sb-sidenav-menu-heading">Otorisasi
                     </div>
 
-                    <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
+                    <Link v-if="roles === 'developer'" class="nav-link"
                         :class="{ 'active active-link': is('authorization/roles*') }" :href="route('roles')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-briefcase"></i>
@@ -151,15 +183,15 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         Peran
                     </Link>
 
-                    <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
+                    <Link v-if="roles === 'developer'" class="nav-link"
                         :class="{ 'active active-link': is('authorization/permissions*') }"
                         :href="route('permissions')">
                         <div class="sb-nav-link-icon">
-                            <i class="fas fa-handshake"></i>
+                            <i class="fas fa-cog"></i>
                         </div>
                         Izin Akses
                     </Link>
-                    <Link v-if="page.props.auth.user.roles == 'developer'" class="nav-link"
+                    <Link v-if="roles === 'developer'" class="nav-link"
                         :class="{ 'active active-link': is('authorization/users*') }" :href="route('users')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-user-cog"></i>
