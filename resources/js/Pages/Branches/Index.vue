@@ -348,7 +348,7 @@ function daysTranslate(dayValue) {
         </template>
     </app-layout>
 </template>
-<style>
+<style scoped>
 .blur-area {
     transition: all 0.3s ease;
 }

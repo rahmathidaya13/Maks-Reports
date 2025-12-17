@@ -116,6 +116,9 @@ const isAllSelected = computed(() => {
     return rows.length > 0 && selected.value.length === rows.length;
 
 })
+const isSelected = (id) => {
+    return selected.value.includes(id);
+}
 const toggleAll = (evt) => {
     if (evt.target.checked) {
         selected.value = props.storyReport?.data.map(r => r.story_status_id);
@@ -248,43 +251,51 @@ console.log(perm);
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
-                    <div class="card mb-3 rounded-3 p-1 bg-light overflow-hidden shadow-sm">
-                        <div class="row align-items-center p-2 g-2 pb-3">
-                            <div class="col-xl-4 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
-                                <div class="input-group">
-                                    <text-input autofocus name="start_date" v-model="filters.start_date" type="date"
-                                        :is-valid="false" />
+                    <div class="card mb-3 rounded-3 overflow-hidden shadow-sm pb-3">
+                        <div class="card-header text-bg-dark p-3">
+                            <h5 class="card-title text-start mb-0 text-uppercase"> <i class="fas fa-filter"></i>
+                                Filter Laporan</h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row align-items-center g-2">
+                                <div class="col-xl-4 col-sm-6 col-md-3">
+                                    <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
+                                    <div class="input-group">
+                                        <text-input autofocus name="start_date" v-model="filters.start_date" type="date"
+                                            :is-valid="false" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="end_date" value="Tanggal Akhir:" />
-                                <div class="input-group">
-                                    <text-input name="end_date" v-model="filters.end_date" type="date"
-                                        :is-valid="false" />
-                                    <base-button :disabled="isDisableBtnDatePicker" @click="applyDateRange"
-                                        class="bg-gradient" :variant="isDisableBtnDatePicker ? 'secondary' : 'primary'"
-                                        name="set" label="Atur" />
+                                <div class="col-xl-4 col-sm-6 col-md-3">
+                                    <input-label class="fw-bold mb-1" for="end_date" value="Tanggal Akhir:" />
+                                    <div class="input-group">
+                                        <text-input name="end_date" v-model="filters.end_date" type="date"
+                                            :is-valid="false" />
+                                        <base-button :disabled="isDisableBtnDatePicker" @click="applyDateRange"
+                                            class="bg-gradient"
+                                            :variant="isDisableBtnDatePicker ? 'secondary' : 'primary'" name="set"
+                                            label="Atur" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-xl-2 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="limit" value="Batas:" />
-                                <div class="input-group">
-                                    <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                        { value: 10, label: 'default' },
-                                        { value: 20, label: '20' },
-                                        { value: 50, label: '50' },
-                                        { value: 100, label: '100' },
-                                    ]" />
+                                <div class="col-xl-2 col-sm-6 col-md-3">
+                                    <input-label class="fw-bold mb-1" for="limit" value="Batas:" />
+                                    <div class="input-group">
+                                        <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
+                                            { value: 10, label: 'default' },
+                                            { value: 20, label: '20' },
+                                            { value: 50, label: '50' },
+                                            { value: 100, label: '100' },
+                                        ]" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-xl-2 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="order_by" value="Urutkan:" />
-                                <div class="input-group">
-                                    <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
-                                        { value: 'desc', label: 'Terbaru' },
-                                        { value: 'asc', label: 'Terlama' },
-                                    ]" />
+                                <div class="col-xl-2 col-sm-6 col-md-3">
+                                    <input-label class="fw-bold mb-1" for="order_by" value="Urutkan:" />
+                                    <div class="input-group">
+                                        <select-input :is-valid="false" v-model="filters.order_by" name="order_by"
+                                            :options="[
+                                                { value: 'desc', label: 'Terbaru' },
+                                                { value: 'asc', label: 'Terlama' },
+                                            ]" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -293,7 +304,7 @@ console.log(perm);
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
                         <div v-if="perm.permissions.includes('status.report.delete')">
                             <transition name="fade">
-                                <button v-if="isVisibleButton" @click="deletedAll" type="button"
+                                <button :disabled="!isVisibleButton" @click="deletedAll" type="button"
                                     class="btn btn-danger position-relative bg-gradient">
                                     <i class="fas fa-trash"></i> Hapus
                                     <span v-if="selected.length > 0"
@@ -328,8 +339,9 @@ console.log(perm);
                                         <tr>
                                             <th v-if="perm.permissions.includes('status.report.delete')">
                                                 <div class="form-check d-flex justify-content-center">
-                                                    <input type="checkbox" class="form-check-input"
-                                                        :checked="isAllSelected" @change="toggleAll($event)" />
+                                                    <input :disabled="!storyReport?.data.length" type="checkbox"
+                                                        class="form-check-input" :checked="isAllSelected"
+                                                        @change="toggleAll($event)" />
                                                 </div>
                                             </th>
                                             <th class="text-center">No</th>
@@ -346,12 +358,13 @@ console.log(perm);
                                     <tbody>
                                         <tr v-if="!storyReport?.data.length">
                                             <td :colspan="(perm.permissions.includes('status.report.delete') ? 8 : 9) + 1"
-                                                class="text-center text-muted">
+                                                class="text-center text-muted py-5">
                                                 Tidak ada data ditemukan
                                             </td>
                                         </tr>
 
                                         <tr :class="[
+                                            { 'table-info': isSelected(row.story_status_id) },
                                             highlightId.includes(row.story_status_id)
                                                 ? (highlightType === 'create' ? 'blink-green' : 'blink-blue')
                                                 : ''
@@ -379,7 +392,7 @@ console.log(perm);
                                                 </div>
                                                 <small class="fw-normal text-muted" style="font-size: 12px;">{{
                                                     row.informasi
-                                                    }}</small>
+                                                }}</small>
                                             </td>
                                             <td class="text-center">
                                                 <span>{{ row.report_time.slice(0, 5) }}</span>
@@ -435,7 +448,9 @@ console.log(perm);
                                             <td class="text-center border-0 border"></td>
                                             <td class="text-center border-0 border"></td>
                                             <td class="text-center border-0 border">
-                                                {{ props.totalToday ?? props.totalWithFilter }}
+                                                {{ storyReport?.data.length ? (props.totalToday ??
+                                                    props.totalWithFilter) : '0'
+                                                }}
                                             </td>
                                             <td class="text-center border-0 border"></td>
                                             <td class="text-center border-0 border"></td>

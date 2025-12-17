@@ -10,6 +10,7 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
 use App\Repositories\AuthorizationUserHandle;
+use App\Repositories\PermissionHelper;
 
 class UsersController extends Controller
 {
@@ -50,27 +51,34 @@ class UsersController extends Controller
 
     public function edit(string $id)
     {
+        // Gunakan variable singular '$user' karena findOrFail mengembalikan 1 objek
+        $user = User::with(['profile', 'permissions', 'roles', 'profile.branch', 'profile.jobTitle'])
+            ->findOrFail($id);
+
+        // Format data (Transformation)
+        $formattedUser = [
+            'id' => $user->id,
+            'google_id' => $user->google_id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'status' => $user->status,
+            'profile' => $user->profile,
+            'is_active' => $user->is_active,
+            'roles' => $user->getRoleNames()->toArray(),
+            'permissions' => $user->getAllPermissions(),
+        ];
+
+        // Clear cache jika diperlukan (sesuai logic Anda)
+        $this->userRepository->clearCache(auth()->id());
+
         $roles = Role::with('permissions')->get(['id', 'name']);
         $permissions = Permission::all(['id', 'name']);
-        $users = User::with(['permissions', 'roles'])->findOrFail($id);
-
-        // Format data agar mudah diolah di Vue
-        $userData = [
-            'id' => $users->id,
-            'google_id' => $users->google_id,
-            'name' => $users->name,
-            'email' => $users->email,
-            'status' => $users->status,
-            'is_active' => $users->is_active,
-            'roles' => $users->getRoleNames(),
-            'permissions' => $users->getAllPermissions()->pluck('name'),
-        ];
 
         $this->userRepository->clearCache(auth()->id());
         return Inertia::render('Authorization/UsersHandle/Form', [
-            'users' => $userData,
+            'users' => $formattedUser,
             'roles' => $roles,
-            'permissions' => $permissions,
+            'permissions' => $permissions
         ]);
     }
 
@@ -90,17 +98,16 @@ class UsersController extends Controller
             'permissions.required' => 'Permission salah satu wajib dipilih',
         ]);
         $users = User::findOrFail($id);
+        $users->status = $request->input('status');
+        $users->update();
         if (isset($request['roles'])) {
-            $users->syncRoles($request['roles']);
             // sync role
+            $users->syncRoles($request['roles']);
         }
         if (isset($request['permissions'])) {
-            $users->syncPermissions($request['permissions']);
             // sync permission langsung ( custom per user )
+            $users->syncPermissions($request->input('permissions'));
         }
-        $users->update([
-            'status' => $request['status'],
-        ]);
         $this->userRepository->clearCache(auth()->id());
         return redirect()->route('users')->with('message', 'User ' . $users->name . ' Berhasil diperbarui.');
     }
@@ -130,16 +137,29 @@ class UsersController extends Controller
 
     public function detail(string $id)
     {
-        $users = User::with(['profile', 'permissions', 'roles', 'profile.branch', 'profile.jobTitle'])->findOrFail($id);
-        // Format data agar mudah diolah di Vue
-        // $users = [
-        //     'user' => $getUser,
-        //     'profile' => $getUser->profile,
-        //     'roles' => $getUser->getRoleNames(),
-        //     'permissions' => $getUser->getAllPermissions()->pluck( 'name' )->toArray(),
-        // ];
+        // Gunakan variable singular '$user' karena findOrFail mengembalikan 1 objek
+        $user = User::with(['profile', 'permissions', 'roles', 'profile.branch', 'profile.jobTitle'])
+            ->findOrFail($id);
+
+        // Format data (Transformation)
+        $formattedUser = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'profile' => $user->profile,
+            'is_active' => $user->is_active,
+            'status' => $user->status,
+            'roles' => $user->getRoleNames()->toArray(),
+            'permissions' => $user->getAllPermissions(),
+        ];
+
+        // Clear cache jika diperlukan (sesuai logic Anda)
         $this->userRepository->clearCache(auth()->id());
-        return Inertia::render('Authorization/UsersHandle/InfoDetail', compact('users'));
+
+        // Kirim data yang sudah diformat ke Vue
+        return Inertia::render('Authorization/UsersHandle/InfoDetail', [
+            'users' => $formattedUser
+        ]);
     }
 
     public function checkUser()

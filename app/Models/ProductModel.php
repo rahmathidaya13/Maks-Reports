@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductModel extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
     protected $table = 'products';
     protected $primaryKey = 'id';
 
@@ -28,5 +29,10 @@ class ProductModel extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
+    public function salesRecords()
+    {
+        return $this->hasMany(SalesRecords::class, 'product_id', 'product_id');
     }
 }

@@ -15,7 +15,20 @@ return new class extends Migration {
             $table->foreignUuid('created_by')->constrained('users', 'id')->cascadeOnDelete();
             $table->string('sales_record_code', 25)->unique();
             $table->date('sale_date')->index();
-            $table->integer('sales_amount')->default(0);
+
+            $table->enum('customer_source', [
+                'walk_in',
+                'whatsapp',
+                'phone_call',
+                'repeat_customer'
+            ])->index();
+
+            $table->enum('purchase_channel', [
+                'in_store',
+                'online',
+                'phone_order'
+            ])->index();
+            
             $table->text('notes')->nullable();
             $table->softDeletes();
             $table->timestamps();

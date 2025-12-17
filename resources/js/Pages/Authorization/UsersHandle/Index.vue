@@ -15,6 +15,7 @@ const props = defineProps({
     filters: Object,
 });
 
+
 const filters = reactive({
     active_emp: props.filters.active_emp ?? 'active',
     keyword: props.filters.keyword ?? '',
@@ -22,6 +23,8 @@ const filters = reactive({
     order_by: props.filters.order_by ?? "desc",
     page: props.filters?.page ?? 1,
 })
+
+// CRUD OPERATION
 const liveSearch = debounce((e) => {
     router.get(route("users"), filters, {
         preserveScroll: true,
@@ -39,7 +42,6 @@ const header = [
     { label: "Status Pegawai", key: "status" },
     { label: "Daring", key: "is_active" },
     { label: "Peran", key: "roles" },
-    { label: "Izin Akses", key: "permissions" },
     { label: "Awal Masuk", key: "first_login" },
     { label: "Terakhir Masuk", key: "last_login" },
     { label: "Aksi", key: "-" },
@@ -54,6 +56,7 @@ watch(
     () => liveSearch()
 );
 
+const loaderActive = ref(null)
 const selectedRow = ref([]);
 const isVisible = ref(false);
 function deleteSelected() {
@@ -65,14 +68,30 @@ function deleteSelected() {
         text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
         confirmText: 'Ya, Hapus Semua!',
         onConfirm: () => {
+            loaderActive.value?.show("Sedang memuat data...");
             router.post(route('users.destroy_all'), { all_id: selectedRow.value }, {
                 preserveScroll: true,
                 preserveState: false,
+                onFinish: () => loaderActive.value?.hide(),
             })
         },
     })
 }
+const isAllSelected = computed(() => {
+    const rows = props.users?.data ?? [];
+    return rows.length > 0 && selectedRow.value.length === rows.length;
+})
+const isSelected = (id) => {
+    return selectedRow.value.includes(id);
+}
 
+const toggleAll = (evt) => {
+    if (evt.target.checked) {
+        selectedRow.value = props.users?.data.map(r => r.id);
+    } else {
+        selectedRow.value = [];
+    }
+}
 watch(selectedRow, (val) => {
     if (val.length > 0) {
         isVisible.value = true
@@ -81,22 +100,7 @@ watch(selectedRow, (val) => {
     }
 })
 // atur warna badge sesuai jenis permission
-const getBadgeClass = (permName) => {
-    switch (true) {
-        case /create|download/i.test(permName):
-            return 'bg-success'
-        case /edit|update/i.test(permName):
-            return 'bg-warning text-dark'
-        case /delete|remove|cancel/i.test(permName):
-            return 'bg-danger'
-        case /read|share|export|import/i.test(permName):
-            return 'bg-info text-white'
-        case /manage|access|assign/i.test(permName):
-            return 'bg-primary'
-        default:
-            return 'bg-secondary'
-    }
-}
+
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
         title: 'Hapus',
@@ -106,6 +110,19 @@ const deleted = (nameRoute, data) => {
             router.delete(route(nameRoute, data.id), { preserveScroll: true, replace: true });
         },
     })
+}
+
+const edit = (id) => {
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route("users.edit", id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+const goDetail = (id) => {
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route("users.detail", id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
 }
 
 const toast = ref(null) // hanya tampil jika ada user baru
@@ -144,160 +161,225 @@ const sync = () => {
         }
     });
 }
-
-
 </script>
 <template>
 
-    <Head title="Halaman Hak Pengguna" />
+    <Head title="Halaman Izin Hak Pengguna" />
     <app-layout>
         <template #content>
+            <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-user-cog" title="Izin Pengguna"
                 :items="[{ text: 'Izin Pengguna' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-sm-12">
                     <swal-toast ref="toast" />
-                    <div class="card mb-3 overflow-hidden rounded-4 p-1">
-                        <div class="row align-items-center p-3 g-2">
-                            <div class="col-xl-6 col-12 mb-0">
-                                <div class="input-group">
-                                    <text-input :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
-                                        placeholder="Pencarian....." />
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-12 mb-xl-0 mb-0 d-flex gap-2">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
-                                    <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                        { value: 5, label: '5' },
-                                        { value: 10, label: '10' },
-                                        { value: 25, label: '25' },
-                                        { value: 50, label: '50' },
-                                        { value: 100, label: '100' },
-                                    ]" />
-                                </div>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-filter"></i></span>
-                                    <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
-                                        { value: 'desc', label: 'Terbaru' },
-                                        { value: 'asc', label: 'Terlama' },
-                                    ]" />
-                                </div>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-dot-circle"></i></span>
-                                    <select-input :is-valid="false" v-model="filters.active_emp" name="active_emp"
-                                        :options="[
-                                            { value: 'active', label: 'Aktif' },
-                                            { value: 'inactive', label: 'Non-Aktif' },
-                                        ]" />
-                                </div>
-                            </div>
-                            <div class="col-xl-2 col-12 mb-xl-0 mb-0 d-flex">
-                                <button :class="{ 'btn-dark': isLoading, 'btn-primary': !isLoading }"
-                                    :disabled="isLoading" @click="sync" class="btn  bg-gradient px-5"><i class="fas"
-                                        :class="{ 'fa-spinner fa-spin': isLoading, 'fa-sync': !isLoading }"
-                                        style="font-size:18px"></i>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <div class="d-flex">
+                                <button :disabled="!isVisible" @click="deleteSelected" type="button"
+                                    class="btn btn-danger position-relative bg-gradient">
+                                    <i class="fas fa-trash"></i> Hapus
+                                    <span v-if="selectedRow.length > 0"
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                        {{ selectedRow.length }}
+                                    </span>
                                 </button>
                             </div>
+
+                            <div class="row g-1 align-items-center ms-auto">
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <text-input input-class="border-dark border-1 border" :is-valid="false"
+                                            autofocus v-model="filters.keyword" name="keyword"
+                                            placeholder="Cari pengguna..." />
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
+                                            v-model="filters.limit" name="limit" :options="[
+                                                { value: 5, label: '5' },
+                                                { value: 10, label: '10' },
+                                                { value: 25, label: '25' },
+                                                { value: 50, label: '50' },
+                                                { value: 100, label: '100' },
+                                            ]" />
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
+                                            v-model="filters.order_by" name="order_by" :options="[
+                                                { value: 'desc', label: 'Terbaru' },
+                                                { value: 'asc', label: 'Terlama' },
+                                            ]" />
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <select-input select-class="border border-1 border-dark" :is-valid="false"
+                                            v-model="filters.active_emp" name="active_emp" :options="[
+                                                { value: 'active', label: 'Aktif' },
+                                                { value: 'inactive', label: 'Non-Aktif' },
+                                            ]" />
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <button :class="{ 'btn-dark': isLoading, 'btn-primary': !isLoading }"
+                                        :disabled="isLoading" @click="sync" class="btn bg-gradient"><i class="fas me-2"
+                                            :class="{ 'fa-spinner fa-spin': isLoading, 'fa-sync': !isLoading }"></i>
+                                        <span>{{ !isLoading ? 'Segarkan' : 'Diproses' }}</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
-                    </div>
-                    <div class="card mb-4 overflow-hidden rounded-4" :class="{ 'h-100': isLoading }">
+                    <div class="card mb-4 overflow-hidden rounded-3">
                         <div v-if="isLoading">
-                            <loader-horizontal />
+                            <loader-horizontal message="Sedang memproses data" />
                         </div>
-                        <div class="table-responsive" v-else>
-                            <base-table @update:selected="selectedRow = $event" :attributes="{ id: 'id', name: 'name' }"
-                                :data="props.users" :headers="header">
-                                <template #cell="{ row, keyName }">
-                                    <template v-if="keyName == 'name'">
-                                        <div class="text-start">
-                                            <Link :href="route('users.detail', row.id)" class="text-decoration-none"><i
-                                                class="fas fa-user"></i> <span
-                                                v-html="highlight(row.name, filters.keyword)" />
-                                            </Link>
-                                        </div>
-                                    </template>
+                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered table-striped text-nowrap">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input :disabled="!users?.data.length" type="checkbox"
+                                                        class="form-check-input" :checked="isAllSelected"
+                                                        @change="toggleAll($event)" />
+                                                </div>
+                                            </th>
+                                            <th v-for="col in header" :key="col.key" class="text-center">
+                                                {{ col.label }}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-if="!users?.data.length">
+                                            <td :colspan="header.length + 1" class="text-center py-3 text-muted">
+                                                Tidak ada data tersedia.
+                                            </td>
+                                        </tr>
 
-                                    <template v-if="keyName == 'roles'">
-                                        <div class="fw-bold">
-                                            {{ formatTextFromSlug(row.roles.join(', ')) }}
-                                        </div>
-                                    </template>
+                                        <tr class="align-middle" v-for="(item, index) in users?.data" :key="index"
+                                            :class="{ 'table-info': isSelected(item.id) }">
 
-                                    <template v-if="keyName == 'is_active'">
-                                        <span :class="[
-                                            'badge text-capitalize px-3 py-2',
-                                            row.is_active == true ? 'bg-success' : 'bg-secondary',
-                                        ]">
-                                            {{ formatTextFromSlug(row.is_active == true ? 'Online' : 'Offline')
-                                            }}
-                                        </span>
-                                    </template>
-                                    <template v-if="keyName == 'status'">
-                                        <span :class="[
-                                            'badge text-capitalize px-3 py-2',
-                                            row.status == 'active' ? 'bg-primary' : 'bg-danger',
-                                        ]">
-                                            {{ formatTextFromSlug(row.status) }}
-                                        </span>
-                                    </template>
+                                            <td class="text-center">
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input type="checkbox" class="form-check-input" :name="item.id"
+                                                        :id="item.id" :value="item.id" v-model="selectedRow" />
+                                                </div>
+                                            </td>
 
-                                    <template v-if="keyName === 'permissions'">
-                                        <ul class="list-unstyled mb-0 d-flex flex-wrap gap-2">
-                                            <li v-for="permission in row.permissions" :key="permission">
+                                            <td class="text-center">
+                                                {{
+                                                    index +
+                                                    1 +
+                                                    (users?.current_page - 1) * users?.per_page
+                                                }}
+                                            </td>
+
+                                            <td class="text-center">
+                                                <Link @click.prevent="goDetail(item.id)"
+                                                    :href="route('users.detail', item.id)" class="text-decoration-none">
+                                                    <i class="fas fa-user"></i> <span
+                                                        v-html="highlight(item.name, filters.keyword)" />
+                                                </Link>
+                                            </td>
+                                            <td class="text-center">
+                                                {{ item.email }}
+                                            </td>
+                                            <td class="text-center">
                                                 <span :class="[
                                                     'badge text-capitalize px-3 py-2',
-                                                    getBadgeClass(permission)
+                                                    item.is_active == true ? 'bg-success' : 'bg-secondary',
                                                 ]">
-                                                    {{ formatTextFromSlug(permission) }}
+                                                    {{ formatTextFromSlug(item.is_active == true ? 'Online' : 'Offline')
+                                                    }}
                                                 </span>
-                                            </li>
-                                        </ul>
-                                    </template>
-
-                                    <template v-if="keyName === '-'">
-                                        <div class="d-flex gap-1 align-items-center justify-content-center">
-                                            <Link :href="route('users.edit', row.id)"
-                                                class="btn btn-sm btn-info text-white px-3"><i class="fas fa-edit"></i>
-                                            </Link>
-                                            <button class="btn btn-sm btn-outline-danger px-3"
-                                                @click="deleted('users.delete', row)">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                </template>
-                            </base-table>
-                        </div>
-                        <div v-if="!isLoading"
-                            class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
-                            <div class="mb-2 order-1 order-xl-0">
-                                Menampilkan <strong>{{ props.users?.from ?? 0 }}</strong> sampai
-                                <strong>{{ props.users?.to ?? 0 }}</strong> dari total
-                                <strong>{{ props.users?.total ?? 0 }}</strong> data
+                                            </td>
+                                            <td class="text-center">
+                                                <span :class="[
+                                                    'badge text-capitalize px-3 py-2',
+                                                    item.status == 'active' ? 'bg-primary' : 'bg-danger',
+                                                ]">
+                                                    {{ formatTextFromSlug(item.status) }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                {{ formatTextFromSlug(item.roles.join(', ')) }}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ item.first_login ?? '-' }}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ item.last_login ?? '-' }}
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="dropdown dropstart">
+                                                    <button class="btn btn-secondary bg-gradient" type="button"
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="fas fa-cog"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <button @click.prevent="edit(item.id)"
+                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button @click.prevent="deleted('users.delete', item)"
+                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <pagination :links="props.users?.links" :keyword="filters.keyword" routeName="users"
-                                :additionalQuery="{
-                                    order_by: filters.order_by,
-                                    limit: filters.limit,
-                                    keyword: filters.keyword,
-                                    active_emp: filters.active_emp
-                                }" />
+                            <div
+                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
+                                <div class="mb-2 order-1 order-xl-0">
+                                    Menampilkan <strong>{{ props.users?.from ?? 0 }}</strong> sampai
+                                    <strong>{{ props.users?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.users?.total ?? 0 }}</strong> data
+                                </div>
+                                <pagination size="pagination-sm" :links="props.users?.links" routeName="users"
+                                    :additionalQuery="{
+                                        order_by: filters.order_by,
+                                        limit: filters.limit,
+                                        keyword: filters.keyword,
+                                        active_emp: props.filters.active_emp,
+                                    }" />
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </template>
     </app-layout>
 
 </template>
-<style>
+<style scoped>
+.blur-area {
+    transition: all 0.3s ease;
+}
+
+.blur-area.is-blurred {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
 .colored-toast.swal2-icon-success {
     background-color: #a5dc86 !important;
 }

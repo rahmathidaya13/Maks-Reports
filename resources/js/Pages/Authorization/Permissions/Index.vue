@@ -179,9 +179,9 @@ function daysTranslate(dayValue) {
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <buttom type="button" @click.prevent="create" class="btn btn-success bg-gradient">
+                                    <button type="button" @click.prevent="create" class="btn btn-success bg-gradient">
                                         <i class="fas fa-plus"></i> Buat Baru
-                                    </buttom>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -236,9 +236,9 @@ function daysTranslate(dayValue) {
                             <div
                                 class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
                                 <div class="mb-2 order-1 order-xl-0">
-                                    Menampilkan <strong>{{ props.permissions.from ?? 0 }}</strong> sampai
-                                    <strong>{{ props.permissions.to ?? 0 }}</strong> dari total
-                                    <strong>{{ props.permissions.total ?? 0 }}</strong> data
+                                    Menampilkan <strong>{{ props.permissions?.from ?? 0 }}</strong> sampai
+                                    <strong>{{ props.permissions?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.permissions?.total ?? 0 }}</strong> data
                                 </div>
                                 <pagination size="pagination-sm" :links="props.permissions?.links"
                                     :keyword="filters.keyword" routeName="permissions" :additionalQuery="{

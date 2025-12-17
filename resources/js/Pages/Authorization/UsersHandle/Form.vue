@@ -5,17 +5,18 @@ import { formatText } from "@/helpers/formatText";
 import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 const props = defineProps({
     users: Object,
+    roles: Array,
     permissions: Array,
-    roles: Array
 })
 const form = useForm({
-    name: props.users.name || "",
-    email: props.users.email || "",
-    status: props.users.status || "",
-    roles: props.users.roles ? props.users.roles.join(",") : "",
-    permissions: props.users.permissions || [],
+    name: props.users?.name ?? "",
+    email: props.users?.email ?? "",
+    status: props.users?.status ?? "",
+    roles: props.users?.roles[0] ?? "",
+    permissions: props.users?.permissions
+        ? props.users.permissions.map(p => p.id)
+        : [],
 })
-
 const isSubmit = () => {
     form.put(route('users.update', props.users.id), {
         onSuccess: () => {
@@ -29,7 +30,7 @@ const icon = ref("");
 const url = ref("")
 onMounted(() => {
     if (props.users && props.users.id) {
-        title.value = "Ubah Izin Pengguna"
+        title.value = "Ubah Izin Pengguna " + props.users.name
         icon.value = "fas fa-edit"
         url.value = route('users')
     }
@@ -65,30 +66,47 @@ const userOptions = computed(() =>
 
 const getBadgeClass = (permName) => {
     switch (true) {
-        case /create|handle/i.test(permName):
+        case /create|export|import/i.test(permName):
             return 'bg-success'
-        case /edit|update|download/i.test(permName):
+        case /edit|update/i.test(permName):
             return 'bg-warning text-dark'
-        case /delete|remove|cancel/i.test(permName):
+        case /delete|remove/i.test(permName):
             return 'bg-danger'
-        case /read|share|export|import/i.test(permName):
-            return 'bg-info text-white'
-        case /manage|access|assign/i.test(permName):
+        case /view|show/i.test(permName):
+            return 'bg-info text-dark'
+        case /manage|access|assign|share/i.test(permName):
             return 'bg-primary'
         default:
             return 'bg-secondary'
     }
 }
 // otomatis set permission form ke permission default saat role berubah
+const initialRole = ref(form.roles)
 watch(
     () => form.roles,
     (newRole) => {
+
+        // ⛔ Jangan override saat pertama load edit
+        if (newRole === initialRole.value) return
+
         const selectedRole = props.roles.find(role => role.name === newRole)
         form.permissions = selectedRole
-            ? selectedRole.permissions.map(p => p.name)
+            ? selectedRole.permissions.map(p => p.id)
             : []
     }
 )
+// cek apakah permission terpilih
+const isChecked = (id) => {
+    return form.permissions.includes(id)
+}
+// cek apakah permission berasal dari role
+const isFromRole = (perm) => {
+    return defaultPermissionByRole.value.includes(perm.name)
+}
+// 
+const isCustom = (perm) => {
+    return isChecked(perm.id) && !isFromRole(perm)
+}
 </script>
 <template>
 
@@ -98,9 +116,9 @@ watch(
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
             <div class="d-flex justify-content-between">
-                <Link :href="url" class="btn btn-danger btn-sm mb-3">
-                <i class="fas fa-arrow-left"></i>
-                Kembali
+                <Link :href="url" class="btn btn-danger bg-gradient mb-3">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
                 </Link>
             </div>
             <div class="row">
@@ -110,7 +128,11 @@ watch(
                             <i class="fas fa-info-circle me-1 text-light"></i>
                             Form Role
                         </h5>
-                        <div class="card-body">
+                        <div v-if="form.processing">
+                            <loader-horizontal
+                                :message="props.users?.id ? 'Sedang memperbarui data' : 'Sedang menyimpan data'" />
+                        </div>
+                        <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
                             <form-wrapper @submit="isSubmit">
                                 <div class="mb-3">
                                     <div class="mb-2 fw-bold">Akun</div>
@@ -180,7 +202,7 @@ watch(
                                             v-model="form.roles" />
                                         <input-error :message="form.errors.roles" />
                                     </div>
-                                    <div class="mb-2 fw-bold">By Default</div>
+                                    <div class="mb-2 fw-bold">By Default Roles</div>
                                     <div v-if="defaultPermissionByRole.length">
                                         <ul class="list-unstyled mb-0 d-flex flex-wrap gap-2">
                                             <li v-for="perm in defaultPermissionByRole" :key="perm">
@@ -200,9 +222,10 @@ watch(
                                     <input-label class="fw-bold" value="Izin Otoritas" />
                                     <div :class="[{ 'text-bg-light border-success': form.permissions.length > 0, 'text-bg-danger': form.permissions.errors }]"
                                         class="border p-3 rounded-3 d-flex gap-2 flex-wrap">
-                                        <label class="form-check-label gap-2 d-flex" v-for="perm in permissions"
-                                            :key="perm.id">
-                                            <input multiple class="form-check-input" type="checkbox" :value="perm.name"
+                                        <label :class="{ 'border-dark border-1 text-bg-info': isChecked(perm.id) }"
+                                            class="form-check-label gap-2 d-flex border  rounded-2 p-1"
+                                            v-for="perm in permissions" :key="perm.id">
+                                            <input multiple class="form-check-input" type="checkbox" :value="perm.id"
                                                 v-model="form.permissions" />
                                             <span class="fw-semibold">{{ formatTextFromSlug(perm.name) }}</span>
                                         </label>
@@ -212,7 +235,7 @@ watch(
 
                                 <div class="d-grid d-xl-block">
                                     <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
-                                        :icon="props.users?.id ? 'fas fa-edit' : 'fas fa-paper-plane'"
+                                        :icon="props.users?.id ? 'fas fa-edit' : 'fas fa-save'"
                                         :variant="props.users?.id ? 'success' : 'primary'" type="submit"
                                         :name="props.users?.id ? 'ubah' : 'simpan'"
                                         :label="props.users?.id ? 'Ubah' : 'Simpan'" />
@@ -226,3 +249,15 @@ watch(
     </app-layout>
 
 </template>
+<style scoped>
+.blur-area {
+    transition: all 0.3s ease;
+}
+
+.blur-area.is-blurred {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+</style>

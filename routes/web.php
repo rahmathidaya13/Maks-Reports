@@ -215,6 +215,3 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
     });
 });
 
-Route::get("/laporan/pdf", function () {
-    return view('pdf.status_report');
-})->name("print.pdf");

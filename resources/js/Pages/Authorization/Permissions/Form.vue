@@ -144,7 +144,7 @@ const goBack = () => {
                             <div class="form-overlay">
                                 <form-wrapper @submit="isSubmit">
                                     <div
-                                        :class="`row row-cols-xl-${forms.length > 1 ? '2' : '1'} row-cols-md-2 row-cols-1 row-cols-sm-1 g-2`">
+                                        :class="`row row-cols-xl-${forms.length > 1 ? '2' : '1'} row-cols-md-${forms.length > 1 ? '2' : '1'} row-cols-1 row-cols-sm-1 g-2`">
                                         <div class="col-auto" :ref="el => formRefs[index] = el"
                                             v-for="(field, index) in forms" :key="index">
                                             <div class="d-flex justify-content-between mt-2">

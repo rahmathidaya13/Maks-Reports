@@ -6,15 +6,32 @@ use Inertia\Inertia;
 use App\Models\SalesRecords;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Repositories\SalesRecordRepository;
 
 class SalesRecordsController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+
+    protected $salesRepository;
+    public function __construct(SalesRecordRepository $salesRepository)
     {
-        return Inertia::render('SalesRecords/Index');
+        $this->salesRepository = $salesRepository;
+    }
+    public function index(Request $request)
+    {
+        $filters = $request->only([
+            'limit',
+            'page',
+            'order_by',
+            'page'
+        ]);
+        $salesRecord = $this->salesRepository->getCached(auth()->id(), $filters);
+        return Inertia::render('SalesRecords/Index', [
+            'salesRecord' => $salesRecord,
+            'filters' => $filters
+        ]);
     }
 
     /**
