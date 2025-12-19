@@ -2,22 +2,26 @@
 
 namespace App\Repositories;
 
-use Spatie\Permission\Models\Role;
+use App\Models\CustomerModel;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class AuthorizationRoles extends BaseCacheRepository
+class CustomerRepository extends BaseCacheRepository
 {
-    protected string $cachePrefix = 'authorization_roles';
+    protected string $cachePrefix = 'customers_cache_';
     /**
      * Override: definisikan cara ambil data dari database
      */
     protected function getData(array $filters = []): LengthAwarePaginator
     {
-        $query = Role::with('permissions')
+        $query = CustomerModel::with('creator')
+            ->where('created_by', auth()->id())
+            ->whereNull('deleted_at')
             ->when(!empty($filters['keyword']), function ($q) use ($filters) {
                 $search = $filters['keyword'];
                 $q->where(function ($sub) use ($search) {
-                    $sub->where('name', 'like', "%{$search}%");
+                    $sub->where('national_id_number', 'like', "%{$search}%")
+                        ->orWhere('customer_name', 'like', "%{$search}%")
+                        ->orWhere('number_phone_customer', 'like', "%{$search}%");
                 });
             });
 

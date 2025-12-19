@@ -227,7 +227,6 @@ const resetField = () => {
 
 // permissions
 const perm = page.props.auth.user;
-console.log(perm.permissions);
 </script>
 <template>
 
@@ -309,7 +308,8 @@ console.log(perm.permissions);
                     </div>
 
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
-                        <button-delete-all v-if="perm.permissions.includes('daily.report.leads.delete')" text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
+                        <button-delete-all v-if="perm.permissions.includes('daily.report.leads.delete')" text="Hapus"
+                            :isVisible="isVisible" :deleted="deleteSelected" />
                         <div class="d-inline-flex ms-auto gap-1">
                             <base-button v-if="perm.permissions.includes('daily.report.leads.export')" variant="success"
                                 icon="fas fa-download" @click="openModal" class="bg-gradient" name="unduh"
@@ -407,7 +407,7 @@ console.log(perm.permissions);
                                                     </td>
                                                     <td class="text-center fw-semibold">{{
                                                         row.fu_before_yesterday_closing
-                                                    }}</td>
+                                                        }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
@@ -440,7 +440,7 @@ console.log(perm.permissions);
                                                         (row.fu_before_yesterday_closing ?? 0) +
                                                         (row.fu_last_week_closing ?? 0) +
                                                         (row.engage_closing ?? 0)
-                                                    }}
+                                                        }}
                                                     </td>
                                                 </tr>
                                             </tfoot>
@@ -469,11 +469,10 @@ console.log(perm.permissions);
             </div>
 
             <!-- modal open -->
-            <div class="row">
+            <div class="row" v-if="showModal">
                 <div class="col-xl-12 col-sm-12">
                     <modal @opened="openModal" size="modal-lg" :footer="false" icon="fas fa-download" v-if="showModal"
-                        :show="showModal" title="Unduh Laporan Leads Harian" @update:show="showModal = $event"
-                        @closed="closeModal">
+                        :show="showModal" title="Unduh Laporan" @update:show="showModal = $event" @closed="closeModal">
                         <template #body>
 
                             <div class="callout callout-info shadow-sm">

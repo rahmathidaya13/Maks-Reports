@@ -155,7 +155,7 @@ const setMainImage = (img) => {
                 </div>
             </div>
 
-            <div class="card overflow-hidden rounded-3 shadow-sm py-5 text-center text-muted"
+            <div class="card overflow-hidden rounded-3 shadow-sm py-5 text-center text-muted shadow"
                 v-if="!product?.data.length">
                 <span class="fw-bold">Tidak ada Produk ditemukan</span>
             </div>

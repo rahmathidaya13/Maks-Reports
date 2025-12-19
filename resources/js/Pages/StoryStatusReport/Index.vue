@@ -135,7 +135,6 @@ const deletedAll = () => {
         text: `Yakin ingin menghapus ${selected.value.length} data terpilih?`,
         confirmText: 'Ya, Hapus Semua!',
         onConfirm: () => {
-            // console.log(selected.value);
             router.post(route('story_report.destroy_all'), { ids: selected.value }, {
                 preserveScroll: true,
                 preserveState: false,
@@ -238,7 +237,6 @@ const resetField = () => {
 // =========Batas Fungsi untuk Tampilkan Modal========== //
 
 const perm = page.props.auth.user
-console.log(perm);
 </script>
 <template>
 
@@ -392,7 +390,7 @@ console.log(perm);
                                                 </div>
                                                 <small class="fw-normal text-muted" style="font-size: 12px;">{{
                                                     row.informasi
-                                                }}</small>
+                                                    }}</small>
                                             </td>
                                             <td class="text-center">
                                                 <span>{{ row.report_time.slice(0, 5) }}</span>
@@ -483,7 +481,7 @@ console.log(perm);
             </div>
 
 
-            <div class="row">
+            <div class="row" v-if="showModal">
                 <div class="col-xl-12 col-sm-12">
                     <modal @opened="openModal" size="modal-lg" :footer="false" icon="fas fa-download" v-if="showModal"
                         :show="showModal" title="Unduh Laporan" @update:show="showModal = $event" @closed="closeModal">

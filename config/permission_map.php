@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\BranchesModel;
+use App\Models\CustomerModel;
 use App\Models\DailyReportModel;
 use App\Models\JobTitleModel;
 use App\Models\ProductModel;
@@ -14,4 +15,5 @@ return [
     BranchesModel::class => 'branches',
     JobTitleModel::class => 'job.title',
     ProductModel::class => 'product',
+    CustomerModel::class => 'customers',
 ];

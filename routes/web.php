@@ -18,6 +18,7 @@ use App\Http\Controllers\Authorization\PermissionController;
 use App\Http\Controllers\Authorization\RoleController;
 use App\Http\Controllers\Authorization\UsersController;
 use App\Http\Controllers\Branches\BranchesController;
+use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Daily\DailyReportController;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Job\JobTitleController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Roles\RolesController;
 use App\Http\Controllers\StoryReport\StoryStatusReportController;
+use App\Http\Controllers\Transaction\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -111,14 +113,23 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::post('/story_report/delete_all', 'destroy_all')->name('story_report.destroy_all');
     });
 
-    Route::controller(SalesRecordsController::class)->group(function () {
-        Route::get('/sales_record/list', 'index')->name('sales_record');
-        Route::get('/sales_record/create', 'create')->name('sales_record.create');
-        Route::post('/sales_record/store', 'store')->name('sales_record.store');
-        Route::get('/sales_record/edit/{id}', 'edit')->name('sales_record.edit');
-        Route::put('/sales_record/update/{id}', 'update')->name('sales_record.update');
-        Route::delete('/sales_record/destroy/{id}', 'destroy')->name('sales_record.deleted');
-        Route::post('/sales_record/delete_all', 'destroy_all')->name('sales_record.destroy_all');
+    Route::controller(TransactionController::class)->group(function () {
+        Route::get('/transaction/list', 'index')->name('transaction');
+        Route::get('/transaction/create', 'create')->name('transaction.create');
+        Route::post('/transaction/store', 'store')->name('transaction.store');
+        Route::get('/transaction/edit/{id}', 'edit')->name('transaction.edit');
+        Route::put('/transaction/update/{id}', 'update')->name('transaction.update');
+        Route::delete('/transaction/destroy/{id}', 'destroy')->name('transaction.deleted');
+        Route::post('/transaction/delete_all', 'destroy_all')->name('transaction.destroy_all');
+    });
+    Route::controller(CustomerController::class)->group(function () {
+        Route::get('/customers/list', 'index')->name('customers');
+        Route::get('/customers/create', 'create')->name('customers.create');
+        Route::post('/customers/store', 'store')->name('customers.store');
+        Route::get('/customers/edit/{id}', 'edit')->name('customers.edit');
+        Route::put('/customers/update/{id}', 'update')->name('customers.update');
+        Route::delete('/customers/destroy/{id}', 'destroy')->name('customers.deleted');
+        Route::post('/customers/delete_all', 'destroyAll')->name('customers.destroy_all');
     });
 
     Route::controller(ProductController::class)->group(function () {
@@ -214,4 +225,3 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::get('/users/refresh', 'refresh')->name('users.refresh');
     });
 });
-

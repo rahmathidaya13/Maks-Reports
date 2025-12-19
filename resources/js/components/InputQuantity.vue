@@ -72,7 +72,7 @@ const updateUnit = (event) => {
 
 <template>
     <div class="input-group">
-        <input :class="[size ? 'form-control-' + size : '', inputClass, {
+        <input :class="[size ? 'form-control-' + size : '', inputClass, 'text-bg-grey', {
             'is-invalid': isInvalid && $page.props.errors[props.name],
             'is-valid': isValid && modelValue && !$page.props.errors[props.name]
         }]" type="text" class="form-control" :value="modelValue" @input="updateQuantity" :placeholder="placeholder" />

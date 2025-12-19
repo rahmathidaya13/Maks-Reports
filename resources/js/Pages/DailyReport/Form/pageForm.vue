@@ -138,7 +138,7 @@ function daysOnlyConvert(dayValue) {
                         </div>
                         <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
                             <form-wrapper @submit="isSubmit">
-                                <div class="mb-3 p-3 rounded-3 border border-dark text-bg-grey">
+                                <div class="mb-3 p-3 rounded-3 border border-dark">
                                     <div class="mb-2">
                                         <input-label class="fw-bold" for="leads" value="Leads" />
                                         <input-number ref="inputLeadsRef" placeholder="0" name="leads"
@@ -151,7 +151,7 @@ function daysOnlyConvert(dayValue) {
                                         <input-error :message="form.errors.closing" />
                                     </div>
                                 </div>
-                                <div class="mb-3 p-3 rounded-3 border border-dark text-bg-grey">
+                                <div class="mb-3 p-3 rounded-3 border border-dark">
                                     <div class="row row-cols-1 row-cols-xl-3 g-3">
 
                                         <div class="col-xl-3 col-sm-6 col-md-6 col-12">

@@ -45,7 +45,7 @@ const handleKeyDown = (event) => {
 </script>
 <template>
     <input :name="name" :id="name" type="text" :value="modelValue" @keydown="handleKeyDown" @input="handleInput"
-        maxlength="4" :class="['form-control', {
+        maxlength="4" :class="['form-control text-bg-grey', {
             'is-invalid': isInvalid && $page.props.errors[name],
             'is-valid': isValid && modelValue && !$page.props.errors[name]
         }, inputClass]" />

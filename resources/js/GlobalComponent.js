@@ -34,10 +34,11 @@ import QuillText from "./components/QuillText.vue";
 import LoaderHorizontal from "./components/LoaderHorizontal.vue";
 import InputDate from "./components/inputDate.vue";
 import { VueDatePicker } from "@vuepic/vue-datepicker";
-import '@vuepic/vue-datepicker/dist/main.css'
+import "@vuepic/vue-datepicker/dist/main.css";
 import InputTime from "./components/inputTime.vue";
 import LoaderPerPage from "./components/LoaderPerPage.vue";
 import InputYears from "./components/inputYears.vue";
+import Callout from "./components/Callout.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
@@ -62,6 +63,7 @@ export default {
         app.component("text-area", TextArea);
         app.component("text-input", TextInput);
         app.component("quill-text", QuillText);
+        app.component("callout", Callout);
         app.component("currency-input", CurrencyInput);
         app.component("file-input", FileInput);
         app.component("file-upload", FileUpload);

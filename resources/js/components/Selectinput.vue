@@ -48,7 +48,7 @@ function formatLabel(label) {
 }
 </script>
 <template>
-    <select v-model="selectedValue" :disabled="disabled" :class="['form-select', selectClass, {
+    <select v-model="selectedValue" :disabled="disabled" :class="['form-select text-bg-grey', selectClass, {
         'is-invalid': isInvalid && $page.props.errors[name],
         'is-valid': isValid && modelValue && !$page.props.errors[name]
     }]" :name="name" :id="name">

@@ -5,9 +5,9 @@ const props = defineProps({
         type: String,
         default: "",
     },
-    variant: {
+    type: {
         type: String,
-        default: "success",
+        default: 'info', // info | success | warning | danger
     },
     icon: {
         type: Object,
@@ -22,7 +22,8 @@ const props = defineProps({
         type: Number,
         default: 5,
     },
-});
+})
+
 // Mengontrol visibilitas alert
 const visible = ref(false);
 const countdown = ref(props.duration);
@@ -48,16 +49,26 @@ watch(
     { immediate: true }
 );
 </script>
+
 <template>
     <transition name="fade-alert" appear>
-        <div :class="['alert rounded-1', `alert-${variant}`, 'fw-bold', 'd-flex', 'justify-content-between', 'align-items-center']"
+        <div :class="['callout rounded-0 align-items-center d-flex justify-content-between', `callout-${type}`]"
+            v-if="visible">
+            <div class="d-flex align-items-center gap-2 fw-semibold">
+                <i v-if="type" :class="icon[type]"></i>
+                {{ message }}
+            </div>
+            <span class="small fw-bold">{{ countdown }}</span>
+        </div>
+
+        <!-- <div :class="['alert rounded-1', `alert-${variant}`, 'fw-bold', 'd-flex', 'justify-content-between', 'align-items-center']"
             role="alert" v-if="visible">
             <div class="d-flex align-items-center gap-2">
                 <i v-if="variant" :class="icon[variant]"></i>
                 {{ message }}
             </div>
             <span class="small fw-bold">{{ countdown }}</span>
-        </div>
+        </div> -->
     </transition>
 </template>
 <style scoped>

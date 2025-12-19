@@ -14,17 +14,15 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->uuid('customer_id')->primary();
 
-            // 🔑 relasi ke sales (user)
-            $table->foreignUuid('sales_id')
-                ->constrained('users', 'id')
-                ->cascadeOnDelete();
-                
+            $table->foreignUuid('created_by')->constrained('users', 'id')->cascadeOnDelete();
+
             $table->string('national_id_number', 20)
                 ->unique()
                 ->nullable()
                 ->index(); // NIK KTP
+
             $table->string('customer_name', 50)->index();
-            $table->string('number_phone_customer', 13)->index();
+            $table->string('number_phone_customer', 13)->unique()->index();
             $table->string('city', 50);
             $table->string('province', 50);
             $table->text('address');

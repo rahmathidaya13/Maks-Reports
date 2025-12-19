@@ -31,7 +31,7 @@ defineExpose({ focus: () => textarea.value.focus() });
 </script>
 
 <template>
-    <textarea v-model="model" :class="['form-control', {
+    <textarea v-model="model" :class="['form-control text-bg-grey', {
         'is-invalid': $page.props.errors[name],
         'is-valid': model && !$page.props.errors[name]
     }]" ref="textarea" :rows="rows" :cols="cols" :name="name" :id="name"></textarea>

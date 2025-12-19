@@ -89,7 +89,7 @@ watch(modelValue, (newValue) => {
 defineExpose({ focus: () => inputRef.value?.focus() });
 </script>
 <template>
-    <input type="text" :name="props.name" :id="props.name" :placeholder="props.placeholder" :class="['form-control', {
+    <input type="text" :name="props.name" :id="props.name" :placeholder="props.placeholder" :class="['form-control text-bg-grey', {
         'is-invalid': $page.props.errors[props.name],
         'is-valid': modelValue && !$page.props.errors[props.name]
     }]" @input="handleInput" :value="String(modelValue)" ref="inputRef" />

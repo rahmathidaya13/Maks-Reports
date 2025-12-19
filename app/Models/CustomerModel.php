@@ -20,7 +20,7 @@ class CustomerModel extends Model
         'deleted_at',
     ];
     protected $fillable = [
-        'sales_id',
+        'created_by',
         'national_id_number',
         'customer_name',
         'number_phone_customer',
@@ -28,8 +28,8 @@ class CustomerModel extends Model
         'province',
         'address',
     ];
-    public function sales()
+    public function creator()
     {
-        return $this->belongsTo(User::class, 'sales_id', 'id');
+        return $this->belongsTo(User::class, 'created_by', 'id');
     }
 }

@@ -21,6 +21,7 @@ class SalesRecordsController extends Controller
     }
     public function index(Request $request)
     {
+        $this->authorize('view', SalesRecords::class);
         $filters = $request->only([
             'limit',
             'page',

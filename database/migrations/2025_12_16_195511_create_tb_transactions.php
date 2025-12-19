@@ -13,23 +13,33 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('transaction_id')->primary();
+
             $table->foreignUuid('customer_id')
                 ->constrained('customers', 'customer_id')
                 ->onDelete('cascade');
 
-            $table->foreignUuid('sales_record_id')
-                ->constrained('sales_records', 'sales_record_id')
+            // Sales / user yang membuat transaksi
+            $table->foreignUuid('created_by')
+                ->constrained('users', 'id')
                 ->onDelete('cascade');
 
             $table->foreignUuid('product_id')
                 ->constrained('products', 'product_id')
                 ->onDelete('cascade');
 
-            $table->unsignedBigInteger('price_original');
-            $table->unsignedBigInteger('price_discount');
+            $table->string('invoice', 50)->unique();
 
-            $table->string('invoice', 50)->index();
-            $table->enum('status', ['first_fund', 'paid_off'])->default('first_fund');
+            // Harga (dalam satuan terkecil, misal rupiah)
+            $table->unsignedBigInteger('price_original');
+            $table->unsignedBigInteger('price_discount')->default(0);
+            $table->unsignedBigInteger('price_final');
+
+            // Status transaksi
+            $table->enum('status', [
+                'first_fund',   // DP / pembayaran pertama
+                'paid_off',     // lunas
+                'cancelled'
+            ])->default('first_fund');
 
             $table->softDeletes();
             $table->timestamps();

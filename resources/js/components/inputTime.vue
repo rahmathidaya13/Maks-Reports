@@ -58,5 +58,5 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-    <input type="text" ref="inputRef" class="form-control" :name="name" :id="name" :value="modelValue">
+    <input type="text" ref="inputRef" class="form-control text-bg-grey" :name="name" :id="name" :value="modelValue">
 </template>

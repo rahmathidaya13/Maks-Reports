@@ -3,12 +3,18 @@
 namespace App\Providers;
 
 use App\Models\BranchesModel;
+use App\Models\CustomerModel;
 use App\Models\DailyReportModel;
 use App\Models\JobTitleModel;
+use App\Models\SalesRecords;
+use App\Models\StoryStatusReportModel;
 use App\Models\User;
 use App\Policies\BranchPolicy;
+use App\Policies\CustomerPolicy;
 use App\Policies\DailyReportLeadsPolicy;
 use App\Policies\JobTitlePolicy;
+use App\Policies\SalesRecordPolicy;
+use App\Policies\StatusReportPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -23,6 +29,9 @@ class AuthServiceProvider extends ServiceProvider
         DailyReportModel::class => DailyReportLeadsPolicy::class,
         JobTitleModel::class => JobTitlePolicy::class,
         BranchesModel::class => BranchPolicy::class,
+        StoryStatusReportModel::class => StatusReportPolicy::class,
+        CustomerModel::class => CustomerPolicy::class,
+        SalesRecords::class => SalesRecordPolicy::class,
     ];
 
     /**
