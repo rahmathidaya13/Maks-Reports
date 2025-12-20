@@ -19,8 +19,8 @@ const props = defineProps({
 const filters = reactive({
     active_emp: props.filters.active_emp ?? 'active',
     keyword: props.filters.keyword ?? '',
-    limit: props.filters.limit ?? 5,
-    order_by: props.filters.order_by ?? "desc",
+    limit: props.filters.limit ?? null,
+    order_by: props.filters.order_by ?? null,
     page: props.filters?.page ?? 1,
 })
 
@@ -170,71 +170,83 @@ const sync = () => {
             <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-user-cog" title="Izin Pengguna"
                 :items="[{ text: 'Izin Pengguna' }]" />
-            <alert :duration="10" :message="message" />
+            <callout type="success" :duration="10" :message="message" />
             <div class="row">
-                <div class="col-xl-12 col-sm-12">
-                    <swal-toast ref="toast" />
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-
-                            <div class="d-flex">
-                                <button :disabled="!isVisible" @click="deleteSelected" type="button"
-                                    class="btn btn-danger position-relative bg-gradient">
-                                    <i class="fas fa-trash"></i> Hapus
-                                    <span v-if="selectedRow.length > 0"
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
-                                        {{ selectedRow.length }}
-                                    </span>
-                                </button>
-                            </div>
-
-                            <div class="row g-1 align-items-center ms-auto">
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <text-input input-class="border-dark border-1 border" :is-valid="false"
-                                            autofocus v-model="filters.keyword" name="keyword"
-                                            placeholder="Cari pengguna..." />
+                <div class="col-xl-12 col-12 mb-3">
+                    <div class="card overflow-hidden pb-2">
+                        <div class="card-header p-2 text-bg-grey">
+                            <h5 class="card-title fw-bold mb-0 text-uppercase px-2">
+                                <i class="fas fa-filter"></i> Filter
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 row-cols-1 justify-content-end">
+                                <div class="col-xl-6 col-md-12">
+                                    <input-label for="keyword" value="Pencarian" class="fw-semibold" />
+                                    <div class="input-group mb-xl-0">
+                                        <text-input input-class="border-dark border-1 border input-height-1"
+                                            :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
+                                            placeholder="Masukan pencarian....." />
                                     </div>
                                 </div>
-                                <div class="col-auto">
+                                <div class="col-xl-2 col-md-4 col-4">
+                                    <input-label for="limit" value="Batas" class="fw-semibold" />
                                     <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
-                                            v-model="filters.limit" name="limit" :options="[
-                                                { value: 5, label: '5' },
+                                        <select-input select-class="border-dark border-1 border input-height-1"
+                                            :is-valid="false" v-model="filters.limit" name="limit" :options="[
+                                                { value: null, label: 'Pilih Batas Data' },
                                                 { value: 10, label: '10' },
-                                                { value: 25, label: '25' },
+                                                { value: 20, label: '20' },
+                                                { value: 30, label: '30' },
                                                 { value: 50, label: '50' },
                                                 { value: 100, label: '100' },
                                             ]" />
                                     </div>
                                 </div>
-                                <div class="col-auto">
+                                <div class="col-xl-2 col-md-4 col-4">
+                                    <input-label for="order_by" value="Urutkan" class="fw-semibold" />
                                     <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
-                                            v-model="filters.order_by" name="order_by" :options="[
+                                        <select-input select-class="border-dark border-1 border input-height-1"
+                                            :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
+                                                { value: null, label: 'Pilih Urutan' },
                                                 { value: 'desc', label: 'Terbaru' },
                                                 { value: 'asc', label: 'Terlama' },
                                             ]" />
                                     </div>
                                 </div>
-                                <div class="col-auto">
+                                <div class="col-xl-2 col-md-4 col-4">
+                                    <input-label for="active_emp" value="Status" class="fw-semibold" />
                                     <div class="input-group">
-                                        <select-input select-class="border border-1 border-dark" :is-valid="false"
-                                            v-model="filters.active_emp" name="active_emp" :options="[
+                                        <select-input select-class="border border-1 border-dark input-height-1"
+                                            :is-valid="false" v-model="filters.active_emp" name="active_emp" :options="[
                                                 { value: 'active', label: 'Aktif' },
                                                 { value: 'inactive', label: 'Non-Aktif' },
                                             ]" />
                                     </div>
                                 </div>
-                                <div class="col-auto">
-                                    <button :class="{ 'btn-dark': isLoading, 'btn-primary': !isLoading }"
-                                        :disabled="isLoading" @click="sync" class="btn bg-gradient"><i class="fas me-2"
-                                            :class="{ 'fa-spinner fa-spin': isLoading, 'fa-sync': !isLoading }"></i>
-                                        <span>{{ !isLoading ? 'Segarkan' : 'Diproses' }}</span>
-                                    </button>
-                                </div>
+
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-12 col-sm-12">
+                    <swal-toast ref="toast" />
+                    <div class="d-flex justify-content-xl-between justify-content-start gap-1 mb-2">
+                        <button :disabled="!isVisible" @click="deleteSelected" type="button"
+                            class="btn btn-secondary position-relative bg-gradient"
+                            :class="{ 'btn-danger': selectedRow.length > 0 }">
+                            <i class="fas fa-trash"></i> Hapus
+                            <span v-if="selectedRow.length > 0"
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                {{ selectedRow.length }}
+                            </span>
+                        </button>
+                        <button :class="{ 'btn-dark': isLoading, 'btn-primary': !isLoading }" :disabled="isLoading"
+                            @click="sync" class="btn bg-gradient"><i class="fas me-2"
+                                :class="{ 'fa-spinner fa-spin': isLoading, 'fa-sync': !isLoading }"></i>
+                            <span>{{ !isLoading ? 'Segarkan' : 'Diproses' }}</span>
+                        </button>
                     </div>
                     <div class="card mb-4 overflow-hidden rounded-3">
                         <div v-if="isLoading">
@@ -290,7 +302,7 @@ const sync = () => {
                                                 </Link>
                                             </td>
                                             <td class="text-center">
-                                                {{ item.email }}
+                                                <span v-html="highlight(item.email, filters.keyword)"></span>
                                             </td>
                                             <td class="text-center">
                                                 <span :class="[
@@ -344,8 +356,10 @@ const sync = () => {
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                        <div class="card-footer pb-0" v-if="users?.data.length > 0">
                             <div
-                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
+                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
                                 <div class="mb-2 order-1 order-xl-0">
                                     Menampilkan <strong>{{ props.users?.from ?? 0 }}</strong> sampai
                                     <strong>{{ props.users?.to ?? 0 }}</strong> dari total

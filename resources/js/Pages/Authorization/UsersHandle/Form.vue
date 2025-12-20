@@ -103,7 +103,7 @@ const isChecked = (id) => {
 const isFromRole = (perm) => {
     return defaultPermissionByRole.value.includes(perm.name)
 }
-// 
+//
 const isCustom = (perm) => {
     return isChecked(perm.id) && !isFromRole(perm)
 }

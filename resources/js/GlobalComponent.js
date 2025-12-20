@@ -39,6 +39,7 @@ import InputTime from "./components/inputTime.vue";
 import LoaderPerPage from "./components/LoaderPerPage.vue";
 import InputYears from "./components/inputYears.vue";
 import Callout from "./components/Callout.vue";
+import FilterDynamic from "./components/FilterDynamic.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
@@ -80,5 +81,6 @@ export default {
         app.component("radio-box", RadioBox);
         app.component("pagination", Pagination);
         app.component("summernote-editor", SummernoteEditor);
+        app.component("filter-dynamic", FilterDynamic);
     },
 };

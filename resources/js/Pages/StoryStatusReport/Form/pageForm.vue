@@ -62,6 +62,7 @@ const isSubmit = () => {
         });
     }
 };
+
 const title = ref("");
 const icon = ref("");
 const url = ref("");
@@ -147,8 +148,8 @@ function daysOnlyConvert(dayValue) {
 
             <div class="d-flex justify-content-between">
                 <Link @click.prevent="goBack" :href="url" class="btn btn-danger mb-3">
-                <i class="fas fa-arrow-left"></i>
-                Kembali
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
                 </Link>
                 <div class="mb-3 gap-1 d-flex" v-if="!props.storyReport?.story_status_id">
 
@@ -199,9 +200,10 @@ function daysOnlyConvert(dayValue) {
                                         <div class="px-3 py-2">
                                             <div class="mb-2">
                                                 <input-label class="fw-bold" :for="index" value="Jam" />
-                                                <text-input autofocus class="form-control-lg" :tabindex="index * 2 + 1"
-                                                    placeholder="00:00" :name="`report.${index}.report_time`"
-                                                    type="time" v-model="fieldItems.report_time" />
+                                                <text-input autofocus class="form-control-lg"
+                                                    :tabindex="index * 2 + 1" placeholder="00:00"
+                                                    :name="`report.${index}.report_time`" type="time"
+                                                    v-model="fieldItems.report_time" />
                                                 <input-error :message="form.errors[`report.${index}.report_time`]" />
                                             </div>
                                             <div class="mb-2">

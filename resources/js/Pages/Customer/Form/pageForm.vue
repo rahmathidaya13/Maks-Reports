@@ -67,6 +67,10 @@ const goBack = () => {
     });
 }
 
+const inputRef = ref(null);
+onMounted(() => {
+    inputRef.value.focus();
+})
 </script>
 <template>
 
@@ -96,7 +100,7 @@ const goBack = () => {
                             <form-wrapper @submit="isSubmit">
                                 <div class="mb-2">
                                     <input-label class="fw-bold" for="national_id" value="NIK/SIM" />
-                                    <text-input autofocus v-model="form.national_id" name="national_id" />
+                                    <text-input ref="inputRef" v-model="form.national_id" name="national_id" />
                                     <small v-if="!form.errors.national_id && !form.national_id"
                                         class="text-muted">Opsional: Jika ada,
                                         masukkan NIK/SIM</small>

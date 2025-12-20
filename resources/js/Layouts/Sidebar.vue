@@ -67,6 +67,18 @@ const getDetailProfile = (id) => {
         onFinish: () => loaderActive.value?.hide()
     });
 }
+const customers = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('customers'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+const transaction = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('transactions'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
 
 
 const imageSource = computed(() => {
@@ -126,16 +138,16 @@ const permissions = page.props.auth.user?.permissions ?? [];
                     <div class="sb-sidenav-menu-heading">Laporan
                     </div>
 
-                    <Link :href="route('transaction')" class="nav-link"
+                    <Link @click.prevent="transaction" :href="route('transaction')" class="nav-link"
                         :class="{ 'active active-link': is('transaction*') }">
                         <div class="sb-nav-link-icon">
-                            <i class="fas fa-dollar-sign"></i>
+                            <i class="fas fa-money-bill"></i>
                         </div>
                         Transaksi
                     </Link>
 
-                    <Link v-if="permissions.includes('customers.view')" :href="route('customers')" class="nav-link"
-                        :class="{ 'active active-link': is('customers*') }">
+                    <Link @click.prevent="customers" v-if="permissions.includes('customers.view')"
+                        :href="route('customers')" class="nav-link" :class="{ 'active active-link': is('customers*') }">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-user-tag"></i>
                         </div>

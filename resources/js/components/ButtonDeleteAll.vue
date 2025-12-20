@@ -13,7 +13,7 @@ const props = defineProps({
         default: ''
     },
     variant: {
-        type: String,
+        type: [String, Array, Object],
         default: 'danger'
     }
 })

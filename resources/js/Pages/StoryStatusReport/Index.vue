@@ -235,7 +235,10 @@ const resetField = () => {
     form.end_date_dw = '';
 }
 // =========Batas Fungsi untuk Tampilkan Modal========== //
-
+const inputRef = ref(null);
+onMounted(() => {
+    inputRef.value.focus();
+})
 const perm = page.props.auth.user
 </script>
 <template>
@@ -259,8 +262,8 @@ const perm = page.props.auth.user
                                 <div class="col-xl-4 col-sm-6 col-md-3">
                                     <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
                                     <div class="input-group">
-                                        <text-input autofocus name="start_date" v-model="filters.start_date" type="date"
-                                            :is-valid="false" />
+                                        <text-input ref="inputRef" name="start_date" v-model="filters.start_date"
+                                            type="date" :is-valid="false" />
                                     </div>
                                 </div>
                                 <div class="col-xl-4 col-sm-6 col-md-3">
@@ -301,16 +304,15 @@ const perm = page.props.auth.user
 
                     <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
                         <div v-if="perm.permissions.includes('status.report.delete')">
-                            <transition name="fade">
-                                <button :disabled="!isVisibleButton" @click="deletedAll" type="button"
-                                    class="btn btn-danger position-relative bg-gradient">
-                                    <i class="fas fa-trash"></i> Hapus
-                                    <span v-if="selected.length > 0"
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
-                                        {{ selected.length }}
-                                    </span>
-                                </button>
-                            </transition>
+                            <button :class="[selected.length > 0 ? 'btn-danger' : 'btn-secondary']"
+                                :disabled="!isVisibleButton" @click="deletedAll" type="button"
+                                class="btn position-relative bg-gradient">
+                                <i class="fas fa-trash"></i> Hapus
+                                <span v-if="selected.length > 0"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                    {{ selected.length }}
+                                </span>
+                            </button>
                         </div>
 
                         <div class="d-inline-flex ms-auto gap-1 align-items-center">
@@ -390,7 +392,7 @@ const perm = page.props.auth.user
                                                 </div>
                                                 <small class="fw-normal text-muted" style="font-size: 12px;">{{
                                                     row.informasi
-                                                    }}</small>
+                                                }}</small>
                                             </td>
                                             <td class="text-center">
                                                 <span>{{ row.report_time.slice(0, 5) }}</span>
@@ -457,11 +459,12 @@ const perm = page.props.auth.user
                                     </tfoot>
                                 </table>
                             </div>
-
+                        </div>
+                        <div class="card-footer pb-0">
                             <div v-if="props.storyReport?.data.length > 0"
-                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row px-2">
+                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
                                 <div class="mb-2 order-1 order-xl-0">
-                                    Menampilkan <strong>{{ props.storyReport?.from ?? 0 }}</strong> sampai
+                                    Menampilkan <strong>{{ props.storyReport?.from ?? 0 }}</strong> -
                                     <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari total
                                     <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
                                 </div>
@@ -475,8 +478,6 @@ const perm = page.props.auth.user
                             </div>
                         </div>
                     </div>
-
-
                 </div>
             </div>
 

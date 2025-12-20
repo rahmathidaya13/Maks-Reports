@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
     variant: {
-        type: String,
+        type:  [String, Array, Object],
         default: "primary",
     },
     label: {
@@ -24,10 +24,15 @@ defineProps({
         type: String,
         default: "Please wait...",
     },
+    buttonClass: {
+        type: [String, Array, Object],
+        default: "",
+    }
 });
 </script>
 <template>
-    <button :class="['btn', `btn-${variant}`]" :name="name.toLowerCase()" :id="name.toLowerCase()" :disabled="loading">
+    <button :class="['btn', `btn-${variant}`, buttonClass]" :name="name.toLowerCase()" :id="name.toLowerCase()"
+        :disabled="loading">
         <span v-if="loading"><i class="fas fa-spinner fa-spin"></i> {{ waiting }}</span>
         <span v-else>
             <slot><i v-if="icon" :class="[icon]"></i>

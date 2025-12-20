@@ -220,7 +220,7 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
 
                     <template #step-3>
                         <div class="mb-2">
-                            <input-label class="fw-bold" for="employee_id_number" value="ID Karyawan" />
+                            <input-label class="fw-bold" for="employee_id_number" value="ID Pegawai" />
                             <div class="input-group">
                                 <text-input class="input-height-1" placeholder="1234567890" type="text"
                                     name="employee_id_number" v-model="form.employee_id_number" />

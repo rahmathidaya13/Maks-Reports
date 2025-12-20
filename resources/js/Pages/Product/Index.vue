@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { Head, router, usePage } from '@inertiajs/vue3';
 import formatCurrency from "@/helpers/formatCurrency";
 import { debounce, get } from "lodash";
@@ -98,6 +98,10 @@ const setMainImage = (img) => {
     mainImage.value = img
 }
 
+const inputRef = ref(null);
+onMounted(() => {
+    inputRef.value.focus();
+})
 </script>
 <template>
 
@@ -118,7 +122,7 @@ const setMainImage = (img) => {
                         <div class="col-xl-6 col-sm-6 col-md-3">
                             <input-label class="fw-bold mb-1" for="keyword" value="Pencarian:" />
                             <div class="input-group">
-                                <text-input placeholder="Pencarian....." autofocus name="keyword"
+                                <text-input ref="inputRef" placeholder="Pencarian....." name="keyword"
                                     v-model="filters.keyword" type="text" :is-valid="false" />
                             </div>
                         </div>
@@ -159,14 +163,15 @@ const setMainImage = (img) => {
                 v-if="!product?.data.length">
                 <span class="fw-bold">Tidak ada Produk ditemukan</span>
             </div>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 g-3">
-                <div class="col-auto" :id="row.id" v-for="(row, rowIndex) in product?.data" :key="rowIndex">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-5 g-3">
+                <div class="col-auto" :id="row.product_id" v-for="(row, rowIndex) in product?.data" :key="rowIndex">
 
 
-                    <figure class="figure text-bg-light p-3 rounded-3 shadow border h-100 d-flex flex-column">
+                    <figure class="figure text-bg-light p-2 rounded-3 shadow border h-100 d-flex flex-column">
 
                         <div class="image-wrapper mb-2  rounded-3">
-                            <img @click="openModal(row.id)" :src="row.image_link ?? 'https://via.placeholder.com/300'"
+                            <img @click="openModal(row.product_id)"
+                                :src="row.image_link ?? 'https://via.placeholder.com/300'"
                                 class=" img-fluid image-figure-product" :alt="row.name" />
                         </div>
 
@@ -175,7 +180,7 @@ const setMainImage = (img) => {
                                 {{ formatCategory(row.category) }}
                             </span>
 
-                            <a :id="row.id" :href="row.link" target="_blank" class="text-decoration-none">
+                            <a :id="row.product_id" :href="row.link" target="_blank" class="text-decoration-none">
                                 <div class="fw-bold text-wrap text-capitalize" :title="row.name"
                                     v-html="highlight(row.name, filters.keyword)">
                                 </div>
@@ -184,7 +189,7 @@ const setMainImage = (img) => {
                             <div class="text-dark fw-bold mt-1 fs-6 align-items-center d-block">
                                 <small v-if="row.price_discount" class="text-muted text-decoration-line-through me-2">{{
                                     formatCurrency(row.price_original) ?? '-'
-                                    }}</small>
+                                }}</small>
 
                                 {{ formatCurrency(row.price_discount ? row.price_discount : row.price_original)
                                 }}
@@ -218,7 +223,7 @@ const setMainImage = (img) => {
             </div>
 
 
-            <div class="row">
+            <div class="row" v-if="showModal">
                 <div class="col-xl-12 col-sm-12 col-md-12 col-lg-12">
                     <modal :footer="true" @opened="openModal" size="modal-xl" icon="fas fa-images" v-if="showModal"
                         :show="showModal" title="Galleri Produk" @update:show="showModal = $event" @closed="closeModal">
@@ -249,7 +254,7 @@ const setMainImage = (img) => {
 <style scoped>
 .image-wrapper {
     overflow: hidden;
-    height: 250px;
+    height: 220px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -261,7 +266,7 @@ const setMainImage = (img) => {
 .image-figure-product {
     transition: transform 0.2s ease-in-out;
     width: 100%;
-    height: 250px;
+    height: 220px;
     object-fit: fill;
     object-position: center;
 }
@@ -288,9 +293,9 @@ const setMainImage = (img) => {
 }
 
 .layout-overlay {
-    max-height: 75vh;
+    max-height: 100vh;
     overflow-y: auto;
-    padding-right: 6px;
+    padding-right: 3px;
     position: relative;
 }
 

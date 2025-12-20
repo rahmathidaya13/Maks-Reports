@@ -1,5 +1,5 @@
 .callout {
-    padding: 1.3rem 1.4rem;
+    padding: 1.2rem 1.2rem;
     margin: 1rem 0;
     border-radius: 0.6rem;
     border-left: 6px solid #ddd;
@@ -7,6 +7,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
+
 /*
 .callout:hover {
     transform: translateY(-2px);

@@ -10,7 +10,7 @@ class ProductModel extends Model
 {
     use HasFactory, HasUuids;
     protected $table = 'products';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'product_id';
 
     protected $fillable = [
         'created_by',

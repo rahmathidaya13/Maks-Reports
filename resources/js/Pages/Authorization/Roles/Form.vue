@@ -59,7 +59,9 @@ const breadcrumbItems = computed(() => {
         { text: title.value }
     ]
 })
-
+const isChecked = (id) => {
+    return form.permissions.includes(id)
+}
 </script>
 <template>
 
@@ -70,8 +72,8 @@ const breadcrumbItems = computed(() => {
 
             <div class="d-flex justify-content-between">
                 <Link :href="url" class="btn btn-danger btn-sm mb-3">
-                <i class="fas fa-arrow-left"></i>
-                Kembali
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
                 </Link>
             </div>
             <div class="card overflow-hidden rounded-4 bg-light">
@@ -89,8 +91,10 @@ const breadcrumbItems = computed(() => {
                         <div class="mb-3">
                             <input-label class="fw-bold" value="Permission" />
                             <div :class="[{ 'text-bg-light border-success': form.permissions.length > 0, 'text-bg-danger': form.permissions.errors }]"
-                                class="border p-3 rounded-3 d-flex gap-2 flex-wrap">
-                                <label class="form-check-label gap-2 d-flex" v-for="perm in permissions" :key="perm.id">
+                                class="border p-3 rounded-3 d-flex gap-2 flex-wrap ">
+                                <label :class="{ 'border-dark border-1 text-bg-info': isChecked(perm.name) }"
+                                    class="form-check-label gap-2 d-flex border  rounded-2 p-1"
+                                    v-for="perm in permissions" :key="perm.id">
                                     <input multiple class="form-check-input" type="checkbox" :value="perm.name"
                                         v-model="form.permissions" />
                                     <span class="fw-semibold">{{ formatTextFromSlug(perm.name) }}</span>

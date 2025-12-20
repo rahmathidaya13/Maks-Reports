@@ -2,18 +2,28 @@
 
 namespace App\Http\Controllers\Transaction;
 
-use App\Http\Controllers\Controller;
-use App\Models\TransactionModel;
+use Inertia\Inertia;
 use Illuminate\Http\Request;
+use App\Models\TransactionModel;
+use App\Http\Controllers\Controller;
 
 class TransactionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $filters = $request->only([
+            'limit',
+            'page',
+            'order_by',
+            'start_date',
+            'end_date',
+        ]);
+        return Inertia::render('Transaction/Index',[
+            'filters' => $filters
+        ]);
     }
 
     /**

@@ -145,6 +145,54 @@ function daysTranslate(dayValue) {
     const dateFormat = moment(dayValue).format('DD-MM-YYYY, HH:mm:ss');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
+
+const fileterFields = [
+    {
+        key: 'keyword',
+        label: 'Pencarian',
+        type: 'text',
+        col: 'col-xl-8 col-12',
+        props: {
+            placeholder: 'Masukan pencarian...',
+            inputClass: 'border-dark border-1 border input-height-1',
+            autofocus: true,
+            isValid: false,
+        }
+    },
+    {
+        key: 'limit',
+        label: 'Batas',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-dark border-1 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Batas Data' },
+            { value: 10, label: '10' },
+            { value: 20, label: '20' },
+            { value: 30, label: '30' },
+            { value: 50, label: '50' },
+            { value: 100, label: '100' },
+        ]
+    },
+    {
+        key: 'order_by',
+        label: 'Urutkan',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-dark border-1 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Urutan' },
+            { value: 'desc', label: 'Terbaru' },
+            { value: 'asc', label: 'Terlama' },
+        ]
+    },
+];
 </script>
 <template>
 
@@ -155,98 +203,77 @@ function daysTranslate(dayValue) {
                 :items="[{ text: 'Daftar Role' }]" />
             <alert :duration="10" :message="message" />
             <div class="row">
-                <div class="col-xl-12">
-                    <div class="card mb-3 overflow-hidden rounded-4 p-1">
-                        <div class="row align-items-center p-3 g-2">
-                            <div class="col-xl-7 col-12 mb-0">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                    <text-input :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
-                                        placeholder="Pencarian....." />
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-12 mb-xl-0 mb-0 d-flex gap-2">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
-                                    <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                        { value: 10, label: '10' },
-                                        { value: 25, label: '25' },
-                                        { value: 50, label: '50' },
-                                        { value: 100, label: '100' },
-                                    ]" />
-                                </div>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-sort"></i></span>
-                                    <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
-                                        { value: 'desc', label: 'Terbaru' },
-                                        { value: 'asc', label: 'Terlama' },
-                                    ]" />
-                                </div>
-                            </div>
-                            <div class="col-xl-2 col-12 mb-xl-0 mb-0 d-flex">
-                                <Link :href="route('roles.create')" class="btn btn-primary bg-gradient px-5">
-                                    <i class="fas fa-plus" style="font-size:18px"></i>
-                                </Link>
-                            </div>
-                        </div>
+                <div class="col-xl-12 col-12 mb-3">
+                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
+                </div>
+                <div class="col-xl-12 col-12">
+                    <div class="gap-1 mb-2 d-flex justify-content-start">
+                        <button-delete-all :disabled="!isVisible" :variant="[isVisible ? 'danger' : 'secondary']"
+                            text="Hapus" :isVisible="true" :deleted="deleteSelected" />
+                        <span class="border border-1 border-secondary-subtle"></span>
+                        <Link :href="route('roles.create')" class="btn btn-success bg-gradient">
+                            <i class="fas fa-plus"></i> Buat Baru
+                        </Link>
                     </div>
-                    <div class="mb-2">
-                        <button-delete-all text="Hapus" :isVisible="isVisible" :deleted="deleteSelected" />
-                    </div>
-
                     <div class="card mb-4 overflow-hidden rounded-3">
-                        <div class="table-responsive">
-                            <base-table variant="secondary" @update:selected="selectedRow = $event" :attributes="{ id: 'id', name: 'name' }"
-                                :data="props.roles" :headers="header">
-                                <template #cell="{ row, keyName }">
-                                    <template v-if="keyName === 'name'">
-                                        <div class="text-start">
-                                            <button @click="openModal(row.id)"
-                                                class="btn-link btn text-decoration-none">
-                                                <i class="fas fa-role"></i>
-                                                {{ cleanTextCapitalize(row.name) }}
-                                            </button>
-                                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <base-table variant="dark" @update:selected="selectedRow = $event"
+                                    :attributes="{ id: 'id', name: 'name' }" :data="props.roles" :headers="header">
+                                    <template #cell="{ row, keyName }">
+                                        <template v-if="keyName === 'name'">
+                                            <div class="text-start">
+                                                <button @click="openModal(row.id)"
+                                                    class="btn-link btn text-decoration-none">
+                                                    <i class="fas fa-role"></i>
+                                                    <span
+                                                        v-html="highlight(cleanTextCapitalize(row.name), filters.keyword)"></span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <template v-if="keyName === '-'">
+                                            <div class="d-flex gap-1 align-items-center justify-content-center">
+                                                <Link :href="route('roles.edit', row.id)"
+                                                    class="btn btn-sm btn-info text-white px-3"><i
+                                                        class="fas fa-edit"></i>
+                                                </Link>
+                                                <button class="btn btn-sm btn-outline-danger px-3"
+                                                    @click="deleted('roles.delete', row)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <template v-if="keyName === 'created_at'">
+                                            {{ daysTranslate(row.created_at) }}
+                                        </template>
+                                        <template v-if="keyName === 'updated_at'">
+                                            {{ daysTranslate(row.updated_at) }}
+                                        </template>
                                     </template>
-                                    <template v-if="keyName === '-'">
-                                        <div class="d-flex gap-1 align-items-center justify-content-center">
-                                            <Link :href="route('roles.edit', row.id)"
-                                                class="btn btn-sm btn-info text-white px-3"><i class="fas fa-edit"></i>
-                                            </Link>
-                                            <button class="btn btn-sm btn-outline-danger px-3"
-                                                @click="deleted('roles.delete', row)">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                    <template v-if="keyName === 'created_at'">
-                                        {{ daysTranslate(row.created_at) }}
-                                    </template>
-                                    <template v-if="keyName === 'updated_at'">
-                                        {{ daysTranslate(row.updated_at) }}
-                                    </template>
-                                </template>
-                            </base-table>
-                        </div>
-                        <div
-                            class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
-                            <div class="mb-2 order-1 order-xl-0">
-                                Menampilkan <strong>{{ props.roles?.from ?? 0 }}</strong> sampai
-                                <strong>{{ props.roles?.to ?? 0 }}</strong> dari total
-                                <strong>{{ props.roles?.total ?? 0 }}</strong> data
+                                </base-table>
                             </div>
-                            <pagination :links="props.roles?.links" :keyword="filters.keyword" routeName="roles"
-                                :additionalQuery="{
-                                    order_by: filters.order_by,
-                                    limit: filters.limit,
-                                    keyword: filters.keyword,
-                                }" />
+                        </div>
+                        <div class="card-footer pb-0">
+                            <div
+                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
+                                <div class="mb-2 order-1 order-xl-0">
+                                    Menampilkan <strong>{{ props.roles?.from ?? 0 }}</strong> sampai
+                                    <strong>{{ props.roles?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.roles?.total ?? 0 }}</strong> data
+                                </div>
+                                <pagination size="pagination-sm" :links="props.roles?.links" :keyword="filters.keyword"
+                                    routeName="roles" :additionalQuery="{
+                                        order_by: filters.order_by,
+                                        limit: filters.limit,
+                                        keyword: filters.keyword,
+                                    }" />
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row" v-if="showModal">
                 <div class="col-xl-12 col-sm-12">
                     <modal @opened="openModal" size="modal-lg" :footer="false" icon="fas fa-info-circle"
                         v-if="showModal" :show="showModal" title="Detail izin Akses" @update:show="showModal = $event"

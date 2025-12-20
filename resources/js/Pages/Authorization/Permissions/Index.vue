@@ -16,8 +16,8 @@ const props = defineProps({
 });
 const filters = reactive({
     keyword: props.filters.keyword ?? '',
-    limit: props.filters.limit ?? 10,
-    order_by: props.filters.order_by ?? "desc",
+    limit: props.filters.limit ?? null,
+    order_by: props.filters.order_by ?? null,
     page: props.filters?.page ?? 1,
 })
 
@@ -126,6 +126,55 @@ function daysTranslate(dayValue) {
     const dateFormat = moment(dayValue).format('DD-MM-YYYY, HH:mm:ss');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
+
+// filter berdasarkan field yang dimau
+const fileterFields = [
+    {
+        key: 'keyword',
+        label: 'Pencarian',
+        type: 'text',
+        col: 'col-xl-8 col-12',
+        props: {
+            placeholder: 'Masukan pencarian...',
+            inputClass: 'border-dark border-1 border input-height-1',
+            autofocus: true,
+            isValid: false,
+        }
+    },
+    {
+        key: 'limit',
+        label: 'Batas',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-dark border-1 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Batas Data' },
+            { value: 10, label: '10' },
+            { value: 20, label: '20' },
+            { value: 30, label: '30' },
+            { value: 50, label: '50' },
+            { value: 100, label: '100' },
+        ]
+    },
+    {
+        key: 'order_by',
+        label: 'Urutkan',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-dark border-1 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Urutan' },
+            { value: 'desc', label: 'Terbaru' },
+            { value: 'asc', label: 'Terlama' },
+        ]
+    },
+];
 </script>
 <template>
 
@@ -136,57 +185,25 @@ function daysTranslate(dayValue) {
 
             <bread-crumbs :home="false" icon="fas fa-cog" title="Daftar Izin Akses"
                 :items="[{ text: 'Daftar Izin Akses' }]" />
-            <alert :duration="10" :message="message" />
+            <callout type="success" :duration="10" :message="message" />
             <div class="row">
-                <div class="col-xl-12">
-
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex gap-1">
-                                <transition name="fade">
-                                    <base-button :disabled="!isVisible" @click.prevent="goEditMultiple" label="Ubah"
-                                        icon="fas fa-edit" />
-                                </transition>
-                                <button-delete-all :disabled="!isVisible" variant="danger" text="Hapus"
-                                    :isVisible="true" :deleted="deleteSelected" />
-                            </div>
-                            <div class="row g-1 align-items-center">
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <text-input input-class="border-dark border-1 border" :is-valid="false"
-                                            autofocus v-model="filters.keyword" name="keyword"
-                                            placeholder="Pencarian....." />
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
-                                            v-model="filters.limit" name="limit" :options="[
-                                                { value: 10, label: '10' },
-                                                { value: 25, label: '25' },
-                                                { value: 50, label: '50' },
-                                                { value: 100, label: '100' },
-                                            ]" />
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border" :is-valid="false"
-                                            v-model="filters.order_by" name="order_by" :options="[
-                                                { value: 'desc', label: 'Terbaru' },
-                                                { value: 'asc', label: 'Terlama' },
-                                            ]" />
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <button type="button" @click.prevent="create" class="btn btn-success bg-gradient">
-                                        <i class="fas fa-plus"></i> Buat Baru
-                                    </button>
-                                </div>
-                            </div>
+                <div class="col-xl-12 col-12 mb-3">
+                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
+                </div>
+                <div class="col-xl-12 col-12">
+                    <div class="gap-1 mb-2 d-flex justify-content-between">
+                        <div class="gap-1 d-flex">
+                            <base-button :variant="[isVisible ? 'primary' : 'secondary']" :disabled="!isVisible"
+                                @click.prevent="goEditMultiple" label="Ubah" icon="fas fa-edit" />
+                            <button-delete-all :disabled="!isVisible" :variant="[isVisible ? 'danger' : 'secondary']"
+                                text="Hapus" :isVisible="true" :deleted="deleteSelected" />
+                        </div>
+                        <div class="ms-auto d-flex">
+                            <button type="button" @click.prevent="create" class="btn btn-success bg-gradient">
+                                <i class="fas fa-plus"></i> Buat Baru
+                            </button>
                         </div>
                     </div>
-
                     <div class="card mb-4 overflow-hidden rounded-3 shadow">
                         <div v-if="isLoading">
                             <loader-horizontal message="Sedang memproses data" />
@@ -233,8 +250,10 @@ function daysTranslate(dayValue) {
                                     </template>
                                 </base-table>
                             </div>
+                        </div>
+                        <div class="card-footer pb-0">
                             <div
-                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row p-3">
+                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
                                 <div class="mb-2 order-1 order-xl-0">
                                     Menampilkan <strong>{{ props.permissions?.from ?? 0 }}</strong> sampai
                                     <strong>{{ props.permissions?.to ?? 0 }}</strong> dari total
@@ -247,6 +266,7 @@ function daysTranslate(dayValue) {
                                         keyword: filters.keyword,
                                     }" />
                             </div>
+
                         </div>
                     </div>
                 </div>

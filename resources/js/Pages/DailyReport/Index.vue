@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref, watch } from "vue";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
@@ -84,7 +84,7 @@ function daysOnlyConvert(dayValue) {
         "Saturday": "Sabtu",
     };
     const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('DD/MM/YYYY');
+    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
 
@@ -227,6 +227,12 @@ const resetField = () => {
 
 // permissions
 const perm = page.props.auth.user;
+
+// autofocus
+const inputRef = ref(null);
+onMounted(() => {
+    inputRef.value.focus();
+});
 </script>
 <template>
 
@@ -268,8 +274,8 @@ const perm = page.props.auth.user;
                             <div class="col-xl-4 col-sm-6 col-md-3">
                                 <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
                                 <div class="input-group">
-                                    <text-input autofocus name="start_date" v-model="filters.start_date" type="date"
-                                        :is-valid="false" />
+                                    <text-input ref="inputRef" name="start_date" v-model="filters.start_date"
+                                        type="date" :is-valid="false" />
                                 </div>
                             </div>
                             <div class="col-xl-4 col-sm-6 col-md-3">
@@ -407,7 +413,7 @@ const perm = page.props.auth.user;
                                                     </td>
                                                     <td class="text-center fw-semibold">{{
                                                         row.fu_before_yesterday_closing
-                                                        }}</td>
+                                                    }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
@@ -440,31 +446,35 @@ const perm = page.props.auth.user;
                                                         (row.fu_before_yesterday_closing ?? 0) +
                                                         (row.fu_last_week_closing ?? 0) +
                                                         (row.engage_closing ?? 0)
-                                                        }}
+                                                    }}
                                                     </td>
                                                 </tr>
                                             </tfoot>
                                         </table>
                                     </div>
                                 </div>
+                                <div class="card-footer pb-0">
+                                    <div v-if="props.dailyReport?.data.length > 0"
+                                        :class="['blur-area', isLoading ? 'is-blurred' : '']"
+                                        class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
+                                        <div class="mb-2 order-1 order-xl-0 order-lg-0 order-md-0">
+                                            Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> sampai
+                                            <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
+                                            <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
+                                        </div>
+                                        <pagination size="pagination-sm" :links="props.dailyReport?.links"
+                                            routeName="daily_report" :additionalQuery="{
+                                                limit: filters.limit,
+                                                order_by: filters.order_by,
+                                                start_date: filters.start_date,
+                                                end_date: filters.end_date,
+                                            }" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div v-if="props.dailyReport?.data.length > 0" :class="['blur-area', isLoading ? 'is-blurred' : '']"
-                        class="mt-2 d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
-                        <div class="mb-2 order-1 order-xl-0 order-lg-0 order-md-0">
-                            Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> sampai
-                            <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
-                            <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
-                        </div>
-                        <pagination size="pagination-sm" :links="props.dailyReport?.links" routeName="daily_report"
-                            :additionalQuery="{
-                                limit: filters.limit,
-                                order_by: filters.order_by,
-                                start_date: filters.start_date,
-                                end_date: filters.end_date,
-                            }" />
-                    </div>
+
                 </div>
             </div>
 

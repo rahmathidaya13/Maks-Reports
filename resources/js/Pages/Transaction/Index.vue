@@ -11,7 +11,7 @@ moment.locale('id');
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
-    customers: Object,
+    transaction: Object,
     filters: Object,
 });
 // cek permission
@@ -27,11 +27,11 @@ const filters = reactive({
 const isLoading = ref(false)
 const liveSearch = debounce((e) => {
     isLoading.value = true
-    router.get(route("customers"), filters, {
+    router.get(route("transaction"), filters, {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["customers", "filters"],
+        only: ["transaction", "filters"],
         onFinish: () => isLoading.value = false
     });
 }, 1000);
@@ -63,7 +63,7 @@ watch(
 const loaderActive = ref(null)
 const create = () => {
     loaderActive.value?.show("Memproses...");
-    router.get(route("customers.create"), {}, {
+    router.get(route("transaction.create"), {}, {
         onFinish: () => {
             loaderActive.value?.hide()
         }
@@ -72,7 +72,7 @@ const create = () => {
 
 const edit = (id) => {
     loaderActive.value?.show("Sedang memuat data...");
-    router.get(route("customers.edit", id), {}, {
+    router.get(route("transaction.edit", id), {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
@@ -80,11 +80,11 @@ const edit = (id) => {
 const deleted = (nameRoute, data) => {
     swalConfirmDelete({
         title: 'Hapus',
-        text: `Kamu ingin menghapus Data Pelanggan ${formatText(data.customer_name)} ?`,
+        text: `Kamu ingin menghapus Data Transaksi ${formatText(data)} ?`,
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
             loaderActive.value?.show("Sedang memuat data...");
-            router.delete(route(nameRoute, data.customer_id), {
+            router.delete(route(nameRoute, data), {
                 onFinish: () => loaderActive.value?.hide(),
                 preserveScroll: false,
                 replace: true
@@ -99,7 +99,7 @@ const selectedRow = ref([]);
 const isVisible = ref(false);
 
 const isAllSelected = computed(() => {
-    const rows = props.customers?.data ?? [];
+    const rows = props.transaction?.data ?? [];
     return rows.length > 0 && selectedRow.value.length === rows.length;
 })
 
@@ -113,7 +113,7 @@ function deleteSelected() {
         confirmText: 'Ya, Hapus Semua!',
         onConfirm: () => {
             loaderActive.value?.show("Sedang memuat data...");
-            router.post(route('customers.destroy_all'), { all_id: selectedRow.value }, {
+            router.post(route('transaction.destroy_all'), { all_id: selectedRow.value }, {
                 onFinish: () => loaderActive.value?.hide(),
                 preserveScroll: true,
                 preserveState: false,
@@ -126,7 +126,7 @@ const isSelected = (id) => {
 }
 const toggleAll = (evt) => {
     if (evt.target.checked) {
-        selectedRow.value = props.customers?.data.map(r => r.customer_id);
+        selectedRow.value = props.transaction?.data.map(r => r.customer_id);
     } else {
         selectedRow.value = [];
     }
@@ -145,66 +145,22 @@ watch(selectedRow, (val) => {
 </script>
 <template>
 
-    <Head title="Halaman Daftar Pelanggan" />
+    <Head title="Halaman Transaksi" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :home="false" icon="fas fa-user-tag" title="Daftar Pelanggan"
-                :items="[{ text: 'Daftar Pelanggan' }]" />
+            <bread-crumbs :home="false" icon="fas fa-money-bill" title="Daftar Transaksi"
+                :items="[{ text: 'Daftar Transaksi' }]" />
             <callout type="success" :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-12 mb-3">
-                    <div class="card overflow-hidden pb-2">
-                        <div class="card-header p-2 text-bg-grey">
-                            <h5 class="card-title fw-bold mb-0 text-uppercase px-2">
-                                <i class="fas fa-filter"></i> Filter
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-2 row-cols-1 justify-content-end">
-                                <div class="col-xl-8 col-md-12">
-                                    <input-label for="keyword" value="Pencarian" class="fw-semibold" />
-                                    <div class="input-group mb-xl-0">
-                                        <text-input input-class="border-dark border-1 border input-height-1"
-                                            :is-valid="false" v-model="filters.keyword" name="keyword"
-                                            placeholder="Masukan pencarian berdasarkan Nama, Nik/Sim, No Handphone....." />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-md-6 col-6">
-                                    <input-label for="limit" value="Batas" class="fw-semibold" />
-                                    <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border input-height-1"
-                                            :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                                { value: null, label: 'Pilih Batas Data' },
-                                                { value: 10, label: '10' },
-                                                { value: 20, label: '20' },
-                                                { value: 30, label: '30' },
-                                                { value: 50, label: '50' },
-                                                { value: 100, label: '100' },
-                                            ]" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-md-6 col-6">
-                                    <input-label for="order_by" value="Urutkan" class="fw-semibold" />
-                                    <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border input-height-1"
-                                            :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
-                                                { value: null, label: 'Pilih Urutan' },
-                                                { value: 'desc', label: 'Terbaru' },
-                                                { value: 'asc', label: 'Terlama' },
-                                            ]" />
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
+                    <!-- filter in here -->
                 </div>
 
                 <div class="col-xl-12 col-sm-12 col-md-12 col-lg-12">
                     <div class="d-flex justify-content-start gap-1 mb-2">
-                        <button v-if="perm.includes('customers.delete')" :disabled="!isVisible" @click="deleteSelected"
-                            type="button" class="btn position-relative bg-gradient"
+                        <button v-if="perm.includes('transaction.delete')" :disabled="!isVisible"
+                            @click="deleteSelected" type="button" class="btn position-relative bg-gradient"
                             :class="[selectedRow.length > 0 ? 'btn-danger' : 'btn-secondary']">
                             <i class="fas fa-trash"></i> Hapus
                             <span v-if="selectedRow.length > 0"
@@ -212,9 +168,9 @@ watch(selectedRow, (val) => {
                                 {{ selectedRow.length }}
                             </span>
                         </button>
-                        <span v-if="perm.includes('customers.delete')"
+                        <span v-if="perm.includes('transaction.delete')"
                             class="border border-1 border-secondary-subtle"></span>
-                        <button v-if="perm.includes('customers.create')" type="button" @click.prevent="create"
+                        <button v-if="perm.includes('transaction.create')" type="button" @click.prevent="create"
                             class="btn btn-success bg-gradient">
                             <i class="fas fa-plus"></i> Buat Baru
                         </button>
@@ -228,9 +184,9 @@ watch(selectedRow, (val) => {
                                 <table class="table table-hover table-bordered table-striped text-nowrap">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th v-if="perm.includes('customers.delete')">
+                                            <th v-if="perm.includes('transaction.delete')">
                                                 <div class="form-check d-flex justify-content-center">
-                                                    <input :disabled="!customers?.data.length" type="checkbox"
+                                                    <input :disabled="!transaction?.data.length" type="checkbox"
                                                         class="form-check-input" :checked="isAllSelected"
                                                         @change="toggleAll($event)" />
                                                 </div>
@@ -241,16 +197,16 @@ watch(selectedRow, (val) => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-if="!customers?.data.length">
+                                        <tr v-if="!transaction?.data.length">
                                             <td :colspan="header.length + 1" class="text-center py-5 text-muted">
                                                 Tidak ada data tersedia.
                                             </td>
                                         </tr>
 
-                                        <tr class="align-middle" v-for="(item, index) in customers?.data" :key="index"
+                                        <tr class="align-middle" v-for="(item, index) in transaction?.data" :key="index"
                                             :class="{ 'table-info': isSelected(item.customer_id) }">
 
-                                            <td class="text-center" v-if="perm.includes('customers.delete')">
+                                            <td class="text-center" v-if="perm.includes('transaction.delete')">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input type="checkbox" class="form-check-input"
                                                         :name="item.customer_id" :id="item.customer_id"
@@ -262,7 +218,7 @@ watch(selectedRow, (val) => {
                                                 {{
                                                     index +
                                                     1 +
-                                                    (customers?.current_page - 1) * customers?.per_page
+                                                    (transaction?.current_page - 1) * transaction?.per_page
                                                 }}
                                             </td>
                                             <td class="text-center text-capitalize">
@@ -295,14 +251,15 @@ watch(selectedRow, (val) => {
                                                         <i class="fas fa-cog"></i>
                                                     </button>
                                                     <ul class="dropdown-menu">
-                                                        <li v-if="perm.includes('customers.edit')">
+                                                        <li v-if="perm.includes('transaction.edit')">
                                                             <button @click.prevent="edit(item.customer_id)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                                 Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
                                                             </button>
                                                         </li>
-                                                        <li v-if="perm.includes('customers.delete')">
-                                                            <button @click.prevent="deleted('customers.deleted', item)"
+                                                        <li v-if="perm.includes('transaction.delete')">
+                                                            <button
+                                                                @click.prevent="deleted('transaction.deleted', item)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                                 Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
                                                             </button>
@@ -315,16 +272,16 @@ watch(selectedRow, (val) => {
                                 </table>
                             </div>
                         </div>
-                        <div class="card-footer pb-0" v-if="customers?.data.length">
+                        <div class="card-footer pb-0" v-if="transaction?.data.length">
                             <div
                                 class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
                                 <div class="mb-2 order-1 order-xl-0">
-                                    Menampilkan <strong>{{ props.customers?.from ?? 0 }}</strong> -
-                                    <strong>{{ props.customers?.to ?? 0 }}</strong> dari total
-                                    <strong>{{ props.customers?.total ?? 0 }}</strong> data
+                                    Menampilkan <strong>{{ props.transaction?.from ?? 0 }}</strong> -
+                                    <strong>{{ props.transaction?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.transaction?.total ?? 0 }}</strong> data
                                 </div>
-                                <pagination size="pagination-sm" :links="props.customers?.links" routeName="customers"
-                                    :additionalQuery="{
+                                <pagination size="pagination-sm" :links="props.transaction?.links"
+                                    routeName="transaction" :additionalQuery="{
                                         order_by: filters.order_by,
                                         limit: filters.limit,
                                         keyword: filters.keyword,
