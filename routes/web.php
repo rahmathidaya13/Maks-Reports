@@ -118,6 +118,8 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::get('/transaction/create', 'create')->name('transaction.create');
         Route::post('/transaction/store', 'store')->name('transaction.store');
         Route::get('/transaction/edit/{id}', 'edit')->name('transaction.edit');
+        Route::get('/transaction/show-payment/{id}', 'show')->name('transaction.show');
+        Route::post('/transaction/settle/{id}', 'settle')->name('transaction.settle');
         Route::put('/transaction/update/{id}', 'update')->name('transaction.update');
         Route::delete('/transaction/destroy/{id}', 'destroy')->name('transaction.deleted');
         Route::post('/transaction/delete_all', 'destroy_all')->name('transaction.destroy_all');

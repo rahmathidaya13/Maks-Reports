@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 const props = defineProps({
     roles: Array,
     branches: Array
@@ -26,6 +26,10 @@ const togglePasswordConfirm = () => {
 }
 const page = usePage();
 const message = computed(() => page.props.message || "");
+const inputName = ref(null);
+onMounted(() => {
+    inputName.value.focus();
+})
 </script>
 <template>
 
@@ -55,7 +59,7 @@ const message = computed(() => page.props.message || "");
                                         <input-label for="name" value="Nama" class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-user input-icon-left"></i>
-                                            <text-input autofocus :class="['input-fixed-height']" type="text"
+                                            <text-input placeholder="Nama Pengguna" ref="inputName" :class="['input-fixed-height']" type="text"
                                                 name="name" v-model="form.name" />
                                         </div>
                                         <input-error :message="form.errors.name" />
@@ -66,7 +70,7 @@ const message = computed(() => page.props.message || "");
                                         <input-label for="email" value="Email" class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-envelope input-icon-left"></i>
-                                            <text-input :class="['input-fixed-height']" type="email" name="email"
+                                            <text-input placeholder="Email Pengguna" :class="['input-fixed-height']" type="email" name="email"
                                                 v-model="form.email" />
                                         </div>
                                         <input-error :message="form.errors.email" />
@@ -77,7 +81,7 @@ const message = computed(() => page.props.message || "");
                                         <input-label for="password" value="Kata sandi" class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-lock input-icon-left"></i>
-                                            <text-input :type="showPassword ? 'text' : 'password'"
+                                            <text-input placeholder="Kata Sandi" :type="showPassword ? 'text' : 'password'"
                                                 :class="['input-fixed-height', 'has-icon-right']" autocomplete="off"
                                                 v-model="form.password" name="password" />
                                             <i @click="togglePasswordVisibilty"
@@ -93,7 +97,7 @@ const message = computed(() => page.props.message || "");
                                             class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-lock input-icon-left"></i>
-                                            <text-input :type="showPasswordConfirm ? 'text' : 'password'"
+                                            <text-input placeholder="Ulangi Kata Sandi" :type="showPasswordConfirm ? 'text' : 'password'"
                                                 :class="['input-fixed-height', 'has-icon-right']" autocomplete="off"
                                                 v-model="form.password_confirmation" name="password_confirmation" />
                                             <i @click="togglePasswordConfirm"

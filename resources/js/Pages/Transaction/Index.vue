@@ -39,12 +39,12 @@ const liveSearch = debounce((e) => {
 
 const header = [
     { label: "No", key: "__index" },
-    { label: "NIK/SIM", key: "national_id_number" },
-    { label: "Nama Pelanggan", key: "customer_name" },
-    { label: "No Handphone", key: "number_phone_customer" },
-    { label: "Kota", key: "city" },
-    { label: "Provinsi", key: "province" },
-    { label: "Alamat", key: "address" },
+    { label: "Nama Pelanggan", key: "customer_id" },
+    { label: "Nama Barang/Produk", key: "product_id" },
+    { label: "Harga Asli", key: "price_original" },
+    { label: "Harga Diskon", key: "price_discount" },
+    { label: "Harga Akhir", key: "price_final" },
+    { label: "Status", key: "status" },
     { label: "Aksi", key: "-" },
 ];
 watch(
@@ -140,8 +140,22 @@ watch(selectedRow, (val) => {
 })
 // END MULTIPLE DELETE
 
+const repayment = (id)=>{
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route("transaction.show", id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
 
-
+function formatCurrency(value) {
+    if (!value) return "0";
+    return new Intl.NumberFormat('id-ID', {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(value)
+}
 </script>
 <template>
 
@@ -171,8 +185,8 @@ watch(selectedRow, (val) => {
                         <span v-if="perm.includes('transaction.delete')"
                             class="border border-1 border-secondary-subtle"></span>
                         <button v-if="perm.includes('transaction.create')" type="button" @click.prevent="create"
-                            class="btn btn-success bg-gradient">
-                            <i class="fas fa-plus"></i> Buat Baru
+                            class="btn btn-primary bg-gradient">
+                            <i class="fas fa-plus"></i> Buat Transaksi
                         </button>
                     </div>
                     <div class="card mb-4 overflow-hidden rounded-3">
@@ -223,25 +237,24 @@ watch(selectedRow, (val) => {
                                             </td>
                                             <td class="text-center text-capitalize">
                                                 <div
-                                                    v-html="highlight(item.national_id_number, filters.keyword) ?? '-'">
+                                                    v-html="highlight(item.customer.customer_name, filters.keyword) ?? '-'">
                                                 </div>
                                             </td>
 
                                             <td class="text-center">
-                                                <div v-html="highlight(item.customer_name, filters.keyword)"></div>
+                                                <div v-html="highlight(item.product.name, filters.keyword)"></div>
                                             </td>
                                             <td class="text-center">
-                                                <div v-html="highlight(item.number_phone_customer, filters.keyword)">
-                                                </div>
+                                              {{ formatCurrency(item.price_original) }}
                                             </td>
                                             <td class="text-center">
-                                                {{ item.city }}
+                                                {{ formatCurrency(item.price_discount) }}
                                             </td>
                                             <td class="text-center">
-                                                {{ item.province }}
+                                                {{ formatCurrency(item.price_final) }}
                                             </td>
-                                            <td class="text-start">
-                                                {{ item.address }}
+                                            <td class="text-center">
+                                                {{ item.status === 'repayment' ? 'Lunas' : 'Belum Lunas' }}
                                             </td>
 
                                             <td class="text-center">
@@ -251,8 +264,14 @@ watch(selectedRow, (val) => {
                                                         <i class="fas fa-cog"></i>
                                                     </button>
                                                     <ul class="dropdown-menu">
+                                                        <li v-if="item.status === 'payment'">
+                                                            <button @click.prevent="repayment(item.transaction_id)"
+                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                Pelunasan <i class="bi bi-currency-dollar text-success fs-5"></i>
+                                                            </button>
+                                                        </li>
                                                         <li v-if="perm.includes('transaction.edit')">
-                                                            <button @click.prevent="edit(item.customer_id)"
+                                                            <button @click.prevent="edit(item.transaction_id)"
                                                                 class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
                                                                 Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
                                                             </button>

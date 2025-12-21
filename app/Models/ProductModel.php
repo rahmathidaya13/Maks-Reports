@@ -31,8 +31,8 @@ class ProductModel extends Model
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
-    public function salesRecords()
+    public function transactions()
     {
-        return $this->hasMany(SalesRecords::class, 'product_id', 'product_id');
+        return $this->hasMany(TransactionModel::class, 'product_id', 'product_id');
     }
 }

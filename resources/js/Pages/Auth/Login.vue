@@ -28,6 +28,10 @@ onMounted(() => {
         });
     }
 })
+const inputEmail = ref(null);
+onMounted(() => {
+    inputEmail.value.focus();
+})
 </script>
 <template>
 
@@ -55,7 +59,7 @@ onMounted(() => {
                                 <input-label class="fw-semibold" for="email" value="Email" />
                                 <div class="position-relative">
                                     <i class="fas fa-envelope input-icon-left"></i>
-                                    <text-input autocomplete="email" autofocus placeholder="Email"
+                                    <text-input ref="inputEmail" autocomplete="email" placeholder="Email"
                                         class="input-fixed-height" type="email" name="email" v-model="form.email" />
                                 </div>
                                 <input-error :message="form.errors.email" />

@@ -141,7 +141,7 @@ onUnmounted(() => {
 }
 
 .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field:focus {
-    border-color: #86b7fe;
+    border-color: #000000;
     box-shadow: 0 0 0 0 rgba(13, 110, 253, .25);
 }
 

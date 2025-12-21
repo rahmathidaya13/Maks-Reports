@@ -7,34 +7,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class CustomerModel extends Model
+class TransactionPayment extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
-    protected $table = 'customers';
-    protected $primaryKey = 'customer_id';
+    protected $table = 'transaction_payments';
+    protected $primaryKey = 'payment_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $dates    = ["deleted_at"];
-    protected $hidden = [
-        'deleted_at',
-    ];
+
     protected $fillable = [
         'created_by',
-        'national_id_number',
-        'customer_name',
-        'number_phone_customer',
-        'city',
-        'province',
-        'address',
+        'transaction_id',
+        'amount',
+        'payment_type',
+        'payment_method',
     ];
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
-
     public function transactions()
     {
-        return $this->hasMany(TransactionModel::class, 'customer_id', 'customer_id');
+        return $this->belongsTo(TransactionModel::class, 'transaction_id');
     }
 }

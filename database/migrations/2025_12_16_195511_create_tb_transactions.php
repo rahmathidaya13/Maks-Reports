@@ -15,31 +15,31 @@ return new class extends Migration
             $table->uuid('transaction_id')->primary();
 
             $table->foreignUuid('customer_id')
+                ->index()
                 ->constrained('customers', 'customer_id')
                 ->onDelete('cascade');
 
             // Sales / user yang membuat transaksi
             $table->foreignUuid('created_by')
+                ->index()
                 ->constrained('users', 'id')
                 ->onDelete('cascade');
 
             $table->foreignUuid('product_id')
+                ->index()
                 ->constrained('products', 'product_id')
                 ->onDelete('cascade');
 
-            $table->string('invoice', 50)->unique();
-
-            // Harga (dalam satuan terkecil, misal rupiah)
+            // Snapshot harga saat transaksi
             $table->unsignedBigInteger('price_original');
             $table->unsignedBigInteger('price_discount')->default(0);
             $table->unsignedBigInteger('price_final');
 
-            // Status transaksi
+            // Status bisnis
             $table->enum('status', [
-                'first_fund',   // DP / pembayaran pertama
-                'paid_off',     // lunas
-                'cancelled'
-            ])->default('first_fund');
+                'payment',
+                'repayment',
+            ])->default('payment');
 
             $table->softDeletes();
             $table->timestamps();

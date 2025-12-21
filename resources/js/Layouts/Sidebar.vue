@@ -75,7 +75,7 @@ const customers = () => {
 }
 const transaction = () => {
     loaderActive.value?.show("Sedang membuka...");
-    router.get(route('transactions'), {}, {
+    router.get(route('transaction'), {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
