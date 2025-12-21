@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('transaction_id')->primary();
+            $table->date('transaction_date'); // TANGGAL TRANSAKSI BISNIS
+
+            $table->string('invoice', 25)->unique()->index();
 
             $table->foreignUuid('customer_id')
                 ->index()
@@ -39,7 +42,7 @@ return new class extends Migration
             $table->enum('status', [
                 'payment',
                 'repayment',
-            ])->default('payment');
+            ])->default('payment')->index();
 
             $table->softDeletes();
             $table->timestamps();

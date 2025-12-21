@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Transaction;
 
+use App\Traits\TransactionValidation;
 use Inertia\Inertia;
+use App\Models\ProductModel;
 use Illuminate\Http\Request;
+use App\Models\CustomerModel;
+use Illuminate\Support\Carbon;
 use App\Models\TransactionModel;
 use App\Http\Controllers\Controller;
-use App\Models\CustomerModel;
-use App\Models\ProductModel;
 use App\Repositories\TransactionRepository;
 
 class TransactionController extends Controller
@@ -15,6 +17,7 @@ class TransactionController extends Controller
     /**
      * Display a listing of the resource.
      */
+    use TransactionValidation;
     protected $transactionRepository;
     public function __construct(TransactionRepository $transactionRepository)
     {
@@ -22,12 +25,14 @@ class TransactionController extends Controller
     }
     public function index(Request $request)
     {
+        $this->authorize('view', TransactionModel::class);
         $filters = $request->only([
             'keyword',
             'limit',
             'order_by',
             'status',
             'page',
+            'date_filter'
         ]);
         $transaction = $this->transactionRepository->getCached(auth()->id(), $filters);
         return Inertia::render('Transaction/Index', [
@@ -41,6 +46,7 @@ class TransactionController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', TransactionModel::class);
         $customer = CustomerModel::select('customer_id', 'customer_name')->get();
         $product = ProductModel::select('product_id', 'name')->get();
         $this->transactionRepository->clearCache(auth()->id());
@@ -55,40 +61,8 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
-        $request->validate([
-            'customer_id' => 'required|exists:customers,customer_id',
-            'product_id'  => 'required|exists:products,product_id',
-
-            'price_original' => 'required|numeric|min:0',
-            'price_discount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
-            'payment_type' => 'required|in:payment,repayment',
-            'payment_method' => 'required|in:cash,transfer,debit',
-            'amount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
-        ], [
-            'customer_id.required' => 'Customer wajib dipilih.',
-            'customer_id.exists' => 'Customer tidak ditemukan.',
-
-            'product_id.required' => 'Produk wajib dipilih.',
-            'product_id.exists' => 'Produk tidak ditemukan.',
-
-            'price_original.required' => 'Harga barang wajib diisi.',
-            'price_original.numeric' => 'Harga barang harus berupa angka.',
-
-            'price_discount.required_if' => 'Diskon wajib diisi.',
-            'price_discount.numeric' => 'Diskon harus berupa angka.',
-            'price_discount.min' => 'Diskon minimal Rp 0.',
-
-            'payment_type.required' => 'Jenis pembayaran wajib dipilih.',
-            'payment_type.in' => 'Jenis pembayaran tidak valid.',
-
-            'payment_method.required' => 'Metode pembayaran wajib dipilih.',
-            'payment_method.in' => 'Metode pembayaran tidak valid.',
-
-            'amount.required_if' => 'Nominal DP wajib diisi.',
-            'amount.numeric' => 'Nominal DP harus berupa angka.',
-        ]);
-
+        $this->authorize('create', TransactionModel::class);
+        $this->validationText($request->all());
         // hitung harga final
         $priceFinal = $request['price_original'] - ($request['price_discount'] ?? 0);
 
@@ -109,6 +83,8 @@ class TransactionController extends Controller
 
         $transaction = new TransactionModel();
         $transaction->created_by = auth()->id();
+        $transaction->invoice = $request['invoice'];
+        $transaction->transaction_date = now();
         $transaction->customer_id = $request['customer_id'];
         $transaction->product_id = $request['product_id'];
         $transaction->price_original = $request['price_original'];
@@ -119,6 +95,7 @@ class TransactionController extends Controller
 
         $transaction->payments()->create([
             'created_by' => auth()->id(),
+            'payment_date' => now(),
             'transaction_id' => $transaction->transaction_id,
             'amount' => $request['payment_type'] === 'repayment'
                 ? $priceFinal
@@ -132,6 +109,7 @@ class TransactionController extends Controller
 
     public function show(TransactionModel $transactionModel, string $id)
     {
+        $this->authorize('edit', TransactionModel::class);
         $transaction = $transactionModel::with(['customer', 'product', 'payments'])->findOrFail($id);
         $this->transactionRepository->clearCache(auth()->id());
         return Inertia::render('Transaction/Form/RepaymentForm', [
@@ -140,6 +118,7 @@ class TransactionController extends Controller
     }
     public function settle(Request $request, TransactionModel $transactionModel, string $id)
     {
+        $this->authorize('edit', TransactionModel::class);
         $transaction = $transactionModel::findOrFail($id);
         // 1. Cegah pelunasan ganda
         if ($transaction->status === 'repayment') {
@@ -167,6 +146,7 @@ class TransactionController extends Controller
         // 5. Simpan pembayaran pelunasan
         $transaction->payments()->create([
             'created_by' => auth()->id(),
+            'payment_date' => now(),
             'transaction_id' => $transaction->transaction_id,
             'amount' => $remainingPayment,
             'payment_type' => 'repayment',
@@ -176,25 +156,49 @@ class TransactionController extends Controller
         $transaction->update([
             'status' => 'repayment',
         ]);
-
+        $message = 'Transaksi tanggal ' . Carbon::parse($transaction->transaction_date)->format('d/m/Y') . ' pelanggan ' . $transaction->customer->customer_name . ' berhasil dilunasi.';
         $this->transactionRepository->clearCache(auth()->id());
-        return redirect()->route('transaction')->with('message', 'Transaksi ' . $transaction->customer->customer_name . ' berhasil dilunasi.');
+        return redirect()->route('transaction')->with('message', $message);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(TransactionModel $transactionModel)
+    public function edit(TransactionModel $transactionModel, string $id)
     {
-        //
+        $this->authorize('edit', TransactionModel::class);
+
+        $customer = CustomerModel::select('customer_id', 'customer_name')->get();
+        $product = ProductModel::select('product_id', 'name')->get();
+
+        $transaction = $transactionModel::with([
+            'creator:id,name',
+            'customer:customer_id,customer_name,number_phone_customer',
+            'product:product_id,name',
+            'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount'
+        ])->findOrFail($id);
+
+        if ($transaction->status === 'repayment') {
+            return redirect()
+                ->route('transaction')
+                ->with('message', 'Transaksi ini sudah lunas tidak bisa diubah.');
+        }
+
+        $this->transactionRepository->clearCache(auth()->id());
+        return Inertia::render('Transaction/Form/pageForm', [
+            'transaction' => $transaction,
+            'customer' => $customer,
+            'product' => $product
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, TransactionModel $transactionModel)
+    public function update(Request $request, TransactionModel $transactionModel, string $id)
     {
-        //
+        $this->authorize('edit', TransactionModel::class);
+        $this->validationText($request->all(), $id);
     }
 
     /**
@@ -202,6 +206,6 @@ class TransactionController extends Controller
      */
     public function destroy(TransactionModel $transactionModel)
     {
-        //
+        $this->authorize('delete', TransactionModel::class);
     }
 }

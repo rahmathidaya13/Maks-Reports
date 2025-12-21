@@ -7,6 +7,7 @@ use App\Models\JobTitleModel;
 use App\Models\ProductModel;
 use App\Models\SalesRecords;
 use App\Models\StoryStatusReportModel;
+use App\Models\TransactionModel;
 
 return [
     DailyReportModel::class => 'daily.report.leads',
@@ -16,4 +17,5 @@ return [
     JobTitleModel::class => 'job.title',
     ProductModel::class => 'product',
     CustomerModel::class => 'customers',
+    TransactionModel::class => 'transaction',
 ];

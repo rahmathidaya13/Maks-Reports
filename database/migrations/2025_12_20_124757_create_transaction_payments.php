@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('transaction_payments', function (Blueprint $table) {
             $table->uuid('payment_id')->primary();
-
+            $table->date('payment_date');
             $table->foreignUuid('created_by')
                 ->index()
                 ->constrained('users', 'id')

@@ -18,6 +18,8 @@ class TransactionModel extends Model
 
     protected $fillable = [
         'created_by',
+        'invoice',
+        'transaction_date',
         'customer_id',
         'product_id',
         'price_original',

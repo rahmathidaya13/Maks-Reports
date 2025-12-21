@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import { swalAlert, swalConfirmDelete } from "../../helpers/swalHelpers";
@@ -18,6 +18,8 @@ const props = defineProps({
 const perm = page.props.auth.user.permissions
 
 const filters = reactive({
+    date_filter: props.filters.date_filter ?? null,
+    status: props.filters.status ?? null,
     keyword: props.filters.keyword ?? '',
     limit: props.filters.limit ?? null,
     order_by: props.filters.order_by ?? null,
@@ -34,29 +36,44 @@ const liveSearch = debounce((e) => {
         only: ["transaction", "filters"],
         onFinish: () => isLoading.value = false
     });
-}, 1000);
-
-
-const header = [
-    { label: "No", key: "__index" },
-    { label: "Nama Pelanggan", key: "customer_id" },
-    { label: "Nama Barang/Produk", key: "product_id" },
-    { label: "Harga Asli", key: "price_original" },
-    { label: "Harga Diskon", key: "price_discount" },
-    { label: "Harga Akhir", key: "price_final" },
-    { label: "Status", key: "status" },
-    { label: "Aksi", key: "-" },
-];
+}, 500);
 watch(
-    () => [
+    () =>
         filters.keyword,
-        filters.limit,
-        filters.order_by,
-    ],
     () => {
         liveSearch();
     }
 );
+const handleApply = () => {
+    liveSearch();
+}
+const handleReset = () => {
+    filters.keyword = ''
+    filters.status = null
+    filters.date_filter = null
+    filters.limit = null
+    filters.order_by = null
+
+    // Langsung cari data bersih
+    liveSearch()
+}
+
+
+const header = [
+    { label: "No", key: "__index" },
+    { label: "Tgl.Transaksi", key: "transaction_date" },
+    { label: "Tgl.Pembayaran", key: "-te" },
+    { label: "Nama Pelanggan", key: "customer_id" },
+    { label: "Nama Barang/Produk", key: "product_id" },
+    { label: "Harga Asli", key: "price_original" },
+    { label: "Harga Diskon", key: "price_discount" },
+    { label: "Total Harga", key: "price_final" },
+    { label: "Sudah Dibayar", key: "total_paid" },
+    { label: "Sisa Pembayaran", key: "-" },
+    { label: "Status", key: "status" },
+    { label: "Aksi", key: "-" },
+];
+
 
 
 // CRUD OPERATION
@@ -126,7 +143,7 @@ const isSelected = (id) => {
 }
 const toggleAll = (evt) => {
     if (evt.target.checked) {
-        selectedRow.value = props.transaction?.data.map(r => r.customer_id);
+        selectedRow.value = props.transaction?.data.map(r => r.transaction_id);
     } else {
         selectedRow.value = [];
     }
@@ -140,7 +157,7 @@ watch(selectedRow, (val) => {
 })
 // END MULTIPLE DELETE
 
-const repayment = (id)=>{
+const repayment = (id) => {
     loaderActive.value?.show("Sedang memuat data...");
     router.get(route("transaction.show", id), {}, {
         onFinish: () => loaderActive.value?.hide()
@@ -156,6 +173,114 @@ function formatCurrency(value) {
         maximumFractionDigits: 0,
     }).format(value)
 }
+
+const getPaymentDate = (payments, type) => {
+    if (!payments) return '-'
+    const p = payments.find(p => p.payment_type === type);
+    return p ? moment(p.payment_date).format('DD/MM/YYYY') : '-'
+}
+// cek apakah ada filter yang terpilih
+const hasActiveFilter = computed(() => {
+    return (
+        filters.keyword !== '' ||
+        filters.status !== null ||
+        filters.date_filter !== null ||
+        filters.limit !== null ||
+        filters.order_by !== null
+    )
+})
+const fileterFields = computed(() => [
+    {
+        key: 'keyword',
+        label: 'Pencarian',
+        type: 'text',
+        col: 'col-xl-8 col-12',
+        props: {
+            placeholder: 'Masukan nama dan produk...',
+            inputClass: 'border-0 border input-height-1',
+            isValid: false,
+        }
+    },
+    {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        col: 'col-xl-4 col-md-6 col-6',
+        props: {
+            selectClass: 'border-0 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Status Pembayaran' },
+            { value: 'payment', label: 'Belum Lunas' },
+            { value: 'repayment', label: 'Lunas' },
+        ]
+    },
+    {
+        key: 'date_filter',
+        label: 'Filter Tanggal',
+        type: 'date',
+        col: 'col-xl-4 col-md-6 col-6',
+        props: {
+            inputClass: 'border-0 border input-height-1',
+            isValid: false,
+        }
+    },
+    {
+        key: 'limit',
+        label: 'Batas',
+        type: 'select',
+        col: 'col-xl-4 col-md-6 col-6',
+        props: {
+            selectClass: 'border-0 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Batas Data' },
+            { value: 10, label: '10' },
+            { value: 20, label: '20' },
+            { value: 30, label: '30' },
+            { value: 50, label: '50' },
+            { value: 100, label: '100' },
+        ]
+    },
+    {
+        key: 'order_by',
+        label: 'Urutan',
+        type: 'select',
+        col: 'col-xl-4 col-md-6 col-6',
+        props: {
+            selectClass: 'border-0 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Urutan' },
+            { value: 'desc', label: 'Terbaru' },
+            { value: 'asc', label: 'Terlama' },
+        ]
+    },
+    //  button trigger
+    {
+        key: 'reset',
+        label: 'Bersihkan',
+        type: 'button',
+        name: 'reset',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-outline-danger',
+        icon: 'fas fa-undo',
+        disabled: !hasActiveFilter.value,
+        handler: () => handleReset()
+    },
+    {
+        key: 'apply',
+        label: 'Terapkan',
+        type: 'button',
+        name: 'apply',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-primary',
+        icon: 'fas fa-filter',
+        disabled: !hasActiveFilter.value,
+        handler: () => handleApply()
+    },
+]);
 </script>
 <template>
 
@@ -168,7 +293,7 @@ function formatCurrency(value) {
             <callout type="success" :duration="10" :message="message" />
             <div class="row">
                 <div class="col-xl-12 col-12 mb-3">
-                    <!-- filter in here -->
+                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
                 </div>
 
                 <div class="col-xl-12 col-sm-12 col-md-12 col-lg-12">
@@ -185,7 +310,7 @@ function formatCurrency(value) {
                         <span v-if="perm.includes('transaction.delete')"
                             class="border border-1 border-secondary-subtle"></span>
                         <button v-if="perm.includes('transaction.create')" type="button" @click.prevent="create"
-                            class="btn btn-primary bg-gradient">
+                            class="btn btn-success bg-gradient">
                             <i class="fas fa-plus"></i> Buat Transaksi
                         </button>
                     </div>
@@ -194,8 +319,8 @@ function formatCurrency(value) {
                             <loader-horizontal message="Sedang memproses data" />
                         </div>
                         <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-bordered table-striped text-nowrap">
+                            <div :class="['table-responsive', transaction?.data.length <= 5 ? 'vh-100' : '']">
+                                <table class=" table table-hover table-bordered table-striped text-nowrap">
                                     <thead class="table-dark">
                                         <tr>
                                             <th v-if="perm.includes('transaction.delete')">
@@ -218,13 +343,13 @@ function formatCurrency(value) {
                                         </tr>
 
                                         <tr class="align-middle" v-for="(item, index) in transaction?.data" :key="index"
-                                            :class="{ 'table-info': isSelected(item.customer_id) }">
+                                            :class="{ 'table-info': isSelected(item.transaction_id) }">
 
                                             <td class="text-center" v-if="perm.includes('transaction.delete')">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input type="checkbox" class="form-check-input"
-                                                        :name="item.customer_id" :id="item.customer_id"
-                                                        :value="item.customer_id" v-model="selectedRow" />
+                                                        :name="item.transaction_id" :id="item.transaction_id"
+                                                        :value="item.transaction_id" v-model="selectedRow" />
                                                 </div>
                                             </td>
 
@@ -236,6 +361,24 @@ function formatCurrency(value) {
                                                 }}
                                             </td>
                                             <td class="text-center text-capitalize">
+                                                {{ moment(item.transaction_date).format('DD/MM/YYYY') }}
+                                            </td>
+                                            <td class="text-start">
+                                                <ul class="list-group lh-1 rounded-0">
+                                                    <li
+                                                        class="list-group-item d-flex justify-content-between align-items-center fw-semibold">
+                                                        <span
+                                                            class="badge text-bg-warning rounded-0 me-5">DP(50%)</span>
+                                                        {{ getPaymentDate(item.payments, 'payment') }}
+                                                    </li>
+                                                    <li
+                                                        class="list-group-item d-flex justify-content-between align-items-center fw-semibold">
+                                                        <span class="badge text-bg-success rounded-0 me-5">Lunas</span>
+                                                        {{ getPaymentDate(item.payments, 'repayment') }}
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                            <td class="text-center text-capitalize">
                                                 <div
                                                     v-html="highlight(item.customer.customer_name, filters.keyword) ?? '-'">
                                                 </div>
@@ -244,47 +387,67 @@ function formatCurrency(value) {
                                             <td class="text-center">
                                                 <div v-html="highlight(item.product.name, filters.keyword)"></div>
                                             </td>
-                                            <td class="text-center">
-                                              {{ formatCurrency(item.price_original) }}
+                                            <td class="text-center fw-bold">
+                                                {{ formatCurrency(item.price_original) }}
                                             </td>
-                                            <td class="text-center">
+                                            <td class="text-center fw-bold">
                                                 {{ formatCurrency(item.price_discount) }}
                                             </td>
-                                            <td class="text-center">
+                                            <td class="text-center fw-bold">
                                                 {{ formatCurrency(item.price_final) }}
                                             </td>
-                                            <td class="text-center">
-                                                {{ item.status === 'repayment' ? 'Lunas' : 'Belum Lunas' }}
+                                            <td class="text-center text-success fw-bold">
+                                                {{ formatCurrency(item.total_paid) }}
                                             </td>
-
+                                            <td class="fw-bold text-danger text-center">
+                                                {{ formatCurrency(item.price_final - item.total_paid) }}
+                                            </td>
                                             <td class="text-center">
-                                                <div class="dropdown dropstart">
-                                                    <button class="btn btn-secondary bg-gradient" type="button"
-                                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="fas fa-cog"></i>
+                                                <span class="badge rounded-0 p-2 "
+                                                    :class="item.status === 'repayment' ? 'bg-success' : 'bg-warning'">
+                                                    <i
+                                                        :class="['me-1', item.status === 'repayment' ? 'fas fa-check-circle' : 'fas fa-circle']"></i>
+                                                    {{ item.status === 'repayment' ? 'Lunas' : 'Belum Lunas' }}
+                                                </span>
+                                            </td>
+                                            <td class="text-start">
+                                                <div class="d-inline-flex gap-1">
+                                                    <button :disabled="item.status !== 'payment'"
+                                                        @click.prevent="repayment(item.transaction_id)"
+                                                        class="btn bg-gradient"
+                                                        :class="[item.status === 'payment' ? ' btn-outline-success' : ' btn-outline-secondary']">
+                                                        <i class="fas fa-cash-register"></i>
+                                                        Pelunasan
                                                     </button>
-                                                    <ul class="dropdown-menu">
-                                                        <li v-if="item.status === 'payment'">
-                                                            <button @click.prevent="repayment(item.transaction_id)"
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Pelunasan <i class="bi bi-currency-dollar text-success fs-5"></i>
-                                                            </button>
-                                                        </li>
-                                                        <li v-if="perm.includes('transaction.edit')">
-                                                            <button @click.prevent="edit(item.transaction_id)"
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
-                                                            </button>
-                                                        </li>
-                                                        <li v-if="perm.includes('transaction.delete')">
-                                                            <button
-                                                                @click.prevent="deleted('transaction.deleted', item)"
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
-                                                            </button>
-                                                        </li>
-                                                    </ul>
+
+
+                                                    <div class="dropdown dropstart">
+                                                        <button class="btn btn-info text-white bg-gradient"
+                                                            type="button" data-bs-toggle="dropdown"
+                                                            aria-expanded="false">
+                                                            <i class="fas fa-cog"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li v-if="perm.includes('transaction.edit')">
+                                                                <button @click.prevent="edit(item.transaction_id)"
+                                                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                    Ubah <i
+                                                                        class="bi bi-pencil-square text-info fs-5"></i>
+                                                                </button>
+                                                            </li>
+                                                            <li v-if="perm.includes('transaction.delete')">
+                                                                <button
+                                                                    @click.prevent="deleted('transaction.deleted', item)"
+                                                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
+                                                                    Hapus <i
+                                                                        class="bi bi-trash-fill text-danger fs-5"></i>
+                                                                </button>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+
                                                 </div>
+
                                             </td>
                                         </tr>
                                     </tbody>
@@ -304,6 +467,8 @@ function formatCurrency(value) {
                                         order_by: filters.order_by,
                                         limit: filters.limit,
                                         keyword: filters.keyword,
+                                        status: filters.status,
+                                        date_filter: filters.date_filter
                                     }" />
                             </div>
                         </div>

@@ -34,6 +34,24 @@ const filters = computed({
     get: () => props.modelValue,
     set: (val) => emit('update:modelValue', val)
 })
+
+const inputField = computed(() => {
+    return props.fields.filter(field => field.type !== 'button')
+})
+const buttonField = computed(() => {
+    return props.fields.filter(field => field.type === 'button')
+})
+// Fungsi helper untuk handle klik button
+const handleButtonClick = (field) => {
+    if (field.handler && typeof field.handler === 'function') {
+        // Jika ada handler khusus di objek field, jalankan
+        field.handler()
+    } else {
+        // Jika tidak, emit event generic dengan key field tersebut
+        emit('action', field.key)
+    }
+
+}
 </script>
 
 <template>
@@ -46,16 +64,27 @@ const filters = computed({
 
         <div class="card-body">
             <div class="row g-2 row-cols-1 justify-content-end">
-                <div v-for="field in fields" :key="field.key" :class="field.col">
+                <div v-for="field in inputField" :key="field.key" :class="field.col">
                     <input-label v-if="field.type !== 'slot'" :for="field.key" :value="field.label"
                         class="fw-semibold" />
 
-                    <!-- TEXT INPUT -->
                     <div v-if="field.type === 'text'" class="input-group">
-                        <text-input v-model="filters[field.key]" v-bind="field.props" :name="field.key" />
+                        <text-input :type="field.type" v-model="filters[field.key]" v-bind="field.props"
+                            :name="field.key" />
+                    </div>
+                    <div v-else-if="field.type === 'date'" class="input-group">
+                        <text-input :type="field.type" v-model="filters[field.key]" v-bind="field.props"
+                            :name="field.key" />
+                    </div>
+                    <div v-else-if="field.type === 'datetime'" class="input-group">
+                        <text-input :type="field.type" v-model="filters[field.key]" v-bind="field.props"
+                            :name="field.key" />
+                    </div>
+                    <div v-else-if="field.type === 'file'" class="input-group">
+                        <text-input :type="field.type" v-model="filters[field.key]" v-bind="field.props"
+                            :name="field.key" />
                     </div>
 
-                    <!-- SELECT INPUT -->
                     <div v-else-if="field.type === 'select'" class="input-group">
                         <select-input v-model="filters[field.key]" v-bind="field.props" :name="field.key"
                             :options="field.options" />
@@ -63,6 +92,15 @@ const filters = computed({
 
                     <slot v-else :name="field.key" :model="filters" />
                 </div>
+                <div class="d-flex gap-1 mt-3">
+                    <button :disabled="btn.disabled" v-for="btn in buttonField" :key="btn.key" :type="btn.type"
+                        :name="btn.name" :id="btn.name" :class="['btn', btn.class || 'btn-primary']" v-bind="btn.props"
+                        @click="handleButtonClick(btn)">
+                        <i v-if="btn.icon" :class="[btn.icon, 'me-1']"></i>
+                        {{ btn.label }}
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>

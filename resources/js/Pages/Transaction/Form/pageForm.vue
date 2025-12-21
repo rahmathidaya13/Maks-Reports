@@ -9,15 +9,16 @@ const props = defineProps({
 
 // form fields
 const form = useForm({
-    customer_id: '',
-    product_id: '',
-    price_original: 0,
-    price_discount: 0,
-    payment_type: null,
-    payment_method: null,
-    amount: 0,
+    invoice: props.transaction?.invoice ?? '',
+    customer_id: props.transaction?.customer?.customer_id ?? '',
+    product_id: props.transaction?.product?.product_id ?? '',
+    price_original: props.transaction?.price_original ?? 0,
+    price_discount: props.transaction?.price_discount ?? 0,
+    payment_type: props.transaction?.payments[0].payment_type ?? '',
+    payment_method: props.transaction?.payments[0].payment_method ?? null,
+    amount: props.transaction?.payments[0].amount ?? 0,
 });
-
+console.log(props.transaction)
 const priceFinal = computed(() => {
     const original = Number(form.price_original || 0)
     const discount = Number(form.price_discount || 0)
@@ -77,7 +78,7 @@ const icon = ref("");
 const url = ref("")
 onMounted(() => {
     if (props.transaction && props.transaction?.transaction_id) {
-        title.value = "Ubah Data Transaksi " + props.transaction?.customer.customer_name
+        title.value = "Ubah Data Transaksi - " + props.transaction?.customer.customer_name
         icon.value = "fas fa-edit"
         url.value = route('transaction')
     } else {
@@ -157,6 +158,11 @@ function formatCurrency(value) {
                                 <div class="row">
                                     <div class="col-xl-6">
                                         <div class="mb-3">
+                                            <input-label class="fw-bold" for="invoice" value="Invoice" />
+                                            <text-input v-model="form.invoice" name="invoice" />
+                                            <input-error :message="form.errors.invoice" />
+                                        </div>
+                                        <div class="mb-3">
                                             <input-label class="fw-bold" for="customer_name" value="Nama Pelanggan" />
                                             <select-2 :settings="{
                                                 width: '100%',
@@ -221,7 +227,7 @@ function formatCurrency(value) {
 
                                                 <div v-else-if="form.payment_type === 'repayment'">
                                                     Harga Akhir (Lunas): <strong>{{ formatCurrency(priceFinal)
-                                                    }}</strong>
+                                                        }}</strong>
                                                 </div>
                                             </div>
 
