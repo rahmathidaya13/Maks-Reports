@@ -112,10 +112,20 @@ body {
     padding-right: 4rem;
 }
 
+.input-fixed-height.has-icon-left.is-valid,
+.input-fixed-height.has-icon-left.is-invalid {
+    padding-left: 4rem;
+}
+
 /* Hanya geser icon jika input sebelumnya adalah input dengan class .has-icon-right */
 .input-fixed-height.has-icon-right.is-valid~.input-icon-right,
 .input-fixed-height.has-icon-right.is-invalid~.input-icon-right {
     right: 36px;
+}
+
+.input-fixed-height.has-icon-left.is-valid~.input-icon-left,
+.input-fixed-height.has-icon-left.is-invalid~.input-icon-left {
+    left: 36px;
 }
 
 .invalid-feedback {

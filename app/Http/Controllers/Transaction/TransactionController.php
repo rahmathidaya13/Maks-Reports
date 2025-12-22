@@ -74,7 +74,7 @@ class TransactionController extends Controller
 
         if ($request['payment_type'] === 'payment') {
             $dpMin = $priceFinal * 0.5;
-            if ($request['amount'] < $dpMin) {
+            if ($request['amount'] < $dpMin || $request['amount'] > $priceFinal) {
                 return back()->withErrors([
                     'amount' => 'Minimal pembayaran Dana pertama adalah Rp ' . number_format($dpMin, 0, ',', '.')
                 ]);
@@ -103,8 +103,9 @@ class TransactionController extends Controller
             'payment_type' => $request['payment_type'] === 'repayment' ? 'repayment' : 'payment',
             'payment_method' => $request['payment_method'],
         ]);
+        $message = 'Transaksi tanggal ' . Carbon::parse($transaction->transaction_date)->format('d/m/Y') . ' pelanggan ' . $transaction->customer->customer_name . ' Berhasil dibuat.';
         $this->transactionRepository->clearCache(auth()->id());
-        return redirect()->route('transaction')->with('message', 'Data transaksi berhasil disimpan.');
+        return redirect()->route('transaction')->with('message', $message);
     }
 
     public function show(TransactionModel $transactionModel, string $id)
@@ -178,11 +179,13 @@ class TransactionController extends Controller
             'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount'
         ])->findOrFail($id);
 
+        // Cegah edit transaksi lunas
         if ($transaction->status === 'repayment') {
             return redirect()
                 ->route('transaction')
                 ->with('message', 'Transaksi ini sudah lunas tidak bisa diubah.');
         }
+
 
         $this->transactionRepository->clearCache(auth()->id());
         return Inertia::render('Transaction/Form/pageForm', [
@@ -199,13 +202,97 @@ class TransactionController extends Controller
     {
         $this->authorize('edit', TransactionModel::class);
         $this->validationText($request->all(), $id);
+        $transaction = $transactionModel::findOrFail($id);
+
+        if ($transaction->status === 'repayment') {
+            return back()->withErrors([
+                'message' => 'Transaksi yang sudah lunas tidak bisa diubah.'
+            ]);
+        }
+
+        $totalPaid = (int) $transaction->payments()->sum('amount');
+        $priceFinal = $request['price_original'] - ($request['price_discount'] ?? 0);
+
+        // ❗ CEGAT: harga tidak boleh lebih kecil dari yang sudah dibayar
+        if ($priceFinal < $totalPaid) {
+            return back()->withErrors([
+                'price_original' => 'Harga akhir tidak boleh lebih kecil dari total yang sudah dibayar.'
+            ]);
+        }
+        $transaction->created_by = auth()->id();
+        $transaction->invoice = $request['invoice'];
+        $transaction->transaction_date = now();
+        $transaction->customer_id = $request['customer_id'];
+        $transaction->product_id = $request['product_id'];
+        $transaction->price_original = $request['price_original'];
+        $transaction->price_discount = $request['price_discount'] ?? 0;
+        $transaction->price_final = $priceFinal;
+        $transaction->status =   $request['payment_type'] === 'repayment' ? 'repayment' : 'payment';
+        $transaction->update();
+
+        $message = 'Transaksi tanggal ' . Carbon::parse($transaction->transaction_date)->format('d/m/Y') . ' pelanggan ' . $transaction->customer->customer_name . ' telah diperbarui.';
+
+        $this->transactionRepository->clearCache(auth()->id());
+        return redirect()
+            ->route('transaction')
+            ->with('message', $message);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(TransactionModel $transactionModel)
+    public function destroy(TransactionModel $transactionModel, string $id)
     {
         $this->authorize('delete', TransactionModel::class);
+        $transaction = $transactionModel::findOrFail($id);
+        // Cegah edit transaksi lunas
+        if ($transaction->status === 'repayment' || $transaction->status === 'payment') {
+            return redirect()
+                ->route('transaction')
+                ->with('warning', 'Transaksi ini tidak dapat dihapus untuk menjaga konsistensi data.');
+        }
+
+        $transaction->delete();
+
+        $message = 'Transaksi tanggal ' . Carbon::parse($transaction->transaction_date)->format('d/m/Y') . ' pelanggan ' . $transaction->customer->customer_name . ' telah dihapus.';
+        $this->transactionRepository->clearCache(auth()->id());
+        return redirect()
+            ->route('transaction')
+            ->with('message', $message);
+    }
+
+    public function destroy_all(TransactionModel $transactionModel, Request $request)
+    {
+        $all_id = $request->input('all_id', []);
+        if (!count($all_id)) {
+            return redirect()
+                ->route('transaction')
+                ->with('warning', 'Tidak ada data yang dipilih.');
+        }
+
+        $transaction = TransactionModel::where('created_by', auth()->id())
+            ->whereIn('transaction_id', $all_id)
+            ->withCount('payments')
+            ->get();
+
+        // Cek apakah ada transaksi yang sudah punya payment
+        $hasPayment = $transaction->contains(fn($trx) => $trx->payments_count > 0);
+
+        if ($hasPayment) {
+            return redirect()
+                ->route('transaction')
+                ->with('warning', 'Sebagian transaksi sudah memiliki pembayaran dan tidak dapat dihapus.');
+        }
+
+        // Hapus semua transaksi aman
+        TransactionModel::where('created_by', auth()->id())
+            ->whereIn('transaction_id', $all_id)
+            ->delete();
+
+        $this->transactionRepository->clearCache(auth()->id());
+
+        return redirect()
+            ->route('transaction')
+            ->with('message', count($all_id) . ' transaksi berhasil dihapus.');
     }
 }

@@ -50,13 +50,24 @@ const header = [
 watch(
     () => [
         filters.keyword,
-        filters.limit,
-        filters.order_by,
     ],
     () => {
         liveSearch();
     }
 );
+
+const handleApply = () => {
+    liveSearch();
+}
+const handleReset = () => {
+    filters.keyword = ''
+    filters.limit = null
+    filters.order_by = null
+
+    // Langsung cari data bersih
+    liveSearch()
+}
+
 
 
 // CRUD OPERATION
@@ -131,6 +142,7 @@ const toggleAll = (evt) => {
         selectedRow.value = [];
     }
 }
+// start MULTIPLE DELETE
 watch(selectedRow, (val) => {
     if (val.length > 0) {
         isVisible.value = true
@@ -140,6 +152,82 @@ watch(selectedRow, (val) => {
 })
 // END MULTIPLE DELETE
 
+// cek apakah ada filter yang terpilih
+const hasActiveFilter = computed(() => {
+    return (
+        filters.keyword !== '' ||
+        filters.limit !== null ||
+        filters.order_by !== null
+    )
+})
+const fileterFields = computed(() => [
+    {
+        key: 'keyword',
+        label: 'Pencarian',
+        type: 'text',
+        col: 'col-xl-8 col-12',
+        props: {
+            placeholder: 'Masukan nama,nik dan no handphone...',
+            inputClass: 'border-0 border input-height-1',
+            isValid: false,
+        }
+    },
+    {
+        key: 'limit',
+        label: 'Batas',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-0 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Batas Data' },
+            { value: 10, label: '10' },
+            { value: 20, label: '20' },
+            { value: 30, label: '30' },
+            { value: 50, label: '50' },
+            { value: 100, label: '100' },
+        ]
+    },
+    {
+        key: 'order_by',
+        label: 'Urutan',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-0 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Urutan' },
+            { value: 'desc', label: 'Terbaru' },
+            { value: 'asc', label: 'Terlama' },
+        ]
+    },
+    //  button trigger
+    {
+        key: 'reset',
+        label: 'Bersihkan',
+        type: 'button',
+        name: 'reset',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-outline-danger',
+        icon: 'fas fa-undo',
+        disabled: !hasActiveFilter.value,
+        handler: () => handleReset()
+    },
+    {
+        key: 'apply',
+        label: 'Terapkan',
+        type: 'button',
+        name: 'apply',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-primary',
+        icon: 'fas fa-filter',
+        disabled: !hasActiveFilter.value,
+        handler: () => handleApply()
+    },
+
+]);
 
 
 </script>
@@ -152,159 +240,163 @@ watch(selectedRow, (val) => {
             <bread-crumbs :home="false" icon="fas fa-user-tag" title="Daftar Pelanggan"
                 :items="[{ text: 'Daftar Pelanggan' }]" />
             <callout type="success" :duration="10" :message="message" />
-            <div class="row">
+            <div class="row pb-3">
                 <div class="col-xl-12 col-12 mb-3">
-                    <div class="card overflow-hidden pb-2">
-                        <div class="card-header p-2 text-bg-grey">
-                            <h5 class="card-title fw-bold mb-0 text-uppercase px-2">
-                                <i class="fas fa-filter"></i> Filter
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-2 row-cols-1 justify-content-end">
-                                <div class="col-xl-8 col-md-12">
-                                    <input-label for="keyword" value="Pencarian" class="fw-semibold" />
-                                    <div class="input-group mb-xl-0">
-                                        <text-input input-class="border-dark border-1 border input-height-1"
-                                            :is-valid="false" v-model="filters.keyword" name="keyword"
-                                            placeholder="Masukan pencarian berdasarkan Nama, Nik/Sim, No Handphone....." />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-md-6 col-6">
-                                    <input-label for="limit" value="Batas" class="fw-semibold" />
-                                    <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border input-height-1"
-                                            :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                                { value: null, label: 'Pilih Batas Data' },
-                                                { value: 10, label: '10' },
-                                                { value: 20, label: '20' },
-                                                { value: 30, label: '30' },
-                                                { value: 50, label: '50' },
-                                                { value: 100, label: '100' },
-                                            ]" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-md-6 col-6">
-                                    <input-label for="order_by" value="Urutkan" class="fw-semibold" />
-                                    <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border input-height-1"
-                                            :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
-                                                { value: null, label: 'Pilih Urutan' },
-                                                { value: 'desc', label: 'Terbaru' },
-                                                { value: 'asc', label: 'Terlama' },
-                                            ]" />
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
+                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
                 </div>
 
-                <div class="col-xl-12 col-sm-12 col-md-12 col-lg-12">
-                    <div class="d-flex justify-content-start gap-1 mb-2">
-                        <button v-if="perm.includes('customers.delete')" :disabled="!isVisible" @click="deleteSelected"
-                            type="button" class="btn position-relative bg-gradient"
-                            :class="[selectedRow.length > 0 ? 'btn-danger' : 'btn-secondary']">
-                            <i class="fas fa-trash"></i> Hapus
-                            <span v-if="selectedRow.length > 0"
-                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
-                                {{ selectedRow.length }}
-                            </span>
-                        </button>
-                        <span v-if="perm.includes('customers.delete')"
-                            class="border border-1 border-secondary-subtle"></span>
-                        <button v-if="perm.includes('customers.create')" type="button" @click.prevent="create"
-                            class="btn btn-success bg-gradient">
-                            <i class="fas fa-plus"></i> Buat Baru
-                        </button>
-                    </div>
-                    <div class="card mb-4 overflow-hidden rounded-3">
-                        <div v-if="isLoading">
-                            <loader-horizontal message="Sedang memproses data" />
+                <div class="col-xl-12 col-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
+                        <div
+                            class="card-header bg-white py-3 px-4 border-bottom-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">Data Pelanggan</h5>
+                                <p class="text-muted small mb-0">Kelola data pelanggan dan informasi kontak.</p>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <transition name="fade">
+                                    <button v-if="perm.includes('customers.delete') && selectedRow.length > 0"
+                                        @click="deleteSelected" type="button"
+                                        class="btn btn-danger rounded-3 shadow-sm px-3 d-flex align-items-center animate__animated animate__fadeIn">
+                                        <i class="fas fa-trash-alt me-2"></i>
+                                        Hapus ({{ selectedRow.length }})
+                                    </button>
+                                </transition>
+
+                                <button v-if="perm.includes('customers.create')" type="button" @click.prevent="create"
+                                    class="btn btn-primary rounded-3 shadow-sm px-3 fw-bold">
+                                    <i class="fas fa-plus me-1"></i> Pelanggan Baru
+                                </button>
+                            </div>
                         </div>
+
+                        <div v-if="isLoading"
+                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                            style="z-index: 10;">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="fw-bold text-dark">Memproses...</p>
+                            </div>
+                        </div>
+
                         <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
                             <div class="table-responsive">
-                                <table class="table table-hover table-bordered table-striped text-nowrap">
-                                    <thead class="table-dark">
+                                <table class="table table-hover align-middle mb-0 text-nowrap">
+                                    <thead class="bg-light text-uppercase text-secondary fw-bold">
                                         <tr>
-                                            <th v-if="perm.includes('customers.delete')">
+                                            <th class="text-center" v-if="perm.includes('customers.delete')">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input :disabled="!customers?.data.length" type="checkbox"
-                                                        class="form-check-input" :checked="isAllSelected"
-                                                        @change="toggleAll($event)" />
+                                                        class="form-check-input shadow-none cursor-pointer"
+                                                        :checked="isAllSelected" @change="toggleAll($event)" />
                                                 </div>
                                             </th>
-                                            <th v-for="col in header" :key="col.key" class="text-center">
-                                                {{ col.label }}
-                                            </th>
+
+                                            <th class=" text-center" width="50">No</th>
+
+                                            <th class="text-start ps-4">Informasi Pelanggan</th>
+
+                                            <th class="text-start">Kontak</th>
+
+                                            <th class="text-start">Domisili / Lokasi</th>
+
+                                            <th class="text-start" style="width: 25%;">Alamat Lengkap</th>
+
+                                            <th class="text-center">Aksi</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="border-top-0">
+
                                         <tr v-if="!customers?.data.length">
-                                            <td :colspan="header.length + 1" class="text-center py-5 text-muted">
-                                                Tidak ada data tersedia.
+                                            <td :colspan="perm.includes('customers.delete') ? 7 : 6"
+                                                class="text-center py-5">
+                                                <div class="py-4">
+                                                    <i class="fas fa-users-slash fa-3x text-muted opacity-25 mb-3"></i>
+                                                    <p class="text-muted fw-semibold">Belum ada data pelanggan.</p>
+                                                </div>
                                             </td>
                                         </tr>
 
-                                        <tr class="align-middle" v-for="(item, index) in customers?.data" :key="index"
-                                            :class="{ 'table-info': isSelected(item.customer_id) }">
+                                        <tr v-for="(item, index) in customers?.data" :key="index" class="align-middle"
+                                            :class="{ 'bg-primary bg-opacity-10': isSelected(item.customer_id) }">
 
                                             <td class="text-center" v-if="perm.includes('customers.delete')">
                                                 <div class="form-check d-flex justify-content-center">
-                                                    <input type="checkbox" class="form-check-input"
-                                                        :name="item.customer_id" :id="item.customer_id"
+                                                    <input type="checkbox"
+                                                        class="form-check-input shadow-none cursor-pointer"
                                                         :value="item.customer_id" v-model="selectedRow" />
                                                 </div>
                                             </td>
 
-                                            <td class="text-center">
-                                                {{
-                                                    index +
-                                                    1 +
-                                                    (customers?.current_page - 1) * customers?.per_page
-                                                }}
+                                            <td class="text-center text-muted fw-bold small">
+                                                {{ index + 1 + (customers?.current_page - 1) * customers?.per_page }}
                                             </td>
-                                            <td class="text-center text-capitalize">
-                                                <div
-                                                    v-html="highlight(item.national_id_number, filters.keyword) ?? '-'">
+
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold shadow-sm"
+                                                        style="width: 40px; height: 40px; min-width: 40px;">
+                                                        {{ item.customer_name.charAt(0).toUpperCase() }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold text-dark text-capitalize"
+                                                            v-html="highlight(item.customer_name, filters.keyword)">
+                                                        </div>
+                                                        <div class="text-muted d-flex align-items-center gap-1">
+                                                            <i class="fas fa-id-card text-secondary"></i>
+                                                            <span
+                                                                v-html="highlight(item.national_id_number, filters.keyword) ?? '-'"></span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </td>
 
-                                            <td class="text-center">
-                                                <div v-html="highlight(item.customer_name, filters.keyword)"></div>
-                                            </td>
-                                            <td class="text-center">
-                                                <div v-html="highlight(item.number_phone_customer, filters.keyword)">
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span
+                                                        class="bg-success bg-opacity-10 text-success rounded px-2 py-1">
+                                                        <i class="fas fa-phone-alt fa-xs"></i>
+                                                    </span>
+                                                    <span class="fw-semibold text-dark"
+                                                        v-html="highlight(item.number_phone_customer, filters.keyword)"></span>
                                                 </div>
                                             </td>
-                                            <td class="text-center">
-                                                {{ item.city }}
+
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span class="fw-semibold text-dark">{{ item.city }}</span>
+                                                    <small class="text-muted">{{ item.province }}</small>
+                                                </div>
                                             </td>
-                                            <td class="text-center">
-                                                {{ item.province }}
-                                            </td>
-                                            <td class="text-start">
-                                                {{ item.address }}
+
+                                            <td>
+                                                <div class="text-muted text-wrap lh-sm">
+                                                    <i class="fas fa-map-marker-alt text-danger me-1 opacity-50"></i>
+                                                    {{ item.address }}
+                                                </div>
                                             </td>
 
                                             <td class="text-center">
                                                 <div class="dropdown dropstart">
-                                                    <button class="btn btn-secondary bg-gradient" type="button"
-                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <button class="btn btn-light border shadow-sm text-secondary"
+                                                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="fas fa-cog"></i>
                                                     </button>
-                                                    <ul class="dropdown-menu">
+                                                    <ul
+                                                        class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
                                                         <li v-if="perm.includes('customers.edit')">
                                                             <button @click.prevent="edit(item.customer_id)"
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
+                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold">
+                                                                <i class="fas fa-pencil-alt text-info"></i> Ubah Data
                                                             </button>
                                                         </li>
                                                         <li v-if="perm.includes('customers.delete')">
+                                                            <div class="dropdown-divider"></div>
                                                             <button @click.prevent="deleted('customers.deleted', item)"
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
+                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger fw-semibold">
+                                                                <i class="fas fa-trash-alt"></i> Hapus Pelanggan
                                                             </button>
                                                         </li>
                                                     </ul>
@@ -315,19 +407,19 @@ watch(selectedRow, (val) => {
                                 </table>
                             </div>
                         </div>
-                        <div class="card-footer pb-0" v-if="customers?.data.length">
-                            <div
-                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
-                                <div class="mb-2 order-1 order-xl-0">
+
+                        <div class="card-footer bg-white border-top py-3" v-if="customers?.data.length">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                <div class="text-muted small mb-2 mb-md-0">
                                     Menampilkan <strong>{{ props.customers?.from ?? 0 }}</strong> -
-                                    <strong>{{ props.customers?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.customers?.to ?? 0 }}</strong> dari
                                     <strong>{{ props.customers?.total ?? 0 }}</strong> data
                                 </div>
                                 <pagination size="pagination-sm" :links="props.customers?.links" routeName="customers"
                                     :additionalQuery="{
                                         order_by: filters.order_by,
                                         limit: filters.limit,
-                                        keyword: filters.keyword,
+                                        keyword: filters.keyword
                                     }" />
                             </div>
                         </div>
@@ -338,6 +430,23 @@ watch(selectedRow, (val) => {
     </app-layout>
 </template>
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .blur-area {
     transition: all 0.3s ease;
 }

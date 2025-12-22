@@ -9,8 +9,6 @@ defineProps({
 </script>
 <template>
     <div class="invalid-feedback" v-if="message">
-        <small>
-            {{ message }}
-        </small>
+        {{ message }}
     </div>
 </template>

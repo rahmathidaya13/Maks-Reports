@@ -25,6 +25,7 @@ class StoryStatusReportController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only([
+            'keyword',
             'limit',
             'page',
             'order_by',

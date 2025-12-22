@@ -32,6 +32,10 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    inputClass: {
+        type: [String, Array, Object],
+        default: '',
+    }
 });
 
 const inputRef = ref(null);
@@ -105,7 +109,7 @@ defineExpose({ focus: () => inputRef.value?.focus() });
 </script>
 
 <template>
-    <input type="text" :name="props.name" :id="props.name" :placeholder="props.placeholder" :class="['form-control text-bg-grey', {
+    <input type="text" :name="props.name" :id="props.name" :placeholder="props.placeholder" :class="['form-control text-bg-grey', props.inputClass, {
         'is-invalid': isInvalid && $page.props.errors[props.name],
         'is-valid': isValid && modelValue && !$page.props.errors[props.name]
     }]" @input="handleInput" :value="modelValue" ref="inputRef" />

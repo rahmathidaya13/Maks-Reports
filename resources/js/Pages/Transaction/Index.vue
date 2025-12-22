@@ -2,14 +2,28 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
-import { swalAlert, swalConfirmDelete } from "../../helpers/swalHelpers";
+import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
 import { highlight } from "@/helpers/highlight";
 import { formatText } from "@/helpers/formatText";
 import moment from "moment";
 moment.locale('id');
 
 const page = usePage();
-const message = computed(() => page.props.flash.message || "");
+const messageTheme = ref('')
+const message = computed(() => {
+    if (page.props.flash.message) {
+        messageTheme.value = 'success'
+        page.props.flash.message
+    } else if (page.props.flash.warning) {
+        messageTheme.value = 'warning'
+        page.props.flash.warning
+    } else {
+        messageTheme.value = ''
+    }
+
+    return page.props.flash.message || page.props.flash.warning
+});
+
 const props = defineProps({
     transaction: Object,
     filters: Object,
@@ -101,7 +115,7 @@ const deleted = (nameRoute, data) => {
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
             loaderActive.value?.show("Sedang memuat data...");
-            router.delete(route(nameRoute, data), {
+            router.delete(route(nameRoute, data.transaction_id), {
                 onFinish: () => loaderActive.value?.hide(),
                 preserveScroll: false,
                 replace: true
@@ -174,11 +188,28 @@ function formatCurrency(value) {
     }).format(value)
 }
 
+// SETUP DATE
 const getPaymentDate = (payments, type) => {
     if (!payments) return '-'
     const p = payments.find(p => p.payment_type === type);
     return p ? moment(p.payment_date).format('DD/MM/YYYY') : '-'
 }
+function daysTranslate(dayValue) {
+    const dayConvert = {
+        "Sunday": "Minggu",
+        "Monday": "Senin",
+        "Tuesday": "Selasa",
+        "Wednesday": "Rabu",
+        "Thursday": "Kamis",
+        "Friday": "Jumat",
+        "Saturday": "Sabtu",
+    };
+    const dayName = moment(dayValue).format('dddd');
+    const dateFormat = moment(dayValue).format('DD/MM/YYYY');
+    return dayConvert[dayName] + ", " + dateFormat ?? dayName;
+}
+// END DATE
+
 // cek apakah ada filter yang terpilih
 const hasActiveFilter = computed(() => {
     return (
@@ -290,176 +321,229 @@ const fileterFields = computed(() => [
             <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-money-bill" title="Daftar Transaksi"
                 :items="[{ text: 'Daftar Transaksi' }]" />
-            <callout type="success" :duration="10" :message="message" />
-            <div class="row">
+
+            <callout :type="messageTheme" :duration="10" :message="message" />
+
+            <div class="row pb-3">
                 <div class="col-xl-12 col-12 mb-3">
                     <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
                 </div>
 
-                <div class="col-xl-12 col-sm-12 col-md-12 col-lg-12">
-                    <div class="d-flex justify-content-start gap-1 mb-2">
-                        <button v-if="perm.includes('transaction.delete')" :disabled="!isVisible"
-                            @click="deleteSelected" type="button" class="btn position-relative bg-gradient"
-                            :class="[selectedRow.length > 0 ? 'btn-danger' : 'btn-secondary']">
-                            <i class="fas fa-trash"></i> Hapus
-                            <span v-if="selectedRow.length > 0"
-                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
-                                {{ selectedRow.length }}
-                            </span>
-                        </button>
-                        <span v-if="perm.includes('transaction.delete')"
-                            class="border border-1 border-secondary-subtle"></span>
-                        <button v-if="perm.includes('transaction.create')" type="button" @click.prevent="create"
-                            class="btn btn-success bg-gradient">
-                            <i class="fas fa-plus"></i> Buat Transaksi
-                        </button>
-                    </div>
-                    <div class="card mb-4 overflow-hidden rounded-3">
-                        <div v-if="isLoading">
-                            <loader-horizontal message="Sedang memproses data" />
+                <div class="col-xl-12 col-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
+                        <div
+                            class="card-header bg-white py-3 px-4 border-bottom-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">Data Transaksi</h5>
+                                <p class="text-muted small mb-0">Kelola riwayat transaksi dan pembayaran pelanggan.</p>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <transition name="fade">
+                                    <button v-if="perm.includes('transaction.delete') && selectedRow.length > 0"
+                                        @click="deleteSelected" type="button"
+                                        class="btn btn-danger rounded-3 shadow-sm px-3 d-flex align-items-center">
+                                        <i class="fas fa-trash-alt me-2"></i>
+                                        Hapus ({{ selectedRow.length }})
+                                    </button>
+                                </transition>
+
+                                <button v-if="perm.includes('transaction.create')" type="button" @click.prevent="create"
+                                    class="btn btn-primary rounded-3 shadow-sm px-3 fw-bold">
+                                    <i class="fas fa-plus me-1"></i> Transaksi Baru
+                                </button>
+                            </div>
                         </div>
+
+                        <div v-if="isLoading"
+                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                            style="z-index: 10;">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="fw-bold text-dark">Memproses...</p>
+                            </div>
+                        </div>
+
                         <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
-                            <div :class="['table-responsive', transaction?.data.length <= 5 ? 'vh-100' : '']">
-                                <table class=" table table-hover table-bordered table-striped text-nowrap">
-                                    <thead class="table-dark">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle text-nowrap">
+                                    <thead class="bg-light text-uppercase text-secondary fw-bold">
                                         <tr>
-                                            <th v-if="perm.includes('transaction.delete')">
+                                            <th class="text-center" v-if="perm.includes('transaction.delete')">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input :disabled="!transaction?.data.length" type="checkbox"
-                                                        class="form-check-input" :checked="isAllSelected"
-                                                        @change="toggleAll($event)" />
+                                                        class="form-check-input shadow-none cursor-pointer"
+                                                        :checked="isAllSelected" @change="toggleAll($event)" />
                                                 </div>
                                             </th>
-                                            <th v-for="col in header" :key="col.key" class="text-center">
+                                            <th v-for="col in header" :key="col.key" class="text-center text-nowrap ">
                                                 {{ col.label }}
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="border-top-0">
                                         <tr v-if="!transaction?.data.length">
-                                            <td :colspan="header.length + 1" class="text-center py-5 text-muted">
-                                                Tidak ada data tersedia.
+                                            <td :colspan="header.length + (perm.includes('transaction.delete') ? 1 : 0)"
+                                                class="text-center py-5">
+                                                <div class="py-4">
+                                                    <i class="fas fa-inbox fa-3x text-muted opacity-25 mb-3"></i>
+                                                    <p class="text-muted fw-semibold">Belum ada data transaksi.</p>
+                                                </div>
                                             </td>
                                         </tr>
 
-                                        <tr class="align-middle" v-for="(item, index) in transaction?.data" :key="index"
-                                            :class="{ 'table-info': isSelected(item.transaction_id) }">
+                                        <tr v-for="(item, index) in transaction?.data" :key="index"
+                                            :class="{ 'bg-primary bg-opacity-10': isSelected(item.transaction_id) }">
 
                                             <td class="text-center" v-if="perm.includes('transaction.delete')">
                                                 <div class="form-check d-flex justify-content-center">
-                                                    <input type="checkbox" class="form-check-input"
-                                                        :name="item.transaction_id" :id="item.transaction_id"
+                                                    <input type="checkbox"
+                                                        class="form-check-input shadow-none cursor-pointer"
                                                         :value="item.transaction_id" v-model="selectedRow" />
                                                 </div>
                                             </td>
 
-                                            <td class="text-center">
-                                                {{
-                                                    index +
-                                                    1 +
-                                                    (transaction?.current_page - 1) * transaction?.per_page
+                                            <td class="text-center text-muted fw-bold small">
+                                                {{ index + 1 + (transaction?.current_page - 1) * transaction?.per_page
                                                 }}
                                             </td>
-                                            <td class="text-center text-capitalize">
-                                                {{ moment(item.transaction_date).format('DD/MM/YYYY') }}
+
+                                            <td class="text-center">
+                                                <div class="fw-semibold text-dark">{{
+                                                    daysTranslate(item.transaction_date).split(',')[0] }}</div>
+                                                <div class="small text-muted" style="font-size: 0.9rem;">{{
+                                                    daysTranslate(item.transaction_date).split(',')[1] }}</div>
                                             </td>
-                                            <td class="text-start">
-                                                <ul class="list-group lh-1 rounded-0">
-                                                    <li
-                                                        class="list-group-item d-flex justify-content-between align-items-center fw-semibold">
+
+                                            <td class="text-start" style="min-width: 200px;">
+                                                <div class="d-flex flex-column gap-2">
+                                                    <div
+                                                        class="d-flex justify-content-between align-items-center border rounded-3 p-1 px-2 bg-light bg-opacity-50">
                                                         <span
-                                                            class="badge text-bg-warning rounded-0 me-5">DP(50%)</span>
-                                                        {{ getPaymentDate(item.payments, 'payment') }}
-                                                    </li>
-                                                    <li
-                                                        class="list-group-item d-flex justify-content-between align-items-center fw-semibold">
-                                                        <span class="badge text-bg-success rounded-0 me-5">Lunas</span>
-                                                        {{ getPaymentDate(item.payments, 'repayment') }}
-                                                    </li>
-                                                </ul>
-                                            </td>
-                                            <td class="text-center text-capitalize">
-                                                <div
-                                                    v-html="highlight(item.customer.customer_name, filters.keyword) ?? '-'">
+                                                            class="badge bg-warning text-dark bg-opacity-25 rounded-pill"
+                                                            style="font-size: 0.65rem;">
+                                                            DP 50%
+                                                        </span>
+                                                        <span class="small fw-bold text-dark">{{
+                                                            getPaymentDate(item.payments, 'payment') }}
+                                                        </span>
+                                                    </div>
+                                                    <div v-if="item.status === 'repayment'"
+                                                        class="d-flex justify-content-between align-items-center border rounded-3 p-1 px-2 bg-success bg-opacity-10">
+                                                        <span
+                                                            class="badge bg-success text-success bg-opacity-25 rounded-pill"
+                                                            style="font-size: 0.65rem;">Lunas</span>
+                                                        <span class="small fw-bold text-success">{{
+                                                            getPaymentDate(item.payments, 'repayment') }}</span>
+                                                    </div>
                                                 </div>
                                             </td>
 
                                             <td class="text-center">
-                                                <div v-html="highlight(item.product.name, filters.keyword)"></div>
+                                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                                    <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center"
+                                                        style="width: 30px; height: 30px;">
+                                                        <i class="fas fa-user-circle"></i>
+                                                    </div>
+                                                    <span class="fw-semibold text-capitalize text-dark"
+                                                        v-html="highlight(item.customer?.customer_name, filters.keyword) ?? '-'"></span>
+                                                </div>
                                             </td>
-                                            <td class="text-center fw-bold">
-                                                {{ formatCurrency(item.price_original) }}
+
+                                            <td class="text-center">
+                                                <span
+                                                    class="badge bg-secondary bg-opacity-25 text-dark border border-secondary border-opacity-10 fw-normal text-capitalize"
+                                                    style="font-size:0.9rem;">
+                                                    <span
+                                                        v-html="highlight(item.product?.name, filters.keyword)"></span>
+                                                </span>
                                             </td>
-                                            <td class="text-center fw-bold">
-                                                {{ formatCurrency(item.price_discount) }}
+
+                                            <td class="text-end pe-4">
+                                                <div class="text-dark fw-bold">{{ formatCurrency(item.price_original) }}
+                                                </div>
                                             </td>
-                                            <td class="text-center fw-bold">
+                                            <td class="text-end pe-4">
+                                                <div class="text-danger text-decoration-line-through">
+                                                    {{ formatCurrency(item.price_discount) }}
+                                                </div>
+                                            </td>
+
+                                            <td class="text-end fw-bold text-primary pe-4" style="font-size: 1rem;">
                                                 {{ formatCurrency(item.price_final) }}
                                             </td>
-                                            <td class="text-center text-success fw-bold">
+
+                                            <td class="text-end fw-bold text-success pe-4">
                                                 {{ formatCurrency(item.total_paid) }}
                                             </td>
-                                            <td class="fw-bold text-danger text-center">
-                                                {{ formatCurrency(item.price_final - item.total_paid) }}
+
+                                            <td class="text-end pe-4">
+                                                <span class="fw-bold"
+                                                    :class="(item.price_final - item.total_paid) > 0 ? 'text-danger' : 'text-muted'">
+                                                    {{ formatCurrency(item.price_final - item.total_paid) }}
+                                                </span>
                                             </td>
+
                                             <td class="text-center">
-                                                <span class="badge rounded-0 p-2 "
-                                                    :class="item.status === 'repayment' ? 'bg-success' : 'bg-warning'">
+                                                <span class="badge rounded-pill px-3 py-2 fw-bold"
+                                                    :class="item.status === 'repayment' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning text-warning-emphasis'">
                                                     <i
-                                                        :class="['me-1', item.status === 'repayment' ? 'fas fa-check-circle' : 'fas fa-circle']"></i>
+                                                        :class="['me-1', item.status === 'repayment' ? 'fas fa-check-circle' : 'fas fa-clock']"></i>
                                                     {{ item.status === 'repayment' ? 'Lunas' : 'Belum Lunas' }}
                                                 </span>
                                             </td>
-                                            <td class="text-start">
-                                                <div class="d-inline-flex gap-1">
+
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-1">
+
                                                     <button :disabled="item.status !== 'payment'"
                                                         @click.prevent="repayment(item.transaction_id)"
-                                                        class="btn bg-gradient"
-                                                        :class="[item.status === 'payment' ? ' btn-outline-success' : ' btn-outline-secondary']">
-                                                        <i class="fas fa-cash-register"></i>
-                                                        Pelunasan
+                                                        class="btn d-flex align-items-center gap-1 shadow-sm px-3"
+                                                        :class="[item.status === 'payment' ? 'btn-success text-white' : 'btn-light text-muted border']"
+                                                        title="Pelunasan">
+                                                        <i class="fas fa-cash-register me-1"></i>
+                                                        <span class="d-none d-xl-inline">Bayar</span>
                                                     </button>
 
-
-                                                    <div class="dropdown dropstart">
-                                                        <button class="btn btn-info text-white bg-gradient"
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-light border shadow-sm text-secondary"
                                                             type="button" data-bs-toggle="dropdown"
                                                             aria-expanded="false">
                                                             <i class="fas fa-cog"></i>
                                                         </button>
-                                                        <ul class="dropdown-menu">
+                                                        <ul
+                                                            class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
                                                             <li v-if="perm.includes('transaction.edit')">
                                                                 <button @click.prevent="edit(item.transaction_id)"
-                                                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                    Ubah <i
-                                                                        class="bi bi-pencil-square text-info fs-5"></i>
+                                                                    class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold">
+                                                                    <i class="fas fa-pencil-alt text-info"></i> Ubah
+                                                                    Transaksi
                                                                 </button>
                                                             </li>
                                                             <li v-if="perm.includes('transaction.delete')">
+                                                                <div class="dropdown-divider"></div>
                                                                 <button
                                                                     @click.prevent="deleted('transaction.deleted', item)"
-                                                                    class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                    Hapus <i
-                                                                        class="bi bi-trash-fill text-danger fs-5"></i>
+                                                                    class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger fw-semibold">
+                                                                    <i class="fas fa-trash-alt"></i> Hapus
                                                                 </button>
                                                             </li>
                                                         </ul>
                                                     </div>
-
                                                 </div>
-
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        <div class="card-footer pb-0" v-if="transaction?.data.length">
-                            <div
-                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
-                                <div class="mb-2 order-1 order-xl-0">
+
+                        <div class="card-footer bg-white border-top py-3" v-if="transaction?.data.length">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                <div class="text-muted mb-2 mb-md-0">
                                     Menampilkan <strong>{{ props.transaction?.from ?? 0 }}</strong> -
-                                    <strong>{{ props.transaction?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.transaction?.to ?? 0 }}</strong> dari
                                     <strong>{{ props.transaction?.total ?? 0 }}</strong> data
                                 </div>
                                 <pagination size="pagination-sm" :links="props.transaction?.links"
@@ -479,6 +563,27 @@ const fileterFields = computed(() => [
     </app-layout>
 </template>
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.vh-50 {
+    height: 50vh;
+}
+
 .blur-area {
     transition: all 0.3s ease;
 }
@@ -488,5 +593,12 @@ const fileterFields = computed(() => [
     pointer-events: none;
     user-select: none;
     opacity: 0.6;
+}
+
+
+
+.list-group {
+    --bs-list-group-bg: none;
+    --bs-list-group-border-width: none;
 }
 </style>

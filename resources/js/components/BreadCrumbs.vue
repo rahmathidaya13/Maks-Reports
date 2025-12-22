@@ -24,32 +24,70 @@ defineProps({
 });
 </script>
 <template>
-    <div class="pagetitle">
-        <nav class="d-lg-flex flex flex-wrap flex-row flex-col justify-content-between align-items-center py-lg-3 pt-3">
-            <h3 class="fw-bold">
-                <i v-if="icon" :class="icon"></i>
-                {{ title }}
-            </h3>
-            <ol class="breadcrumb align-items-center small">
-                <li v-if="modeButton" class="breadcrumb-item">
+    <div class="pagetitle mb-4 py-2">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+
+            <div class="d-flex align-items-center">
+                <div v-if="icon"
+                    class="bg-white text-primary shadow-sm rounded-3 d-flex align-items-center justify-content-center me-3"
+                    style="width: 45px; height: 45px; font-size: 1.2rem;">
+                    <i :class="icon"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0 ls-tight text-capitalize">{{ title }}</h3>
+                </div>
+            </div>
+
+            <nav aria-label="breadcrumb">
+
+                <div v-if="modeButton">
                     <slot name="modeButton" />
-                </li>
-                <li v-if="home && !modeButton" class="breadcrumb-item">
-                    <Link class="text-decoration-none" :href="route('home')">Home</Link>
-                </li>
-                <template v-if="!modeButton">
-                    <li v-for="(item, index) in items" :key="index"
-                        :class="['breadcrumb-item', { 'active': index === items.length - 1 }]">
-                        <template v-if="index === items.length - 1">
-                            {{ item.text }}
-                        </template>
-                        <template v-else>
-                            <Link class="text-decoration-none" :href="item.url">{{
-                            item.text }}</Link>
-                        </template>
+                </div>
+
+                <ol v-else
+                    class="breadcrumb bg-white shadow-sm rounded-pill px-4 py-2 mb-0 align-items-center m-0 border border-light">
+
+                    <li v-if="home" class="breadcrumb-item">
+                        <Link :href="route('home')"
+                            class="text-decoration-none text-muted hover-primary d-flex align-items-center">
+                            <i class="fas fa-home"></i>
+                        </Link>
                     </li>
-                </template>
-            </ol>
-        </nav>
+
+                    <li v-for="(item, index) in items" :key="index" class="breadcrumb-item text-capitalize"
+                        :class="{ 'active': index === items.length - 1 }">
+
+                        <span v-if="index === items.length - 1" class="fw-bold text-primary">
+                            {{ item.text }}
+                        </span>
+
+                        <Link v-else :href="item.url" class="text-decoration-none text-muted hover-primary fw-medium">
+                            {{ item.text }}
+                        </Link>
+                    </li>
+                </ol>
+            </nav>
+        </div>
     </div>
 </template>
+<style scoped>
+/* Transisi halus saat hover link breadcrumb */
+.hover-primary {
+    transition: color 0.2s ease;
+}
+
+.hover-primary:hover {
+    color: var(--bs-primary) !important;
+}
+
+/* Custom separator breadcrumb menjadi panah kecil (chevron) agar lebih modern */
+.breadcrumb-item+.breadcrumb-item::before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f054";
+    /* Code untuk fa-chevron-right */
+    font-size: 0.65rem;
+    color: #b0b0b0;
+    padding-top: 4px;
+}
+</style>

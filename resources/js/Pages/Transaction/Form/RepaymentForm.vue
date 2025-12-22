@@ -36,7 +36,7 @@ const title = ref("")
 const icon = ref("fas fa-money-bill-wave")
 const url = ref(route('transaction'))
 onMounted(() => {
-    title.value = `Pelunasan Transaksi - ${props.transaction.customer.customer_name}`
+    title.value = `Pelunasan Transaksi`
 })
 
 const breadcrumbItems = computed(() => {
@@ -87,62 +87,134 @@ function formatCurrency(value) {
                     Kembali
                 </Link>
             </div>
-            <div class="row">
-                <div class="col-xl-12 col-sm-12 pb-3">
-                    <div class="card overflow-hidden rounded-3 shadow-sm">
-                        <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
-                            <i class="fas fa-info-circle me-1 text-light"></i>
-                            Form Pelunasan Transaksi
-                        </h5>
-                        <div v-if="form.processing">
-                            <loader-horizontal
-                                :message="props.transaction?.transaction_id ? 'Sedang memperbarui data' : 'Sedang menyimpan data'" />
+            <div class="row justify-content-center mt-3">
+                <div class="col-xl-6 col-12 pb-5">
+                    <div class="card border-0 shadow rounded-4 overflow-hidden">
+
+                        <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">Pelunasan Transaksi {{
+                                        transaction.customer.customer_name }}</h5>
+                                    <p class="text-muted small mb-0">Selesaikan pembayaran untuk pesanan ini.</p>
+                                </div>
+                                <div class="icon-shape bg-light text-primary rounded-circle p-3">
+                                    <i class="fas fa-wallet fa-lg"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
-                            <div class="alert alert-light border mb-3">
-                                <p class="mb-1">
-                                    Total Harga :
-                                    <strong>{{ formatCurrency(transaction.price_final) }}</strong>
-                                </p>
-                                <p class="mb-1">
-                                    Sudah Dibayar :
-                                    <strong class="text-success">
-                                        {{ formatCurrency(totalPaid) }}
-                                    </strong>
-                                </p>
-                                <p class="mb-0">
-                                    Sisa Pembayaran :
-                                    <strong class="text-danger">
+
+                        <div v-if="form.processing"
+                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                            style="z-index: 10;">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="fw-bold text-dark">Memproses...</p>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4">
+
+                            <div
+                                class="bg-primary bg-opacity-10 rounded-4 p-4 mb-4 text-center border border-primary border-opacity-25 position-relative overflow-hidden">
+
+                                <i class="fas fa-file-invoice-dollar position-absolute bottom-0 end-0 text-primary opacity-25"
+                                    style="font-size: 6rem; transform: rotate(-20deg) translate(20px, 10px);"></i>
+
+                                <div class="position-relative" style="z-index: 1;">
+                                    <span
+                                        class="badge bg-white text-primary border border-primary border-opacity-25 mb-2 px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="fas fa-tag me-1"></i> Pembayaran Untuk
+                                    </span>
+
+                                    <h3 class="fw-bolder text-dark mb-0 text-break px-3">
+                                        {{ transaction.product.name ?? 'Nama Produk/Jasa' }}
+                                    </h3>
+                                </div>
+
+                                <hr class="border-primary border-opacity-25 border-2 border-dashed mx-auto w-75 my-4 position-relative"
+                                    style="z-index: 1;">
+
+                                <div class="position-relative" style="z-index: 1;">
+                                    <p class="text-uppercase text-primary fw-bold small mb-1 ls-1">Sisa Yang Harus
+                                        Dibayar</p>
+                                    <h1 class="display-4 fw-bolder text-primary mb-0">
                                         {{ formatCurrency(remaining) }}
-                                    </strong>
-                                </p>
+                                    </h1>
+                                </div>
                             </div>
 
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>Progress Pembayaran</span>
+                                        <span>{{ Math.round((totalPaid / transaction.price_final) * 100) }}%</span>
+                                    </div>
+                                    <div class="progress" style="height: 10px; border-radius: 10px;">
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                            :style="{ width: (totalPaid / transaction.price_final) * 100 + '%' }">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="border rounded-3 p-2 bg-light">
+                                        <small class="text-muted d-block">Total Tagihan</small>
+                                        <span class="fw-bold text-dark">{{ formatCurrency(transaction.price_final)
+                                        }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded-3 p-2 bg-light">
+                                        <small class="text-muted d-block">Sudah Dibayar</small>
+                                        <span class="fw-bold text-success">{{ formatCurrency(totalPaid) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary border my-4">
+
                             <form-wrapper @submit="isSubmit">
-                                <div class="mb-3">
-                                    <input-label class="fw-bold" for="payment_method" value="Metode Pembayaran" />
-                                    <select-input name="payment_method" :options="[
-                                        { value: null, label: 'Pilih Metode Pembayaran' },
-                                        { value: 'cash', label: 'Cash' },
-                                        { value: 'transfer', label: 'Transfer' },
-                                        { value: 'debit', label: 'Debit' }
-                                    ]" v-model="form.payment_method" />
-                                    <input-error :message="form.errors.payment_method" />
+
+                                <div class="mb-4">
+                                    <input-label class="fw-bold mb-2 text-dark" for="payment_method"
+                                        value="Pilih Metode Pembayaran" />
+
+                                    <select-input
+                                        select-class="form-select-lg shadow-none border-secondary border-opacity-25"
+                                        name="payment_method" :options="[
+                                            { value: null, label: '— Pilih Metode —' },
+                                            { value: 'cash', label: '💵 Tunai (Cash)' },
+                                            { value: 'transfer', label: '🏦 Transfer Bank' },
+                                            { value: 'debit', label: '💳 Kartu Debit' }
+                                        ]" v-model="form.payment_method" />
+                                    <input-error :message="form.errors.payment_method" class="mt-2" />
                                 </div>
 
-                                <div class="callout callout-info rounded-0 mb-3">
-                                    <ul class="mb-0 ps-3">
-                                        <li>Nominal pelunasan akan otomatis sesuai sisa pembayaran.</li>
-                                        <li>Transaksi akan ditandai <b>LUNAS</b> setelah proses ini.</li>
-                                    </ul>
+                                <div
+                                    class="alert alert-info border-0 d-flex align-items-center mb-4 bg-info bg-opacity-10 text-info-emphasis">
+                                    <i class="fas fa-info-circle me-3 fs-4"></i>
+                                    <div class="small lh-sm">
+                                        Status transaksi akan otomatis berubah menjadi <strong>LUNAS</strong> setelah
+                                        pembayaran ini diproses.
+                                    </div>
                                 </div>
 
-                                <div class="d-grid d-xl-block">
-                                    <button class="btn btn-success px-4" :disabled="!canSubmit || form.processing">
-                                        <i class="fas fa-check-circle me-1"></i>
-                                        Bayar & Lunasi
+                                <div class="d-grid">
+                                    <button class="btn btn-primary btn-lg rounded-3 py-3 fw-bold shadow-sm"
+                                        :class="{ 'disabled': !canSubmit || form.processing }"
+                                        :disabled="!canSubmit || form.processing">
+                                        <span v-if="!form.processing">
+                                            <i class="fas fa-check-circle me-2"></i> Bayar & Lunasi Sekarang
+                                        </span>
+                                        <span v-else>
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"
+                                                aria-hidden="true"></span>
+                                            Memproses...
+                                        </span>
                                     </button>
                                 </div>
+
                             </form-wrapper>
                         </div>
                     </div>

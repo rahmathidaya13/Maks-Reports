@@ -22,6 +22,7 @@ const props = defineProps({
 });
 
 const filters = reactive({
+    keyword: props.filters.keyword ?? '',
     limit: props.filters.limit ?? 10,
     order_by: props.filters.order_by ?? "desc",
     page: props.filters?.page ?? 1,
@@ -76,8 +77,8 @@ const searchByDate = debounce((e) => {
 
 // trigger button untuk melakukan pencarian berdasarkan tanggal
 const applyDateRange = () => {
-    isLoading.value = true
     if (filters.start_date && filters.end_date) {
+        isLoading.value = true
         filters.page = 1;
         searchByDate()
         return
@@ -101,7 +102,11 @@ watch(
 }
 );
 // Watcher untuk limit dan order_by saja
-watch([() => filters.limit, () => filters.order_by], () => {
+watch([
+    () => filters.limit,
+    () => filters.order_by,
+    () => filters.keyword,
+], () => {
     filters.page = 1;
     searchByDate()
 }, {
@@ -235,11 +240,97 @@ const resetField = () => {
     form.end_date_dw = '';
 }
 // =========Batas Fungsi untuk Tampilkan Modal========== //
-const inputRef = ref(null);
-onMounted(() => {
-    inputRef.value.focus();
-})
+// const inputRef = ref(null);
+// onMounted(() => {
+//     inputRef.value.focus();
+// })
 const perm = page.props.auth.user
+
+const fileterFields = computed(() => [
+    {
+        key: 'keyword',
+        label: 'Pencarian',
+        type: 'text',
+        col: 'col-xl-8 col-12',
+        props: {
+            placeholder: 'Masukan ID Report',
+            inputClass: 'border-0 border input-height-1',
+            isValid: false,
+        }
+    },
+    {
+        key: 'limit',
+        label: 'Batas',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-0 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Batas Data' },
+            { value: 10, label: '10' },
+            { value: 20, label: '20' },
+            { value: 30, label: '30' },
+            { value: 50, label: '50' },
+            { value: 100, label: '100' },
+        ]
+    },
+    {
+        key: 'order_by',
+        label: 'Urutan',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        props: {
+            selectClass: 'border-0 border input-height-1',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Urutan' },
+            { value: 'desc', label: 'Terbaru' },
+            { value: 'asc', label: 'Terlama' },
+        ]
+    },
+    {
+        key: 'start_date',
+        label: 'Tanggal Awal',
+        type: 'date',
+        col: 'col-xl-6 col-md-6 col-6',
+        props: {
+            inputClass: 'border-0 border input-height-1',
+            isValid: false,
+        }
+    },
+    {
+        key: 'end_date',
+        label: 'Tanggal Akhir',
+        type: 'date',
+        col: 'col-xl-6 col-md-6 col-6',
+        props: {
+            inputClass: 'border-0 border input-height-1',
+            isValid: false,
+        }
+    },
+
+    //  button trigger
+    {
+        key: 'reset',
+        label: 'Bersihkan',
+        type: 'button',
+        name: 'reset',
+        class: 'btn-secondary',
+        icon: 'fas fa-undo',
+    },
+    {
+        key: 'apply',
+        label: 'Terapkan',
+        type: 'button',
+        name: 'apply',
+        class: 'btn-secondary',
+        icon: 'fas fa-filter',
+        handler: () => applyDateRange()
+    },
+]);
 </script>
 <template>
 
@@ -249,104 +340,71 @@ const perm = page.props.auth.user
             <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-sticky-note" title="Laporan Update Status"
                 :items="[{ text: 'Laporan Update Status' }]" />
-            <alert :duration="10" :message="message" />
+            <callout type="success" :duration="10" :message="message" />
+
             <div class="row">
-                <div class="col-xl-12 col-sm-12">
-                    <div class="card mb-3 rounded-3 overflow-hidden shadow-sm pb-3">
-                        <div class="card-header text-bg-dark p-3">
-                            <h5 class="card-title text-start mb-0 text-uppercase"> <i class="fas fa-filter"></i>
-                                Filter Laporan</h5>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="row align-items-center g-2">
-                                <div class="col-xl-4 col-sm-6 col-md-3">
-                                    <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
-                                    <div class="input-group">
-                                        <text-input ref="inputRef" name="start_date" v-model="filters.start_date"
-                                            type="date" :is-valid="false" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-4 col-sm-6 col-md-3">
-                                    <input-label class="fw-bold mb-1" for="end_date" value="Tanggal Akhir:" />
-                                    <div class="input-group">
-                                        <text-input name="end_date" v-model="filters.end_date" type="date"
-                                            :is-valid="false" />
-                                        <base-button :disabled="isDisableBtnDatePicker" @click="applyDateRange"
-                                            class="bg-gradient"
-                                            :variant="isDisableBtnDatePicker ? 'secondary' : 'primary'" name="set"
-                                            label="Atur" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-sm-6 col-md-3">
-                                    <input-label class="fw-bold mb-1" for="limit" value="Batas:" />
-                                    <div class="input-group">
-                                        <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                            { value: 10, label: 'default' },
-                                            { value: 20, label: '20' },
-                                            { value: 50, label: '50' },
-                                            { value: 100, label: '100' },
-                                        ]" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-sm-6 col-md-3">
-                                    <input-label class="fw-bold mb-1" for="order_by" value="Urutkan:" />
-                                    <div class="input-group">
-                                        <select-input :is-valid="false" v-model="filters.order_by" name="order_by"
-                                            :options="[
-                                                { value: 'desc', label: 'Terbaru' },
-                                                { value: 'asc', label: 'Terlama' },
-                                            ]" />
-                                    </div>
+                <div class="col-12 col-xl-12">
+                    <div class="col-xl-12 col-12 mb-3">
+                        <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
+                    </div>
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
+                        <div
+                            class="card-header bg-white py-3 px-4 border-bottom-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">Laporan Status</h5>
+                                <p class="text-muted small mb-0">Rekapitulasi update status harian.</p>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <transition name="fade">
+                                    <button
+                                        v-if="perm.permissions.includes('status.report.delete') && selected.length > 0"
+                                        @click="deletedAll" :disabled="!isVisibleButton" type="button"
+                                        class="btn btn-danger rounded-3 shadow-sm px-3 d-flex align-items-center animate__animated animate__fadeIn">
+                                        <i class="fas fa-trash-alt me-2"></i>
+                                        Hapus ({{ selected.length }})
+                                    </button>
+                                </transition>
+
+                                <base-button v-if="perm.permissions.includes('status.report.export')"
+                                    class="btn-success rounded-3 shadow-sm text-white" icon="fas fa-download"
+                                    @click="openModal" name="unduh" label="Unduh" />
+
+                                <div v-if="perm.permissions.includes('status.report.create')">
+                                    <base-button @click="createReport" class="btn-primary rounded-3 shadow-sm fw-bold"
+                                        name="create" label="Buat Laporan" icon="fas fa-plus" />
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
-                        <div v-if="perm.permissions.includes('status.report.delete')">
-                            <button :class="[selected.length > 0 ? 'btn-danger' : 'btn-secondary']"
-                                :disabled="!isVisibleButton" @click="deletedAll" type="button"
-                                class="btn position-relative bg-gradient">
-                                <i class="fas fa-trash"></i> Hapus
-                                <span v-if="selected.length > 0"
-                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
-                                    {{ selected.length }}
-                                </span>
-                            </button>
-                        </div>
-
-                        <div class="d-inline-flex ms-auto gap-1 align-items-center">
-
-                            <base-button v-if="perm.permissions.includes('status.report.export')" variant="success"
-                                icon="fas fa-download" @click="openModal" class="bg-gradient" name="unduh"
-                                label="Unduh" />
-
-                            <div v-if="perm.permissions.includes('status.report.create')" class="position-relative">
-                                <base-button @click="createReport" class="bg-gradient" name="create"
-                                    label="Buat Laporan" icon="fas fa-plus" />
+                        <div v-if="isLoading"
+                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                            style="z-index: 10;">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="fw-bold text-dark">Memproses...</p>
                             </div>
-                        </div>
-                    </div>
-                    <div class="card mb-4 overflow-hidden rounded-3 shadow-sm">
-                        <div v-if="isLoading">
-                            <loader-horizontal message="Sedang memproses data" />
                         </div>
 
                         <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
                             <div class="table-responsive">
-                                <table class="table align-middle table-hover text-nowrap table-striped table-bordered">
-                                    <thead class="table-dark position-sticky">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light text-uppercase text-secondary fw-bold"
+                                        style="letter-spacing: 0.5px;">
                                         <tr>
-                                            <th v-if="perm.permissions.includes('status.report.delete')">
+                                            <th class="text-center" width="50"
+                                                v-if="perm.permissions.includes('status.report.delete')">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input :disabled="!storyReport?.data.length" type="checkbox"
-                                                        class="form-check-input" :checked="isAllSelected"
-                                                        @change="toggleAll($event)" />
+                                                        class="form-check-input shadow-none cursor-pointer"
+                                                        :checked="isAllSelected" @change="toggleAll($event)" />
                                                 </div>
                                             </th>
+
                                             <th class="text-center">No</th>
-                                            <th class="text-center">ID Status</th>
-                                            <th class="text-center">Tanggal</th>
+                                            <th class="text-center">ID Report</th>
+                                            <th class="text-start">Tanggal & Info</th>
                                             <th class="text-center">Jam</th>
                                             <th class="text-center">Jumlah Status</th>
                                             <th class="text-center">Dibuat</th>
@@ -355,83 +413,105 @@ const perm = page.props.auth.user
                                         </tr>
                                     </thead>
 
-                                    <tbody>
+                                    <tbody class="border-top-0">
+
                                         <tr v-if="!storyReport?.data.length">
-                                            <td :colspan="(perm.permissions.includes('status.report.delete') ? 8 : 9) + 1"
-                                                class="text-center text-muted py-5">
-                                                Tidak ada data ditemukan
+                                            <td :colspan="(perm.permissions.includes('status.report.delete') ? 9 : 8)"
+                                                class="text-center py-5">
+                                                <div class="py-4">
+                                                    <i class="fas fa-folder-open fa-3x text-muted opacity-25 mb-3"></i>
+                                                    <p class="text-muted fw-semibold">Tidak ada data laporan ditemukan.
+                                                    </p>
+                                                </div>
                                             </td>
                                         </tr>
 
-                                        <tr :class="[
-                                            { 'table-info': isSelected(row.story_status_id) },
-                                            highlightId.includes(row.story_status_id)
-                                                ? (highlightType === 'create' ? 'blink-green' : 'blink-blue')
-                                                : ''
-                                        ]" :id="row.story_status_id" v-for="(row, rowIndex) in storyReport?.data"
-                                            :key="rowIndex">
+                                        <tr v-for="(row, rowIndex) in storyReport?.data" :key="rowIndex"
+                                            :id="row.story_status_id" class="transition-hover" :class="[
+                                                { 'bg-primary bg-opacity-10': isSelected(row.story_status_id) },
+                                                highlightId.includes(row.story_status_id) ? (highlightType === 'create' ? 'blink-green' : 'blink-blue') : ''
+                                            ]">
 
-                                            <td v-if="perm.permissions.includes('status.report.delete')"
-                                                class="text-center">
+                                            <td class="text-center"
+                                                v-if="perm.permissions.includes('status.report.delete')">
                                                 <div class="form-check d-flex justify-content-center">
-                                                    <input type="checkbox" class="form-check-input"
-                                                        :name="row.story_status_id" :id="row.story_status_id"
+                                                    <input type="checkbox"
+                                                        class="form-check-input shadow-none cursor-pointer"
                                                         :value="row.story_status_id" v-model="selected" />
                                                 </div>
                                             </td>
 
-                                            <td style="width: 5%;" class="text-center"> {{ rowIndex + 1 +
-                                                (storyReport?.current_page - 1) *
-                                                storyReport?.per_page }}
+                                            <td class="text-center text-muted fw-bold">
+                                                {{ rowIndex + 1 + (storyReport?.current_page - 1) *
+                                                    storyReport?.per_page }}
                                             </td>
 
-                                            <td class="text-center">{{ row.report_code }}</td>
-                                            <td class="text-start lh-sm">
-                                                <div>
-                                                    {{ daysTranslate(row.report_date) }}
-                                                </div>
-                                                <small class="fw-normal text-muted" style="font-size: 12px;">{{
-                                                    row.informasi
-                                                }}</small>
-                                            </td>
                                             <td class="text-center">
-                                                <span>{{ row.report_time.slice(0, 5) }}</span>
+                                                <span
+                                                    class="font-monospace bg-light border px-2 py-1 rounded text-dark">
+                                                    {{ row.report_code }}
+                                                </span>
                                             </td>
 
-                                            <td class="text-center">{{ row.count_status }}
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span class="fw-semibold text-dark">
+                                                        <i class="far fa-calendar-alt me-1 text-primary small"></i>
+                                                        {{ daysTranslate(row.report_date) }}
+                                                    </span>
+                                                    <small class="text-muted fst-italic mt-1"
+                                                        style="font-size: 0.75rem;">
+                                                        {{ row.informasi }}
+                                                    </small>
+                                                </div>
                                             </td>
-                                            <td class="text-center ">{{
-                                                moment(row.created_at).format('H:mm A') }}
+
+                                            <td class="text-center">
+                                                <span class="badge bg-light text-dark border fw-normal fs-6">
+                                                    <i class="far fa-clock me-1"></i> {{ row.report_time.slice(0, 5) }}
+                                                </span>
                                             </td>
-                                            <td class="text-center">{{ row.updated_at === row.created_at
-                                                ? '-'
-                                                : moment(row.updated_at).format('H:mm A') }}
+
+                                            <td class="text-center">
+                                                <span class="fw-bold fs-6 text-primary">
+                                                    {{ row.count_status }}
+                                                </span>
                                             </td>
+
+                                            <td class="text-center text-muted">
+                                                {{ moment(row.created_at).format('H:mm A') }}
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                {{ row.updated_at === row.created_at ? '-' :
+                                                    moment(row.updated_at).format('H:mm A') }}
+                                            </td>
+
                                             <td class="text-center">
                                                 <div class="dropdown dropstart">
-                                                    <button class="btn btn-secondary bg-gradient" type="button"
+                                                    <button class="btn btn-light bg-gradient border" type="button"
                                                         data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="fas fa-cog"></i>
                                                     </button>
-                                                    <ul class="dropdown-menu">
+                                                    <ul
+                                                        class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
                                                         <li v-if="perm.permissions.includes('status.report.edit')">
                                                             <button @click.prevent="goEdit(row.story_status_id)"
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
-                                                            </button>
-                                                        </li>
-                                                        <li v-if="perm.permissions.includes('status.report.delete')">
-                                                            <button
-                                                                @click.prevent="deleted('story_report.deleted', row)"
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
+                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold">
+                                                                <i class="fas fa-pencil-alt text-info"></i> Ubah
                                                             </button>
                                                         </li>
                                                         <li v-if="perm.permissions.includes('status.report.share')">
                                                             <button
-                                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                                Bagikan <i
-                                                                    class="bi bi-share-fill text-primary fs-5"></i>
+                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold">
+                                                                <i class="fas fa-share-alt text-primary"></i> Bagikan
+                                                            </button>
+                                                        </li>
+                                                        <li v-if="perm.permissions.includes('status.report.delete')">
+                                                            <div class="dropdown-divider"></div>
+                                                            <button
+                                                                @click.prevent="deleted('story_report.deleted', row)"
+                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger fw-semibold">
+                                                                <i class="fas fa-trash-alt"></i> Hapus
                                                             </button>
                                                         </li>
                                                     </ul>
@@ -439,33 +519,31 @@ const perm = page.props.auth.user
                                             </td>
                                         </tr>
                                     </tbody>
-                                    <tfoot class="fw-bold table-dark">
+
+                                    <tfoot class="bg-light" v-if="storyReport?.data.length">
                                         <tr>
-                                            <td v-if="perm.permissions.includes('status.report.delete')"
-                                                class="text-center border-0 border"></td>
-                                            <td class="text-center border-0 border">Total</td>
-                                            <td class="text-center border-0 border"></td>
-                                            <td class="text-center border-0 border"></td>
-                                            <td class="text-center border-0 border"></td>
-                                            <td class="text-center border-0 border">
-                                                {{ storyReport?.data.length ? (props.totalToday ??
-                                                    props.totalWithFilter) : '0'
-                                                }}
+                                            <td :colspan="(perm.permissions.includes('status.report.delete') ? 5 : 4)"
+                                                class="text-end fw-bold text-uppercase text-secondary py-3 pe-3">
+                                                Total Keseluruhan :
                                             </td>
-                                            <td class="text-center border-0 border"></td>
-                                            <td class="text-center border-0 border"></td>
-                                            <td class="text-center border-0 border"></td>
+
+                                            <td
+                                                class="text-center fw-bolder text-dark py-3 fs-6 bg-warning bg-opacity-10 border-start border-end border-warning border-opacity-25">
+                                                {{ props.totalToday ?? props.totalWithFilter ?? '0' }}
+                                            </td>
+
+                                            <td colspan="3"></td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                         </div>
-                        <div class="card-footer pb-0">
-                            <div v-if="props.storyReport?.data.length > 0"
-                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
-                                <div class="mb-2 order-1 order-xl-0">
+
+                        <div class="card-footer bg-white border-top py-3" v-if="storyReport?.data.length">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                <div class="text-muted mb-2 mb-md-0">
                                     Menampilkan <strong>{{ props.storyReport?.from ?? 0 }}</strong> -
-                                    <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari total
+                                    <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari
                                     <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
                                 </div>
                                 <pagination size="pagination-sm" :links="props.storyReport?.links"

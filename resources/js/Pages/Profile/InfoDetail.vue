@@ -195,11 +195,11 @@ const goToEditProfile = (id) => {
 /* Gaya untuk membuat gambar profil bulat dan berukuran besar */
 .profile-image-container {
     /* Ukuran wadah gambar */
-    width: 180px;
-    height: 180px;
+    width: 250px;
+    height: 300px;
     overflow: hidden;
     /* Penting untuk menjaga bentuk bulat */
-    border-radius: 50%;
+    /* border-radius: 50%; */
     /* Bayangan opsional */
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
 }
@@ -210,7 +210,7 @@ const goToEditProfile = (id) => {
     height: 100%;
     /* Pastikan gambar menutupi area wadah tanpa terdistorsi */
     object-fit: fill;
-    border-radius: 50%;
+    /* border-radius: 50%; */
 }
 
 /* Gaya untuk baris detail agar lebih terstruktur */

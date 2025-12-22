@@ -6,7 +6,7 @@ const props = defineProps({
         default: "",
     },
     type: {
-        type: String,
+        type: [String, Object, Array],
         default: 'info', // info | success | warning | danger
     },
     icon: {

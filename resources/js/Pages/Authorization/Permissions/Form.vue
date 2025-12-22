@@ -140,8 +140,8 @@ const goBack = () => {
                             <loader-horizontal
                                 :message="props.permissions?.id ? 'Sedang memperbarui data' : 'Sedang menyimpan data'" />
                         </div>
-                        <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
-                            <div class="form-overlay">
+                        <div class="card-body " :class="['blur-area', form.processing ? 'is-blurred' : '']">
+                            <div :class="['form-overlay', forms.length <= 5 ? 'vh-30' : '']">
                                 <form-wrapper @submit="isSubmit">
                                     <div
                                         :class="`row row-cols-xl-${forms.length > 1 ? '2' : '1'} row-cols-md-${forms.length > 1 ? '2' : '1'} row-cols-1 row-cols-sm-1 g-2`">
@@ -198,5 +198,9 @@ const goBack = () => {
     padding-right: 6px;
     position: relative;
 
+}
+
+.vh-30 {
+    height: 30vh;
 }
 </style>

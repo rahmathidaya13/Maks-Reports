@@ -96,10 +96,10 @@ const goToBack = (id) => {
                         </div>
                         <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
                             <form-wrapper @submit="submit">
-                                <div class="row g-2 border text-bg-grey p-3">
+                                <div class="row g-0 border text-bg-grey p-3">
                                     <div class="col-xl-4 col-md-12 col-sm-12">
                                         <div class="d-flex justify-content-center">
-                                            <file-input :width="150" :height="150"
+                                            <file-input :width="250" :height="280"
                                                 :pathUrls="props.profile?.images ? '/storage/' + props.profile?.images : ''"
                                                 objectFit="fill" @preview="onPreview" name="images"
                                                 v-model="form.images" />
@@ -109,73 +109,74 @@ const goToBack = (id) => {
                                         </div>
                                     </div>
 
-                                    <div class="col-xl-4 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="name" value="Nama" />
-                                            <div class="input-group">
-                                                <text-input type="text" name="name" v-model="form.name" />
+                                    <div class="col-xl-8 col-md-12 col-sm-12">
+                                        <div class="row g-1">
+                                            <div class="col-xl-6 mb-2">
+                                                <input-label class="fw-bold" for="name" value="Nama" />
+                                                <div class="input-group">
+                                                    <text-input type="text" name="name" v-model="form.name" />
+                                                </div>
+                                                <input-error :message="form.errors.name" />
                                             </div>
-                                            <input-error :message="form.errors.name" />
-                                        </div>
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="national_id_number" value="NIK" />
-                                            <div class="input-group">
-                                                <text-input placeholder="1234567890" type="text"
-                                                    name="national_id_number" v-model="form.national_id_number" />
+                                            <div class="mb-2 col-xl-6">
+                                                <input-label class="fw-bold" for="national_id_number" value="NIK" />
+                                                <div class="input-group">
+                                                    <text-input placeholder="1234567890" type="text"
+                                                        name="national_id_number" v-model="form.national_id_number" />
+                                                </div>
+                                                <input-error :message="form.errors.national_id_number" />
                                             </div>
-                                            <input-error :message="form.errors.national_id_number" />
-                                        </div>
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="birthplace" value="Tempat Lahir" />
-                                            <div class="input-group">
-                                                <text-input type="text" name="birthplace" v-model="form.birthplace" />
+                                            <div class="mb-2 col-xl-6">
+                                                <input-label class="fw-bold" for="birthplace" value="Tempat Lahir" />
+                                                <div class="input-group">
+                                                    <text-input type="text" name="birthplace"
+                                                        v-model="form.birthplace" />
+                                                </div>
+                                                <input-error :message="form.errors.birthplace" />
                                             </div>
-                                            <input-error :message="form.errors.birthplace" />
+                                            <div class="mb-2 col-xl-6">
+                                                <input-label class="fw-bold" for="religion" value="Agama" />
+                                                <div class="input-group">
+                                                    <select-input text="Pilih Agama" name="religion"
+                                                        v-model="form.religion" :options="[
+                                                            { value: 'islam', label: 'Islam' },
+                                                            { value: 'kristen', label: 'Kristen' },
+                                                            { value: 'katolik', label: 'Katolik' },
+                                                            { value: 'hindu', label: 'Hindu' },
+                                                            { value: 'budha', label: 'Budha' },
+                                                            { value: 'konghucu', label: 'Konghucu' },
+                                                        ]" />
+                                                </div>
+                                                <input-error :message="form.errors.religion" />
+                                            </div>
+                                            <div class="mb-2 col-xl-6">
+                                                <input-label class="fw-bold" for="gender" value="Jenis Kelamin" />
+                                                <div class="input-group">
+                                                    <select-input text="Pilih Jenis Kelamin" name="gender"
+                                                        v-model="form.gender" :options="[
+                                                            { value: 'male', label: 'Laki-laki' },
+                                                            { value: 'female', label: 'Perempuan' },
+                                                        ]" />
+                                                </div>
+                                                <input-error :message="form.errors.gender" />
+                                            </div>
+                                            <div class="mb-2 col-xl-6">
+                                                <input-label class="fw-bold" for="birthdate" value="Tanggal Lahir" />
+                                                <div class="input-group">
+                                                    <text-input type="date" name="birthdate" v-model="form.birthdate" />
+                                                </div>
+                                                <input-error :message="form.errors.birthdate" />
+                                            </div>
+                                            <div class="col-xl-12">
+                                                <input-label class="fw-bold" for="address" value="Alamat" />
+                                                <div class="input-group">
+                                                    <text-area :rows="5" :cols="5" name="address"
+                                                        v-model="form.address" />
+                                                </div>
+                                                <input-error :message="form.errors.address" />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-xl-4 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="religion" value="Agama" />
-                                            <div class="input-group">
-                                                <select-input text="Pilih Agama" name="religion" v-model="form.religion"
-                                                    :options="[
-                                                        { value: 'islam', label: 'Islam' },
-                                                        { value: 'kristen', label: 'Kristen' },
-                                                        { value: 'katolik', label: 'Katolik' },
-                                                        { value: 'hindu', label: 'Hindu' },
-                                                        { value: 'budha', label: 'Budha' },
-                                                        { value: 'konghucu', label: 'Konghucu' },
-                                                    ]" />
-                                            </div>
-                                            <input-error :message="form.errors.religion" />
-                                        </div>
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="gender" value="Jenis Kelamin" />
-                                            <div class="input-group">
-                                                <select-input text="Pilih Jenis Kelamin" name="gender"
-                                                    v-model="form.gender" :options="[
-                                                        { value: 'male', label: 'Laki-laki' },
-                                                        { value: 'female', label: 'Perempuan' },
-                                                    ]" />
-                                            </div>
-                                            <input-error :message="form.errors.gender" />
-                                        </div>
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="birthdate" value="Tanggal Lahir" />
-                                            <div class="input-group">
-                                                <text-input type="date" name="birthdate" v-model="form.birthdate" />
-                                            </div>
-                                            <input-error :message="form.errors.birthdate" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-8 col-12 offset-xl-4">
-                                        <input-label class="fw-bold" for="address" value="Alamat" />
-                                        <div class="input-group">
-                                            <text-area :rows="3" :cols="3" name="address" v-model="form.address" />
-                                        </div>
-                                        <input-error :message="form.errors.address" />
-                                    </div>
-
                                 </div>
                                 <div class="row g-2 border text-bg-grey p-3">
                                     <div class="text-bg-dark mb-3">

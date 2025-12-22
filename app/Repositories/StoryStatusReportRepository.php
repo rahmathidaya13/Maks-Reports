@@ -20,6 +20,12 @@ class StoryStatusReportRepository extends BaseCacheRepository
                 // Jika user TIDAK memberikan filter → ambil data hari ini
                 $q->whereDate('report_date', now()->toDateString());
             })
+            ->when(!empty($filters['keyword']), function ($q) use ($filters) {
+                $search = $filters['keyword'];
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('report_code', 'like', "%{$search}%");
+                });
+            })
             ->when(!empty($filters['start_date']) && !empty($filters['end_date']), function ($q) use ($filters) {
                 // filter rentang tanggal
                 $q->whereBetween('report_date', [

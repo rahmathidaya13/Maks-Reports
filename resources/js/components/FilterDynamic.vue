@@ -28,7 +28,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'action'])
 
 const filters = computed({
     get: () => props.modelValue,
@@ -55,18 +55,25 @@ const handleButtonClick = (field) => {
 </script>
 
 <template>
-    <div class="card overflow-hidden pb-2">
-        <div class="card-header p-2 text-bg-grey bg-gradient">
-            <h5 class="card-title fw-bold mb-0 text-uppercase px-2">
-                <i class="fas fa-filter"></i> {{ title }}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card-header bg-white border-bottom py-3 px-4">
+            <h5 class="card-title fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <span
+                    class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 d-flex align-items-center justify-content-center"
+                    style="width: 32px; height: 32px;">
+                    <i class="fas fa-filter fa-sm"></i>
+                </span>
+                {{ title }}
             </h5>
         </div>
 
-        <div class="card-body">
-            <div class="row g-2 row-cols-1 justify-content-end">
+        <div class="card-body px-4">
+            <div class="row g-2 row-cols-1">
                 <div v-for="field in inputField" :key="field.key" :class="field.col">
+
                     <input-label v-if="field.type !== 'slot'" :for="field.key" :value="field.label"
-                        class="fw-semibold" />
+                        class="fw-semibold mb-1 text-muted text-uppercase"
+                        style="letter-spacing: 0.5px; font-size: 0.8rem;" />
 
                     <div v-if="field.type === 'text'" class="input-group">
                         <text-input :type="field.type" v-model="filters[field.key]" v-bind="field.props"
