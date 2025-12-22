@@ -8,16 +8,16 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ["resources/css/app.css", "resources/js/app.js"],
-            refresh: true
+            refresh: true,
         }),
 
         vue({
             template: {
                 transformAssetUrls: {
                     base: null,
-                    includeAbsolute: false
-                }
-            }
+                    includeAbsolute: false,
+                },
+            },
         }),
 
         // 🔥 Inject jQuery global untuk plugin-plugin jQuery (daterangepicker)
@@ -31,15 +31,21 @@ export default defineConfig({
         }),
     ],
 
+    server: {
+        watch: {
+            usePolling: false,
+        },
+    },
+
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "resources/js"),
             // pastikan jQuery load versi minified
             jquery: "jquery/dist/jquery.min.js",
-        }
+        },
     },
 
     build: {
-        sourcemap: false
-    }
+        sourcemap: false,
+    },
 });
