@@ -230,6 +230,7 @@ const fileterFields = computed(() => [
             placeholder: 'Masukan nama dan produk...',
             inputClass: 'border-0 border input-height-1',
             isValid: false,
+            autofocus: true
         }
     },
     {
@@ -296,8 +297,8 @@ const fileterFields = computed(() => [
         label: 'Bersihkan',
         type: 'button',
         name: 'reset',
-        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-outline-danger',
         icon: 'fas fa-undo',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-outline-danger',
         disabled: !hasActiveFilter.value,
         handler: () => handleReset()
     },
@@ -306,8 +307,8 @@ const fileterFields = computed(() => [
         label: 'Terapkan',
         type: 'button',
         name: 'apply',
-        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-primary',
         icon: 'fas fa-filter',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-primary',
         disabled: !hasActiveFilter.value,
         handler: () => handleApply()
     },
@@ -451,7 +452,7 @@ const fileterFields = computed(() => [
                                                 </div>
                                             </td>
 
-                                            <td class="text-center">
+                                            <td class="text-start">
                                                 <span
                                                     class="badge bg-secondary bg-opacity-25 text-dark border border-secondary border-opacity-10 fw-normal text-capitalize"
                                                     style="font-size:0.9rem;">
@@ -506,7 +507,7 @@ const fileterFields = computed(() => [
                                                         <span class="d-none d-xl-inline">Bayar</span>
                                                     </button>
 
-                                                    <div class="dropdown">
+                                                    <div class="dropdown dropstart">
                                                         <button class="btn btn-light border shadow-sm text-secondary"
                                                             type="button" data-bs-toggle="dropdown"
                                                             aria-expanded="false">
@@ -517,7 +518,7 @@ const fileterFields = computed(() => [
                                                             <li v-if="perm.includes('transaction.edit')">
                                                                 <button @click.prevent="edit(item.transaction_id)"
                                                                     class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold">
-                                                                    <i class="fas fa-pencil-alt text-info"></i> Ubah
+                                                                    <i class="fas fa-edit text-info"></i> Ubah
                                                                     Transaksi
                                                                 </button>
                                                             </li>

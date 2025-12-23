@@ -166,7 +166,6 @@ class UsersController extends Controller
     {
         return response()->json([
             'message' => 'Status checked and broadcasted successfully.',
-            'data' => $this->userServices->checkAndBroadcastStatus()
         ]);
     }
 

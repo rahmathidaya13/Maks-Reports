@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const props = defineProps({
     title: {
@@ -52,10 +52,11 @@ const handleButtonClick = (field) => {
     }
 
 }
+
 </script>
 
 <template>
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 custom-filter-card">
         <div class="card-header bg-white border-bottom py-3 px-4">
             <h5 class="card-title fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                 <span
@@ -112,3 +113,39 @@ const handleButtonClick = (field) => {
         </div>
     </div>
 </template>
+<style scoped>
+.custom-filter-card {
+    background: #ffffff;
+    border-radius: 12px;
+    /* Sudut lebih bulat */
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    /* Shadow sangat halus */
+    transition: all 0.3s ease;
+}
+
+.custom-filter-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    /* Efek naik saat hover */
+}
+
+/* Styling Input & Select agar seragam */
+/* Note: CSS ini menargetkan elemen input yang dirender oleh komponen Vue kamu */
+.custom-filter-card input,
+.custom-filter-card select,
+.custom-filter-card .input-group-text {
+    border-color: #e9ecef;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    font-size: 0.9rem;
+    border: none;
+}
+
+/* Efek saat input diklik (Fokus) */
+.custom-filter-card input:focus,
+.custom-filter-card select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 4px rgba(13, 109, 253, 0.185);
+    /* Ring fokus yang lembut */
+    background-color: #fff;
+}
+</style>

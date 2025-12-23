@@ -125,66 +125,98 @@ function daysOnlyConvert(dayValue) {
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
-            <div class="callout callout-success">
-                <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Panduan Pengisian Laporan Update Status Harian
-                </h5>
-                <ul class="mb-0 ps-3">
-                    <li>Setiap form mewakili satu aktivitas posting status pada hari ini.</li>
-                    <li>Isi <strong>Jam</strong> sesuai waktu status diposting (contoh: 08:30, 13:45, dll).</li>
-                    <li>Jika memposting status beberapa kali dalam satu hari, klik tombol
-                        <strong>Tambah</strong> untuk menambah form baru.
-                    </li>
-                    <li>Kolom <strong>Jumlah</strong> berisi banyaknya status yang diposting pada jam tersebut
-                        (isi angka <strong>1</strong> jika hanya upload satu status).</li>
-                    <li>Pastikan tidak ada kolom yang kosong — jika tidak ada status pada jam itu, hapus form terkait.
-                    </li>
-                    <li>Klik tombol <strong>X</strong> di setiap form untuk menghapus form yang tidak
-                        diperlukan.</li>
-                    <li>Periksa kembali seluruh data sebelum menekan tombol <strong>Simpan</strong> atau
-                        <strong>Ubah</strong>.
-                    </li>
-                </ul>
-            </div>
-
-            <div class="d-flex justify-content-between">
-                <Link @click.prevent="goBack" :href="url" class="btn btn-danger mb-3">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali
-                </Link>
-                <div class="mb-3 gap-1 d-flex" v-if="!props.storyReport?.story_status_id">
-                    <transition name="fade">
-                        <button title="Hapus Semua Form" v-if="forms.length > 1 && !form.processing"
-                            @click="forms = [{ report_time: '', count_status: '' }]" type="button"
-                            class="btn btn-danger position-relative align-items-center">
-                            <i class="fas fa-trash-alt me-2"></i>
-                            Hapus ({{ forms.length }})
-                        </button>
-                    </transition>
-                    <button title="Tambah Form" v-if="!form.processing" @click="addForm"
-                        class="btn btn-primary bg-gradient"><i class="fas fa-plus"></i>
-                        Tambah</button>
-                </div>
-            </div>
-
             <div class="row pb-3">
                 <div class="col-xl-12 col-12">
+
+                    <div class="d-block d-xl-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Input Laporan Status</h4>
+                            <p class="text-muted small mb-0">Isi data aktivitas harian Anda dengan lengkap pada form di
+                                bawah.</p>
+                        </div>
+                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm hover-scale">
+                            <i class="fas fa-arrow-left me-2"></i>Kembali
+                        </Link>
+                    </div>
+
+                    <div class="alert custom-alert-info border-0 rounded-3 shadow-sm mb-4 d-flex align-items-start"
+                        role="alert">
+                        <i class="fas fa-info-circle fs-4 me-3 mt-1 text-primary"></i>
+                        <div>
+                            <h6 class="fw-bold text-primary mb-1">Panduan Pengisian</h6>
+                            <ul class="mb-0 ps-3 small text-muted">
+                                <li>Setiap form mewakili satu aktivitas posting status pada hari ini.</li>
+                                <li>Isi <strong>Jam</strong> sesuai waktu status diposting (contoh: 08:30, 13:45, dll).
+                                </li>
+                                <li>Jika memposting status beberapa kali dalam satu hari, klik tombol
+                                    <strong>Tambah</strong> untuk menambah form baru.
+                                </li>
+                                <li>Kolom <strong>Jumlah</strong> berisi banyaknya status yang diposting pada jam
+                                    tersebut
+                                    (isi angka <strong>1</strong> jika hanya upload satu status).</li>
+                                <li>Pastikan tidak ada kolom yang kosong — jika tidak ada status pada jam itu, hapus
+                                    form
+                                    terkait.
+                                </li>
+                                <li>Klik tombol <strong>X</strong> di setiap form untuk menghapus form yang tidak
+                                    diperlukan.</li>
+                                <li>Periksa kembali seluruh data sebelum menekan tombol <strong>Simpan</strong> atau
+                                    <strong>Ubah</strong>.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <div
-                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-info bg-opacity-10 text-info p-2 rounded-3 me-3">
-                                    <i class="fas fa-chart-line fs-4"></i>
+
+                        <div class="card-header bg-white py-4 px-4 border-bottom-0 custom-header-shadow">
+                            <div
+                                class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+
+                                <div class="d-flex align-items-center">
+                                    <div
+                                        class="icon-box-header bg-info bg-opacity-10 text-info rounded-3 me-3 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-chart-line fs-4"></i>
+                                    </div>
+
+                                    <div>
+                                        <h5 class="fw-bold mb-1 text-dark tracking-tight">Laporan Update Status</h5>
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <i class="far fa-file-alt me-1"></i>
+                                            <span>Input laporan leads harian</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h5 class="fw-bold mb-0 text-dark">Laporan Update Status</h5>
-                                    <p class="text-muted small mb-0">Input laporan leads harian.</p>
+
+                                <div class="d-flex align-items-center gap-2 flex-wrap"
+                                    v-if="!props.storyReport?.story_status_id">
+
+                                    <div
+                                        class="date-badge px-3 py-2 rounded-pill border bg-light text-secondary fw-semibold me-md-2">
+                                        <i class="far fa-calendar-alt me-2 text-primary"></i>
+                                        {{ daysOnlyConvert(form.report_date) }}
+                                    </div>
+
+                                    <div class="d-flex gap-2" v-if="!form.processing">
+
+                                        <transition name="fade">
+                                            <button v-if="forms.length > 1" title="Hapus Semua Form"
+                                                @click="forms = [{ report_time: '', count_status: '' }]" type="button"
+                                                class="btn btn-outline-danger shadow-sm">
+                                                <i class="fas fa-trash-alt me-md-2"></i>
+                                                <span class="d-none d-md-inline">Hapus ({{ forms.length }})</span>
+                                            </button>
+                                        </transition>
+
+                                        <button title="Tambah Form" @click="addForm"
+                                            class="btn btn-primary bg-gradient shadow-sm">
+                                            <i class="fas fa-plus me-md-2"></i>
+                                            <span class="d-none d-md-inline">Tambah</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold fs-6">
-                                    <i class="far fa-calendar-alt me-2 text-muted"></i>
-                                    {{ daysOnlyConvert(form.report_date) }}
-                                </span>
+
                             </div>
                         </div>
 
@@ -199,7 +231,7 @@ function daysOnlyConvert(dayValue) {
                             :class="['blur-area', form.processing ? 'is-blurred' : '']">
                             <form-wrapper @submit="isSubmit">
 
-                                <div class="position-relative ps-2 form-overlay">
+                                <div class="position-relative ps-1">
 
                                     <div class="position-absolute start-0 top-0 bottom-0 border-start border-2 border-primary border-opacity-25 ms-2"
                                         style="z-index: 0;" v-if="forms.length > 0"></div>
@@ -210,8 +242,9 @@ function daysOnlyConvert(dayValue) {
                                         <div class="position-absolute start-0 top-50 translate-middle-y bg-white border border-2 border-primary rounded-circle"
                                             style="width: 16px; height: 16px; left: 8px !important; z-index: 1;"></div>
 
-                                        <div class="card border-0 shadow-sm rounded-3 overflow-hidden transition-hover">
+                                        <div class="card border shadow-sm rounded-3 overflow-hidden transition-hover">
                                             <div class="card-body p-3">
+
                                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                                     <h6 class="fw-bold text-primary mb-0 small text-uppercase ls-1">
                                                         <i class="fas fa-clock me-1"></i> Sesi Laporan {{ index + 1 }}
@@ -220,7 +253,7 @@ function daysOnlyConvert(dayValue) {
                                                     <button v-if="forms.length > 1" title="Hapus Baris Ini"
                                                         class="btn btn-link text-danger"
                                                         @click.prevent="removeForm(index)">
-                                                        <i class="fas fa-times-circle fs-5"></i>
+                                                        <i class="fas fa-times fs-5"></i>
                                                     </button>
                                                 </div>
 
@@ -231,7 +264,7 @@ function daysOnlyConvert(dayValue) {
                                                             :for="`time_${index}`" value="Waktu / Jam" />
                                                         <div class="position-relative">
                                                             <i class="far fa-clock text-muted input-icon-left"></i>
-                                                            <text-input autofocus
+                                                            <text-input
                                                                 input-class="fw-bold text-dark input-fixed-height input-height-2"
                                                                 :id="`time_${index}`" :tabindex="index * 2 + 1"
                                                                 placeholder="00:00"
@@ -262,7 +295,6 @@ function daysOnlyConvert(dayValue) {
                                             </div>
                                         </div>
                                     </div>
-
                                 </div>
 
                                 <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
@@ -273,10 +305,9 @@ function daysOnlyConvert(dayValue) {
                                                 class="small fw-normal text-muted">Entri</span></div>
                                     </div>
 
-                                    <div
-                                        :class="{ 'sticky-bottom bg-white py-3 border-top shadow-lg w-100 px-4 position-fixed start-0 bottom-0 d-flex justify-content-end z-3': forms.length > 5 }">
+                                    <div class="d-flex align-items-center">
                                         <base-button @click="isSubmit" waiting="Menyimpan..." :loading="form.processing"
-                                            class="rounded-3 shadow px-5 btn-height-2 fw-bold"
+                                            class="rounded-3 shadow px-4 btn-height-1 fw-bold btn-save-custom"
                                             :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-save' : 'fas fa-paper-plane'"
                                             :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
                                             type="submit"
@@ -327,7 +358,7 @@ function daysOnlyConvert(dayValue) {
 
 
 .form-overlay {
-    max-height: 60vh;
+    max-height: 65vh;
     overflow-y: auto;
     padding-right: 6px;
     position: relative;
@@ -344,4 +375,65 @@ function daysOnlyConvert(dayValue) {
     z-index: 999;
     display: flex;
 }
+
+/* Alert Instruksi Custom */
+.custom-alert-info {
+    background-color: #f0f7ff;
+    /* Biru sangat muda */
+    border-left: 4px solid #0d6efd;
+}
+
+/* Header Shadow tipis agar terpisah dari body card */
+.custom-header-shadow {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Mengatur ukuran box icon agar presisi */
+.icon-box-header {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    /* Mencegah icon mengecil di layar sempit */
+    transition: all 0.3s ease;
+}
+
+/* Badge tanggal yang lebih modern */
+.date-badge {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    /* Mencegah teks tanggal turun baris */
+    border-color: #e9ecef !important;
+}
+
+/* Styling tombol action */
+.btn-action {
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+/* Sedikit letter spacing pada judul */
+.tracking-tight {
+    letter-spacing: -0.025em;
+}
+/* Utility Class untuk Tombol Kembali */
+.hover-scale {
+    transition: transform 0.2s;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.btn-save-custom {
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-save-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+}
+
 </style>

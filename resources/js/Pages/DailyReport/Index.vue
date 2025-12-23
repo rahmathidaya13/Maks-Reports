@@ -94,6 +94,7 @@ const isDisableBtnDatePicker = computed(() => {
 })
 const isLoading = ref(false)
 const searchByDate = debounce(() => {
+    isLoading.value = true
     router.get(route("daily_report"), filters, {
         preserveScroll: true,
         replace: true,
@@ -104,7 +105,7 @@ const searchByDate = debounce(() => {
             isLoading.value = false
         }
     });
-}, 1000);
+}, 500);
 
 // trigger button untuk melakukan pencarian berdasarkan tanggal
 const applyDateRange = () => {
@@ -240,241 +241,370 @@ onMounted(() => {
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :home="false" icon="fas fa-clipboard" title="Laporan Leads Harian"
+            <bread-crumbs :home="false" icon="fas fa-clipboard" title="Rekap Laporan Leads Harian"
                 :items="[{ text: 'Laporan Harian' }]" />
-            <alert :duration="10" :message="message" />
-            <div class="row">
-                <div class="col-xl-12 col-sm-12">
+            <callout type="success" :duration="10" :message="message" />
+            <div class="row justify-content-center pb-3">
 
-                    <div class="callout callout-info">
-                        <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Informasi Laporan Leads Harian</h5>
-                        <ul class="mb-0 ps-3">
-                            <li><strong>Leads</strong> adalah calon konsumen baru yang pertama kali dihubungi pada hari
-                                ini.
-                            </li>
-                            <li><strong>FU (Follow Up)</strong> adalah tindak lanjut yang dilakukan kepada konsumen yang
-                                sebelumnya sudah pernah dihubungi.</li>
-                            <li><strong>FU Kemarin (H-1)</strong> adalah follow up untuk konsumen yang dihubungi sehari
-                                sebelumnya.</li>
-                            <li><strong>FU Kemarennya (H-2)</strong> adalah follow up untuk konsumen yang dihubungi dua
-                                hari
-                                sebelumnya.</li>
-                            <li><strong>FU Minggu Kemarennya</strong> adalah follow up untuk konsumen yang dihubungi
-                                pada
-                                minggu
-                                lalu.</li>
-                            <li><strong>Engage Pelanggan Lama</strong> adalah interaksi dengan pelanggan lama untuk
-                                menjaga
-                                hubungan dan menawarkan kebutuhan baru.</li>
-                        </ul>
-                    </div>
+                <!-- filter -->
+                <div class="col-12">
+                    <div class="card mb-4 border-0 custom-filter-card">
 
-                    <div class="card mb-4 rounded-3 p-1 bg-light overflow-hidden shadow-sm">
-                        <div class="row align-items-center p-2 g-2 pb-3">
-                            <div class="col-xl-4 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="start_date" value="Tanggal Awal:" />
-                                <div class="input-group">
-                                    <text-input ref="inputRef" name="start_date" v-model="filters.start_date"
-                                        type="date" :is-valid="false" />
+                        <div class="card-header py-3 px-4 border-bottom ">
+                            <h5 class="card-title fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <span
+                                    class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 d-flex align-items-center justify-content-center"
+                                    style="width: 32px; height: 32px;">
+                                    <i class="fas fa-filter fa-sm"></i>
+                                </span>
+                                Filter
+                            </h5>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <div class="row g-3 align-items-end">
+
+                                <div class="col-xl-4 col-md-6">
+                                    <input-label class="custom-label mb-2" for="start_date" value="TANGGAL AWAL" />
+                                    <div class="position-relative">
+                                        <i class="bi bi-calendar3 input-icon-left"></i>
+                                        <text-input ref="inputRef" name="start_date" v-model="filters.start_date"
+                                            type="date" :is-valid="false"
+                                            input-class="input-fixed-height pe-3 border-0 input-height-1" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-xl-4 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="end_date" value="Tanggal Akhir:" />
-                                <div class="input-group">
-                                    <text-input name="end_date" v-model="filters.end_date" type="date"
-                                        :is-valid="false" />
-                                    <base-button :disabled="isDisableBtnDatePicker" @click="applyDateRange"
-                                        class="bg-gradient" :variant="isDisableBtnDatePicker ? 'secondary' : 'primary'"
-                                        name="set" label="Atur" />
+
+                                <div class="col-xl-4 col-md-6">
+                                    <input-label class="custom-label mb-2" for="end_date" value="TANGGAL AKHIR" />
+                                    <div class="input-group">
+                                        <i class="bi bi-calendar3 input-icon-left"></i>
+                                        <text-input name="end_date" v-model="filters.end_date" type="date"
+                                            :is-valid="false"
+                                            input-class="input-fixed-height pe-3 rounded-0 rounded-start border-0 input-height-1" />
+                                        <base-button :disabled="isDisableBtnDatePicker" @click="applyDateRange"
+                                            button-class="btn-filter-action"
+                                            :variant="isDisableBtnDatePicker ? 'secondary' : 'primary'" name="set"
+                                            label="Terapkan" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-xl-2 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="limit" value="Batas:" />
-                                <div class="input-group">
-                                    <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                        { value: 1, label: 'Default' },
-                                        { value: 5, label: '5' },
-                                        { value: 10, label: '10' },
-                                        { value: 20, label: '20' },
-                                        { value: 50, label: '50' },
-                                        { value: 100, label: '100' },
-                                    ]" />
+
+                                <div class="col-xl-2 col-md-6">
+                                    <input-label class="custom-label mb-2" for="limit" value="BATAS DATA" />
+                                    <div class="input-group">
+                                        <select-input :is-valid="false" v-model="filters.limit" name="limit"
+                                            select-class="border-0 border input-height-1" :options="[
+                                                { value: 1, label: 'Default' },
+                                                { value: 5, label: '5 Baris' },
+                                                { value: 10, label: '10 Baris' },
+                                                { value: 20, label: '20 Baris' },
+                                                { value: 50, label: '50 Baris' },
+                                                { value: 100, label: '100 Baris' },
+                                            ]" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-xl-2 col-sm-6 col-md-3">
-                                <input-label class="fw-bold mb-1" for="order_by" value="Urutkan:" />
-                                <div class="input-group">
-                                    <select-input :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
-                                        { value: 'desc', label: 'Terbaru' },
-                                        { value: 'asc', label: 'Terlama' },
-                                    ]" />
+
+                                <div class="col-xl-2 col-md-6">
+                                    <input-label class="custom-label mb-2" for="order_by" value="URUTKAN" />
+                                    <div class="input-group">
+                                        <select-input :is-valid="false" v-model="filters.order_by" name="order_by"
+                                            select-class="border-0 border input-height-1" :options="[
+                                                { value: 'desc', label: 'Terbaru' },
+                                                { value: 'asc', label: 'Terlama' },
+                                            ]" />
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mb-2 d-flex justify-content-between flex-wrap gap-2 align-items-center">
-                        <button-delete-all v-if="perm.permissions.includes('daily.report.leads.delete')" text="Hapus"
-                            :isVisible="isVisible" :deleted="deleteSelected" />
-                        <div class="d-inline-flex ms-auto gap-1">
-                            <base-button v-if="perm.permissions.includes('daily.report.leads.export')" variant="success"
-                                icon="fas fa-download" @click="openModal" class="bg-gradient" name="unduh"
-                                label="Unduh" />
-                            <div class="position-relative">
+
+                <div class="col-12">
+
+                    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                        <div
+                            class="card-header bg-white py-3 px-4 border-bottom-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3">
+                                    <i class="fas fa-calendar-day fs-4"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">Laporan Leads Harian</h5>
+                                    <p class="text-muted small mb-0">Monitor aktivitas leads dan closing harian.</p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-light text-secondary border shadow-sm" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#infoCollapse" aria-expanded="false">
+                                    <i class="fas fa-info-circle me-1"></i> Info Istilah
+                                </button>
+
+                                <button-delete-all v-if="perm.permissions.includes('daily.report.leads.delete')"
+                                    text="Hapus Data" class="shadow-sm" :isVisible="isVisible"
+                                    :deleted="deleteSelected" />
+
+                                <base-button v-if="perm.permissions.includes('daily.report.leads.export')"
+                                    variant="success" button-class="shadow-sm" icon="fas fa-download" @click="openModal"
+                                    name="unduh" label="Unduh" />
+
                                 <base-button v-if="perm.permissions.includes('daily.report.leads.create')"
-                                    @click="goToCreate" class="bg-gradient" name="create" label="Buat Laporan"
+                                    @click="goToCreate" button-class="shadow-sm" name="create" label="Buat Laporan"
                                     icon="fas fa-plus" />
                             </div>
                         </div>
-                    </div>
 
-                    <div class="table-overlay">
-
-                        <div v-if="!dailyReport.data.length"
-                            class="card overflow-hidden rounded-3 shadow-sm py-5 text-center text-muted mb-4">
-                            <div v-if="isLoading">
-                                <loader-horizontal message="Sedang memperbarui data" />
-                            </div>
-                            <div class="card-body" :class="['blur-area', isLoading ? 'is-blurred' : '']">
-                                <span>Tidak ada laporan leads ditemukan</span>
+                        <div class="collapse" id="infoCollapse">
+                            <div class="card-body bg-info bg-opacity-10 border-top border-info border-opacity-25">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold text-info mb-2"><i class="fas fa-book me-2"></i>Kamus Laporan
+                                        </h6>
+                                        <ul class="small text-muted mb-0 ps-3 columns-md-2">
+                                            <li>
+                                                <strong>Leads</strong>
+                                                adalah calon konsumen baru yang pertama kali dihubungi pada hari ini.
+                                            </li>
+                                            <li><strong>FU (Follow Up)</strong> adalah tindak lanjut yang dilakukan
+                                                kepada konsumen yang sebelumnya sudah pernah dihubungi.
+                                            </li>
+                                            <li><strong>FU Kemarin (H-1)</strong> adalah follow up untuk konsumen yang
+                                                dihubungi sehari sebelumnya.
+                                            </li>
+                                            <li><strong>FU Kemarennya (H-2)</strong> adalah follow up untuk konsumen
+                                                yang dihubungi dua hari sebelumnya.
+                                            </li>
+                                            <li><strong>FU Minggu Kemarennya</strong> adalah follow up untuk konsumen
+                                                yang dihubungi pada minggu lalu.
+                                            </li>
+                                            <li><strong>Engage Pelanggan Lama</strong> adalah interaksi dengan pelanggan
+                                                lama untuk menjaga hubungan dan menawarkan kebutuhan baru.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3" :id="row.daily_report_id" v-for="(row, rowIndex) in dailyReport.data"
+                    </div>
+
+                    <div v-if="!dailyReport.data.length"
+                        class="card border-0 shadow-sm rounded-4 py-5 text-center mb-4">
+                        <div v-if="isLoading">
+                            <loader-horizontal message="Memuat data..." />
+                        </div>
+                        <div class="card-body" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                            <div class="opacity-25 mb-3">
+                                <i class="fas fa-clipboard-list fa-4x text-muted"></i>
+                            </div>
+                            <h6 class="text-muted fw-bold">Belum ada laporan leads.</h6>
+                            <p class="small text-muted">Silakan buat laporan baru untuk hari ini.</p>
+                        </div>
+                    </div>
+
+                    <div v-else class="row g-4">
+
+                        <div class="col-12" :id="row.daily_report_id" v-for="(row, rowIndex) in dailyReport.data"
                             :key="rowIndex">
 
-                            <div :class="['blur-area', isLoading ? 'is-blurred' : '']"
-                                class="d-xl-flex d-md-flex d-sm-block align-items-center mb-2 mt-2 justify-content-between">
-                                <h4 class="fw-bold">Laporan Leads:
-                                    <span class="text-primary">
-                                        {{ daysOnlyConvert(row.date) }}
-                                    </span>
-                                </h4>
-                                <div class="dropdown">
-                                    <button class="btn btn-secondary bg-gradient px-3 btn-sm" type="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-cog"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li>
-                                            <button v-if="perm.permissions.includes('daily.report.leads.edit')"
-                                                @click="goToEdit(row.daily_report_id)"
-                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button v-if="perm.permissions.includes('daily.report.leads.delete')"
-                                                @click="deleted('daily_report.deleted', row)"
-                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button v-if="perm.permissions.includes('daily.report.leads.share')"
-                                                class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                Bagikan <i class="bi bi-share-fill text-primary fs-5"></i>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
+                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden transition-hover h-100">
+                                <div
+                                    class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span
+                                            class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 rounded-pill px-3 py-2 fs-6">
+                                            <i class="far fa-calendar-alt me-2"></i>
+                                            {{ daysOnlyConvert(row.date) }}
+                                        </span>
+                                    </div>
 
-                            <div class="card mb-0 overflow-hidden rounded-3 shadow-sm">
-                                <div v-if="isLoading">
-                                    <loader-horizontal message="Sedang memproses data" />
+                                    <div class="dropdown">
+                                        <button class="btn btn-light border shadow-sm px-3 fs-6" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v text-muted"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                            <li>
+                                                <button v-if="perm.permissions.includes('daily.report.leads.edit')"
+                                                    @click="goToEdit(row.daily_report_id)"
+                                                    class="dropdown-item py-2 d-flex align-items-center gap-2">
+                                                    <i class="fas fa-pencil-alt text-info"></i> Ubah Data
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button v-if="perm.permissions.includes('daily.report.leads.delete')"
+                                                    @click="deleted('daily_report.deleted', row)"
+                                                    class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger">
+                                                    <i class="fas fa-trash-alt"></i> Hapus
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
+
+                                <div v-if="isLoading"
+                                    class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                                    style="z-index: 10;">
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                                        <p class="fw-bold text-dark">Memproses...</p>
+                                    </div>
+                                </div>
+
                                 <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
                                     <div class="table-responsive">
-                                        <table class="table align-middle mb-0 table-striped text-nowrap table-hover">
-                                            <thead class="table-dark">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light text-secondary small text-uppercase">
                                                 <tr>
-                                                    <th class="text-start">Kategori</th>
-                                                    <th class="text-center">Jumlah</th>
-                                                    <th class="text-center">Closing</th>
+                                                    <th class="ps-4 py-3" style="width: 50%;">Kategori Aktivitas</th>
+                                                    <th class="text-center py-3">Jumlah (Qty)</th>
+                                                    <th class="text-center py-3">Closing (Deal)</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody class="border-top-0">
+                                                <tr>
+
+                                                    <td class="ps-4"
+                                                        :class="row.closing > 0 || row.leads > 0 ? 'fw-semibold text-dark' : 'text-muted'">
+                                                        <i class="fas fa-bullhorn me-2"
+                                                            :class="row.closing > 0 || row.leads > 0 ? 'text-info' : ' text-secondary'"></i>
+                                                        Leads
+                                                    </td>
+
+                                                    <td class="text-center bg-light bg-opacity-50 fw-bold"
+                                                        :class="row.leads > 0 ? 'text-dark' : 'text-muted'">
+                                                        {{ row.leads }}
+                                                    </td>
+
+                                                    <td class="text-center fw-bold"
+                                                        :class="row.closing > 0 ? 'text-success bg-success bg-opacity-10' : 'text-muted'">
+                                                        {{ row.closing }}
+                                                    </td>
+
+                                                </tr>
 
                                                 <tr>
-                                                    <td class="fw-semibold">Leads</td>
-                                                    <td class="text-center fw-semibold">{{ row.leads }}</td>
-                                                    <td class="text-center fw-semibold">{{ row.closing }}</td>
+                                                    <td class="ps-4"
+                                                        :class="row.fu_yesterday > 0 || row.fu_yesterday_closing > 0 ? 'fw-semibold text-dark' : 'text-muted'">
+                                                        <i class="fas fa-history me-2"
+                                                            :class="row.fu_yesterday > 0 || row.fu_yesterday_closing > 0 ? 'text-info' : 'text-secondary'"></i>
+                                                        FU Konsumen
+                                                        Kemarin (H-1)
+                                                    </td>
+
+                                                    <td class="text-center bg-light bg-opacity-50 fw-bold"
+                                                        :class="row.fu_yesterday > 0 ? 'text-dark' : 'text-muted'">
+                                                        {{ row.fu_yesterday }}
+                                                    </td>
+
+                                                    <td class="text-center fw-bold"
+                                                        :class="row.fu_yesterday_closing > 0 ? 'text-success bg-success bg-opacity-10' : 'text-muted'">
+                                                        {{ row.fu_yesterday_closing }}
+                                                    </td>
                                                 </tr>
+
                                                 <tr>
-                                                    <td class="fw-semibold">FU Konsumen Kemarin (H-1)</td>
-                                                    <td class="text-center fw-semibold">{{ row.fu_yesterday }}</td>
-                                                    <td class="text-center fw-semibold">{{ row.fu_yesterday_closing }}
+                                                    <td class="ps-4"
+                                                        :class="row.fu_before_yesterday > 0 || row.fu_before_yesterday_closing > 0 ? 'fw-semibold text-dark' : 'text-muted'">
+                                                        <i class="fas fa-history me-2"
+                                                            :class="row.fu_before_yesterday > 0 || row.fu_before_yesterday_closing > 0 ? 'text-info' : 'text-secondary'">
+                                                        </i>
+                                                        FU Konsumen
+                                                        Kemarennya (H-2)
+                                                    </td>
+
+                                                    <td class="text-center bg-light bg-opacity-50 fw-bold"
+                                                        :class="row.fu_before_yesterday > 0 ? 'text-dark' : 'text-muted'">
+                                                        {{ row.fu_before_yesterday }}
+                                                    </td>
+
+                                                    <td class="text-center fw-bold"
+                                                        :class="row.fu_before_yesterday_closing > 0 ? 'text-success bg-success bg-opacity-10' : 'text-muted'">
+                                                        {{ row.fu_before_yesterday_closing }}
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="fw-semibold">FU Konsumen Kemarennya (H-2)</td>
-                                                    <td class="text-center fw-semibold">{{ row.fu_before_yesterday }}
+                                                    <td class="ps-4"
+                                                        :class="row.fu_last_week > 0 || row.fu_last_week_closing > 0 ? 'fw-semibold text-dark' : 'text-muted'">
+                                                        <i class="fas fa-calendar-week me-2"
+                                                            :class="row.fu_last_week > 0 || row.fu_last_week_closing > 0 ? 'text-info' : 'text-secondary'">
+                                                        </i>
+                                                        FU
+                                                        Konsumen Minggu Lalu
                                                     </td>
-                                                    <td class="text-center fw-semibold">{{
-                                                        row.fu_before_yesterday_closing
-                                                    }}</td>
+
+                                                    <td class="text-center bg-light bg-opacity-50 fw-bold"
+                                                        :class="row.fu_last_week > 0 ? 'text-dark' : 'text-muted'">
+                                                        {{ row.fu_last_week }}
+                                                    </td>
+
+                                                    <td class="text-center fw-bold"
+                                                        :class="row.fu_last_week_closing > 0 ? 'text-success bg-success bg-opacity-10' : 'text-muted'">
+                                                        {{ row.fu_last_week_closing }}
+                                                    </td>
                                                 </tr>
+
                                                 <tr>
-                                                    <td class="fw-semibold">FU Konsumen Minggu Kemarennya</td>
-                                                    <td class="text-center fw-semibold">{{ row.fu_last_week }}</td>
-                                                    <td class="text-center fw-semibold">{{ row.fu_last_week_closing }}
+                                                    <td class="ps-4"
+                                                        :class="row.engage_old_customer > 0 || row.engage_closing > 0 ? 'fw-semibold text-dark' : 'text-muted'">
+                                                        <i class="fas fa-handshake text-info me-2"></i> Engage Pelanggan
+                                                        Lama
+                                                    </td>
+                                                    <td class="text-center bg-light bg-opacity-50 fw-bold"
+                                                        :class="row.engage_old_customer > 0 ? 'text-dark' : 'text-muted'">
+                                                        {{ row.engage_old_customer }}
+                                                    </td>
+                                                    <td class="text-center fw-bold"
+                                                        :class="row.engage_closing > 0 ? 'text-success bg-success bg-opacity-10' : 'text-muted'">
+                                                        {{ row.engage_closing }}
                                                     </td>
                                                 </tr>
-                                                <tr>
-                                                    <td class="fw-semibold">Engage Konsumen Lama</td>
-                                                    <td class="text-center fw-semibold">{{ row.engage_old_customer }}
-                                                    </td>
-                                                    <td class="text-center fw-semibold">{{ row.engage_closing }}</td>
-                                                </tr>
+
                                             </tbody>
-                                            <tfoot class="fw-bold table-dark">
-                                                <tr>
-                                                    <td class="border border-0">Total</td>
-                                                    <td class="text-center border border-0">
-                                                        {{
-                                                            (row.leads ?? 0) +
-                                                            (row.fu_yesterday ?? 0) +
-                                                            (row.fu_before_yesterday ?? 0) +
-                                                            (row.fu_last_week ?? 0) +
-                                                            (row.engage_old_customer ?? 0)
-                                                        }}
+                                            <tfoot class="bg-light border-top">
+                                                <tr class="fw-bold">
+                                                    <td class="ps-4 text-end text-uppercase small py-3">Total Harian :
                                                     </td>
-                                                    <td class="text-center border border-0"> {{
-                                                        (row.closing ?? 0) +
-                                                        (row.fu_yesterday_closing ?? 0) +
-                                                        (row.fu_before_yesterday_closing ?? 0) +
-                                                        (row.fu_last_week_closing ?? 0) +
-                                                        (row.engage_closing ?? 0)
-                                                    }}
+                                                    <td class="text-center py-3 fs-6 text-dark">
+                                                        {{ (row.leads ?? 0) + (row.fu_yesterday ?? 0) +
+                                                            (row.fu_before_yesterday ?? 0) + (row.fu_last_week ?? 0) +
+                                                            (row.engage_old_customer ?? 0) }}
+                                                    </td>
+                                                    <td
+                                                        class="text-center py-3 fs-6 bg-success bg-opacity-25 text-success-emphasis border-start border-success border-opacity-25">
+                                                        {{ (row.closing ?? 0) + (row.fu_yesterday_closing ?? 0) +
+                                                            (row.fu_before_yesterday_closing ?? 0) +
+                                                            (row.fu_last_week_closing ?? 0) + (row.engage_closing ?? 0) }}
                                                     </td>
                                                 </tr>
                                             </tfoot>
                                         </table>
                                     </div>
                                 </div>
-                                <div class="card-footer pb-0">
-                                    <div v-if="props.dailyReport?.data.length > 0"
-                                        :class="['blur-area', isLoading ? 'is-blurred' : '']"
-                                        class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
-                                        <div class="mb-2 order-1 order-xl-0 order-lg-0 order-md-0">
-                                            Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> sampai
-                                            <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari total
-                                            <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
-                                        </div>
-                                        <pagination size="pagination-sm" :links="props.dailyReport?.links"
-                                            routeName="daily_report" :additionalQuery="{
-                                                limit: filters.limit,
-                                                order_by: filters.order_by,
-                                                start_date: filters.start_date,
-                                                end_date: filters.end_date,
-                                            }" />
+                            </div>
+                        </div>
+
+                        <div class="col-12" v-if="props.dailyReport?.data.length > 0">
+                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden p-3 pb-0">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                                    <div class="text-muted pb-3">
+                                        Menampilkan <strong>{{ props.dailyReport?.from ?? 0 }}</strong> -
+                                        <strong>{{ props.dailyReport?.to ?? 0 }}</strong> dari
+                                        <strong>{{ props.dailyReport?.total ?? 0 }}</strong> data
                                     </div>
+                                    <pagination size="pagination-sm" :links="props.dailyReport?.links"
+                                        routeName="daily_report" :additionalQuery="{
+                                            limit: filters.limit,
+                                            order_by: filters.order_by,
+                                            start_date: filters.start_date,
+                                            end_date: filters.end_date,
+                                        }" />
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
             </div>
 
@@ -560,6 +690,7 @@ onMounted(() => {
                     </modal>
                 </div>
             </div>
+
         </template>
     </app-layout>
 </template>
@@ -616,5 +747,64 @@ onMounted(() => {
     overflow-x: hidden;
     vertical-align: top;
     max-height: 300px;
+}
+
+
+
+/* Container Kartu Filter */
+.custom-filter-card {
+    background: #ffffff;
+    border-radius: 12px;
+    /* Sudut lebih bulat */
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    /* Shadow sangat halus */
+    transition: all 0.3s ease;
+}
+
+.custom-filter-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    /* Efek naik saat hover */
+}
+
+/* Label yang lebih rapi */
+.custom-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    /* Warna abu-abu profesional */
+    text-transform: uppercase;
+}
+
+/* Styling Input & Select agar seragam */
+/* Note: CSS ini menargetkan elemen input yang dirender oleh komponen Vue kamu */
+.custom-filter-card input,
+.custom-filter-card select,
+.custom-filter-card .input-group-text {
+    border-color: #e9ecef;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    font-size: 0.9rem;
+}
+
+/* Efek saat input diklik (Fokus) */
+.custom-filter-card input:focus,
+.custom-filter-card select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 4px rgba(13, 109, 253, 0.185);
+    /* Ring fokus yang lembut */
+    background-color: #fff;
+}
+
+/* Tombol Terapkan (Filter Action) */
+.btn-filter-action {
+    border-top-right-radius: 6px !important;
+    border-bottom-right-radius: 6px !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    z-index: 5;
+    /* Pastikan tombol di atas border input */
 }
 </style>

@@ -78,59 +78,97 @@ const goBack = () => {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-            <div class="d-flex justify-content-between">
-                <Link @click.prevent="goBack" :href="url" class="btn btn-danger mb-3">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali
-                </Link>
-            </div>
-            <div class="row">
-                <div class="col-xl-12 col-sm-12 pb-3">
-                    <div class="card overflow-hidden rounded-3 bg-light">
-                        <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
-                            <i class="fas fa-info-circle me-1 text-light"></i>
-                            Form Jabatan
-                        </h5>
-                        <div v-if="form.processing">
-                            <loader-horizontal
-                                :message="props.jobTitle?.job_title_id ? 'Sedang memperbarui data' : 'Sedang menyimpan data'" />
+            <div class="row pb-3">
+                <div class="col-xl-12 col-sm-12 ">
+
+                    <div class="d-block d-xl-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Input Jabatan</h4>
+                            <p class="text-muted small mb-0">Isi data jabatan dengan lengkap pada form di
+                                bawah.</p>
                         </div>
-                        <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
+                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm hover-scale">
+                            <i class="fas fa-arrow-left me-2"></i>Kembali
+                        </Link>
+                    </div>
+
+                    <div class="card form-card border-0 shadow-lg rounded-4 overflow-hidden">
+
+                        <div class="card-header bg-white p-4 border-bottom-0 d-flex align-items-center">
+                            <div class="icon-square-lg bg-primary bg-opacity-10 text-primary rounded-3 me-3">
+                                <i class="fas fa-briefcase fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1">Form Data Jabatan</h5>
+                            </div>
+                        </div>
+
+                        <div v-if="form.processing"
+                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                            style="z-index: 10;">
+                            <loader-horizontal
+                                :message="props.storyReport?.story_status_id ? 'Memperbarui Laporan...' : 'Menyimpan Laporan...'" />
+                        </div>
+
+
+                        <div class="card-body p-4" :class="['blur-area', form.processing ? 'is-blurred' : '']">
                             <form-wrapper @submit="isSubmit">
-                                <div class="mb-3">
-                                    <input-label class="fw-bold" for="code" value="Kode Jabatan" />
-                                    <text-input :is-valid="false" disabled v-model="form.job_title_code" name="code" />
+
+                                <div class="row g-4">
+                                    <div class="col-12">
+                                        <label class="form-label-custom text-muted mb-2">KODE JABATAN (AUTO)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0 text-muted">
+                                                <i class="fas fa-hashtag"></i>
+                                            </span>
+                                            <text-input :is-valid="false" disabled v-model="form.job_title_code"
+                                                name="code" input-class="bg-light text-dark fw-bold border-start-0" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-8">
+                                        <input-label class="form-label-custom mb-2" for="title" value="NAMA JABATAN" />
+                                        <text-input autofocus v-model="form.title" name="title"
+                                            placeholder="Contoh: Staff Administrasi"
+                                            input-class="form-control-lg fs-6" />
+                                        <input-error :message="form.errors.title" />
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <input-label class="form-label-custom mb-2" for="title_alias"
+                                            value="SINGKATAN" />
+                                        <text-input v-model="form.title_alias" name="title_alias"
+                                            placeholder="Contoh: ADM" input-class="form-control-lg fs-6" />
+                                        <input-error :message="form.errors.title_alias" />
+                                    </div>
+
+                                    <div class="col-12">
+                                        <input-label class="form-label-custom mb-2" for="description"
+                                            value="DESKRIPSI TUGAS" />
+                                        <div class="quill-wrapper rounded-3 border overflow-hidden">
+                                            <quill-text :maxChar="500"
+                                                placeholder="Jelaskan tanggung jawab utama jabatan ini..."
+                                                v-model="form.description" height="300px" />
+                                        </div>
+                                        <input-error :message="form.errors.description" />
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <input-label class="fw-bold" for="title" value="Nama jabatan" />
-                                    <text-input autofocus v-model="form.title" name="title" placeholder="exp: Admin" />
-                                    <input-error :message="form.errors.title" />
-                                </div>
-                                <div class="mb-3">
-                                    <input-label class="fw-bold" for="title_alias" value="Singkatan Jabatan" />
-                                    <text-input v-model="form.title_alias" name="title_alias" placeholder="exp: Adm" />
-                                    <input-error :message="form.errors.title_alias" />
-                                </div>
-                                <div class="mb-3">
-                                    <input-label class="fw-bold" for="description" value="Deskripsi jabatan" />
-                                    <quill-text :maxChar="500" placeholder="Tulis deskripsi disini..."
-                                        v-model="form.description" height="350px" />
-                                    <input-error :message="form.errors.description" />
-                                </div>
-                                <div class="d-grid d-xl-block">
+
+                                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
                                     <base-button :loading="form.processing"
-                                        class="rounded-3 bg-gradient px-5 btn-height-2"
-                                        :icon="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'fas fa-edit' : 'fas fa-save'"
-                                        :variant="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'success' : 'primary'"
-                                        type="submit"
-                                        :name="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'ubah' : 'simpan'"
-                                        :label="props.jobTitle?.job_title_id && props.jobTitle?.job_title_id ? 'Ubah' : 'Simpan'" />
+                                        class="btn btn-height-1 rounded-3 px-4 shadow-sm btn-save-animate"
+                                        :icon="props.jobTitle?.job_title_id ? 'fas fa-check-circle' : 'fas fa-paper-plane'"
+                                        :variant="props.jobTitle?.job_title_id ? 'success' : 'primary'" type="submit"
+                                        :name="props.jobTitle?.job_title_id ? 'ubah' : 'simpan'"
+                                        :label="props.jobTitle?.job_title_id ? 'Simpan Perubahan' : 'Buat Jabatan Baru'" />
                                 </div>
+
                             </form-wrapper>
                         </div>
                     </div>
                 </div>
             </div>
+
         </template>
     </app-layout>
 
@@ -145,5 +183,79 @@ const goBack = () => {
     pointer-events: none;
     user-select: none;
     opacity: 0.6;
+}
+
+
+/* Card Container */
+.form-card {
+    background: #ffffff;
+    transition: all 0.3s ease;
+}
+
+/* Header Icon Box */
+.icon-square-lg {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Label Custom Modern */
+.form-label-custom {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+/* Quill Editor Styling Override */
+/* Agar editor terlihat menyatu dengan desain input Bootstrap */
+.quill-wrapper {
+    background-color: #fff;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.quill-wrapper:focus-within {
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.20rem rgba(13, 110, 253, 0.25);
+}
+
+/* Input Focus Effect yang lebih lembut */
+.form-control-lg:focus {
+    background-color: #fff;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+}
+
+/* Read-Only Input Styling */
+input:disabled {
+    background-color: #f8f9fa !important;
+    opacity: 1;
+    cursor: not-allowed;
+}
+
+/* Button Animation */
+.btn-save-animate {
+    transition: transform 0.2s;
+    font-weight: 600;
+}
+
+.btn-save-animate:hover {
+    transform: translateY(-2px);
+}
+
+.btn-save-animate:active {
+    transform: translateY(0);
+}
+
+.hover-scale {
+    transition: transform 0.2s;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
 }
 </style>

@@ -270,18 +270,18 @@ class TransactionController extends Controller
                 ->with('warning', 'Tidak ada data yang dipilih.');
         }
 
-        $transaction = TransactionModel::where('created_by', auth()->id())
-            ->whereIn('transaction_id', $all_id)
+        $transaction = TransactionModel::whereIn('transaction_id', $all_id)
+            ->where('created_by', auth()->id())
             ->withCount('payments')
             ->get();
 
         // Cek apakah ada transaksi yang sudah punya payment
-        $hasPayment = $transaction->contains(fn($trx) => $trx->payments_count > 0);
-
-        if ($hasPayment) {
-            return redirect()
-                ->route('transaction')
-                ->with('warning', 'Sebagian transaksi sudah memiliki pembayaran dan tidak dapat dihapus.');
+        foreach ($transaction as $trx) {
+            if ($trx->payments_count > 0) {
+                return redirect()
+                    ->route('transaction')
+                    ->with('warning', 'Sebagian transaksi sudah memiliki pembayaran dan tidak dapat dihapus.');
+            }
         }
 
         // Hapus semua transaksi aman

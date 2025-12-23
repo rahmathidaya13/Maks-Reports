@@ -18,7 +18,6 @@ const form = useForm({
     payment_method: props.transaction?.payments[0].payment_method ?? null,
     amount: props.transaction?.payments[0].amount ?? 0,
 });
-console.log(props.transaction)
 const priceFinal = computed(() => {
     const original = Number(form.price_original || 0)
     const discount = Number(form.price_discount || 0)
@@ -142,8 +141,9 @@ function formatCurrency(value) {
                     Kembali
                 </Link>
             </div>
-            <div class="row g-4">
-                <div class="col-xl-8 col-lg-7">
+            <div class="row g-4 pb-3">
+
+                <div class="col-xl-8 col-lg-8 col-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                         <div class="card-header bg-white py-3 px-4 border-bottom">
                             <div class="d-flex align-items-center">
@@ -283,7 +283,7 @@ function formatCurrency(value) {
                     </div>
                 </div>
 
-                <div class="col-xl-4 col-lg-5">
+                <div class="col-xl-4 col-lg-4 col-12">
                     <div class="sticky-top" style="top: 20px; z-index: 1;">
                         <div class="card border-0 shadow-sm rounded-4 bg-light bg-gradient">
                             <div class="card-body p-4">

@@ -125,27 +125,27 @@ const goDetail = (id) => {
     });
 }
 
-const toast = ref(null) // hanya tampil jika ada user baru
+// const toast = ref(null) // hanya tampil jika ada user baru
 // cek user jika ada yang registrasi, masuk ataupun keluar
-onMounted(() => {
-    window.Echo.channel('user-status')
-        .listen('.status.changed', (data) => {
-            const shouldClearCache = data.new_user_registered || data.recently_logged_in || data.recently_logged_out;
-            const new_user_registered = data.new_user_registered; // hanya tampil toast untuk user baru
-            if (shouldClearCache) {
-                if (new_user_registered) {
-                    const names = data.new_user_name.slice(0, 3).join(", ");
-                    const remaining = data.new_user_name.length - 3;
-                    const message = remaining > 0 ? `Terdaftar pengguna baru ${names} dan ${remaining} lainnya` : `Terdaftar pengguna baru ${names}`;
-                    // tampilkan toast
-                    toast.value.show('success', message, { timer: 10000 });
-                }
-            }
-        });
-});
-onUnmounted(() => {
-    window.Echo.leaveChannel('user-status');
-});
+// onMounted(() => {
+//     window.Echo.channel('user-status')
+//         .listen('.status.changed', (data) => {
+//             const shouldClearCache = data.new_user_registered || data.recently_logged_in || data.recently_logged_out;
+//             const new_user_registered = data.new_user_registered; // hanya tampil toast untuk user baru
+//             if (shouldClearCache) {
+//                 if (new_user_registered) {
+//                     const names = data.new_user_name.slice(0, 3).join(", ");
+//                     const remaining = data.new_user_name.length - 3;
+//                     const message = remaining > 0 ? `Terdaftar pengguna baru ${names} dan ${remaining} lainnya` : `Terdaftar pengguna baru ${names}`;
+//                     // tampilkan toast
+//                     toast.value.show('success', message, { timer: 10000 });
+//                 }
+//             }
+//         });
+// });
+// onUnmounted(() => {
+//     window.Echo.leaveChannel('user-status');
+// });
 
 const isLoading = ref(false)
 const sync = () => {

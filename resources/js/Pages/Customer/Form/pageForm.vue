@@ -80,14 +80,17 @@ onMounted(() => {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-            <div class="d-flex justify-content-between">
-                <Link @click.prevent="goBack" :href="url" class="btn btn-danger mb-3">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali
-                </Link>
-            </div>
             <div class="row pb-3">
                 <div class="col-xl-12 col-12">
+                    <div class="d-block d-xl-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Input Pelanggan</h4>
+                            <p class="text-muted small mb-0">Isi data pelanggan Anda dengan lengkap.</p>
+                        </div>
+                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm hover-scale">
+                            <i class="fas fa-arrow-left me-2"></i>Kembali
+                        </Link>
+                    </div>
                     <div class="card border-0 shadow rounded-4 overflow-hidden">
                         <div class="card-header bg-white py-3 px-4 border-bottom">
                             <div class="d-flex align-items-center">
@@ -152,12 +155,6 @@ onMounted(() => {
                                     <div class="col-md-12">
                                         <input-label class="fw-bold small" for="number_phone"
                                             value="Nomor WhatsApp / HP" />
-                                        <!-- <div class="input-group">
-                                            <span class="input-group-text bg-light border-end-0"><i
-                                                    class="fab fa-whatsapp text-success"></i></span>
-                                            <input-number placeholder="0812xxxx (Aktif)" name="number_phone" type="text"
-                                                class="form-control border-start-0 ps-1" v-model="form.number_phone" />
-                                        </div> -->
                                         <div class="position-relative">
                                             <i class="fab fa-whatsapp text-success input-icon-left"></i>
                                             <input-number input-class="input-fixed-height"
@@ -211,7 +208,7 @@ onMounted(() => {
                                     </button>
 
                                     <base-button :loading="form.processing"
-                                        class="rounded-3 shadow-sm px-4 btn-height-1 fw-bold" :icon="props.customers?.customer_id ? 'fas fa-save' : 'fas fa-paper-plane'
+                                        class="btn-save-custom rounded-3 shadow-sm px-4 btn-height-1 fw-bold" :icon="props.customers?.customer_id ? 'fas fa-save' : 'fas fa-paper-plane'
                                             " :variant="props.customers?.customer_id ? 'success' : 'primary'"
                                         type="submit" :label="props.customers?.customer_id ? 'Simpan Perubahan' : 'Simpan Data'
                                             " />
@@ -234,5 +231,24 @@ onMounted(() => {
     pointer-events: none;
     user-select: none;
     opacity: 0.6;
+}
+
+/* Utility Class untuk Tombol Kembali */
+.hover-scale {
+    transition: transform 0.2s;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.btn-save-custom {
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-save-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
 }
 </style>

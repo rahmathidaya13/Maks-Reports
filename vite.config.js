@@ -20,27 +20,30 @@ export default defineConfig({
             },
         }),
 
-        // 🔥 Inject jQuery global untuk plugin-plugin jQuery (daterangepicker)
+        // Inject jQuery TAPI JANGAN KE SEMUA FILE
         inject({
             $: "jquery",
             jQuery: "jquery",
             "window.jQuery": "jquery",
             "window.$": "jquery",
-            include: ["**/*.js", "**/*.vue"],
+            include: ["resources/js/**/*.js", "resources/js/**/*.vue"],
             // exclude: ["**/*.css"],
         }),
     ],
 
     server: {
+        hmr: {
+            overlay: false, // matikan overlay error
+        },
         watch: {
             usePolling: false,
+            ignored: ["**/vendor/**", "**/storage/**", "**/node_modules/**"],
         },
     },
 
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "resources/js"),
-            // pastikan jQuery load versi minified
             jquery: "jquery/dist/jquery.min.js",
         },
     },

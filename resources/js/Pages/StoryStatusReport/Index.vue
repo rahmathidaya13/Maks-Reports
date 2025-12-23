@@ -4,6 +4,7 @@ import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
 import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
+import { highlight } from "@/helpers/highlight";
 import axios from "axios";
 moment.locale('id');
 
@@ -23,11 +24,11 @@ const props = defineProps({
 
 const filters = reactive({
     keyword: props.filters.keyword ?? '',
-    limit: props.filters.limit ?? 10,
-    order_by: props.filters.order_by ?? "desc",
+    limit: props.filters.limit ?? null,
+    order_by: props.filters.order_by ?? null,
+    start_date: props.filters.start_date ?? null,
+    end_date: props.filters.end_date ?? null,
     page: props.filters?.page ?? 1,
-    start_date: props.filters.start_date ?? '',
-    end_date: props.filters.end_date ?? '',
 })
 
 const deleted = (nameRoute, data) => {
@@ -63,11 +64,12 @@ function daysTranslate(dayValue) {
 
 const isLoading = ref(false)
 const searchByDate = debounce((e) => {
+    isLoading.value = true
     router.get(route("story_report"), filters, {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["storyReport", "filters"], // optional: lebih hemat bandwidth jika pakai Inertia partial reload
+        only: ["storyReport", "filters"], // lebih hemat bandwidth jika pakai Inertia partial reload
         onFinish: () => {
             // Selesai apapun hasilnya → loader hilang
             isLoading.value = false
@@ -87,24 +89,35 @@ const applyDateRange = () => {
     searchByDate()
 }
 
-// Watcher untuk tanggal saja bila tanggal direset dari field
-watch(
-    [() => filters.start_date, () => filters.end_date],
-    () => {
-        if (!filters.start_date && !filters.end_date) {
-            filters.page = 1;
-            isLoading.value = true
-            searchByDate();
-        }
+const handleReset = () => {
+    filters.keyword = ''
+    filters.limit = null
+    filters.order_by = null
+    filters.start_date = null
+    filters.end_date = null
 
-    }, {
-    deep: true
+    // Langsung cari data bersih
+    applyDateRange()
 }
-);
-// Watcher untuk limit dan order_by saja
+
+// Watcher untuk tanggal saja bila tanggal direset dari field
+
+// watch(
+//     [() => filters.start_date, () => filters.end_date],
+//     () => {
+//         if (!filters.start_date && !filters.end_date) {
+//             filters.page = 1;
+//             isLoading.value = true
+//             searchByDate();
+//         }
+
+//     }, {
+//     deep: true
+// }
+// );
+
+// Watcher untuk trigger pencarian
 watch([
-    () => filters.limit,
-    () => filters.order_by,
     () => filters.keyword,
 ], () => {
     filters.page = 1;
@@ -240,11 +253,18 @@ const resetField = () => {
     form.end_date_dw = '';
 }
 // =========Batas Fungsi untuk Tampilkan Modal========== //
-// const inputRef = ref(null);
-// onMounted(() => {
-//     inputRef.value.focus();
-// })
+
 const perm = page.props.auth.user
+
+const hasActiveFilter = computed(() => {
+    return (
+        filters.keyword !== '' ||
+        filters.start_date !== null ||
+        filters.end_date !== null ||
+        filters.limit !== null ||
+        filters.order_by !== null
+    )
+})
 
 const fileterFields = computed(() => [
     {
@@ -254,8 +274,9 @@ const fileterFields = computed(() => [
         col: 'col-xl-8 col-12',
         props: {
             placeholder: 'Masukan ID Report',
-            inputClass: 'border-0 border input-height-1',
+            inputClass: ' input-height-1',
             isValid: false,
+            autofocus: true
         }
     },
     {
@@ -264,7 +285,7 @@ const fileterFields = computed(() => [
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
         props: {
-            selectClass: 'border-0 border input-height-1',
+            selectClass: ' input-height-1',
             isValid: false,
         },
         options: [
@@ -282,7 +303,7 @@ const fileterFields = computed(() => [
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
         props: {
-            selectClass: 'border-0 border input-height-1',
+            selectClass: 'input-height-1',
             isValid: false,
         },
         options: [
@@ -297,7 +318,7 @@ const fileterFields = computed(() => [
         type: 'date',
         col: 'col-xl-6 col-md-6 col-6',
         props: {
-            inputClass: 'border-0 border input-height-1',
+            inputClass: ' input-height-1',
             isValid: false,
         }
     },
@@ -307,7 +328,7 @@ const fileterFields = computed(() => [
         type: 'date',
         col: 'col-xl-6 col-md-6 col-6',
         props: {
-            inputClass: 'border-0 border input-height-1',
+            inputClass: ' input-height-1',
             isValid: false,
         }
     },
@@ -320,6 +341,10 @@ const fileterFields = computed(() => [
         name: 'reset',
         class: 'btn-secondary',
         icon: 'fas fa-undo',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-outline-danger',
+        disabled: !hasActiveFilter.value,
+        handler: () => handleReset()
+
     },
     {
         key: 'apply',
@@ -328,6 +353,8 @@ const fileterFields = computed(() => [
         name: 'apply',
         class: 'btn-secondary',
         icon: 'fas fa-filter',
+        class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-primary',
+        disabled: !hasActiveFilter.value,
         handler: () => applyDateRange()
     },
 ]);
@@ -342,11 +369,11 @@ const fileterFields = computed(() => [
                 :items="[{ text: 'Laporan Update Status' }]" />
             <callout type="success" :duration="10" :message="message" />
 
-            <div class="row">
+            <div class="row pb-3">
+                <div class="col-xl-12 col-12 mb-3">
+                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
+                </div>
                 <div class="col-12 col-xl-12">
-                    <div class="col-xl-12 col-12 mb-3">
-                        <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
-                    </div>
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
 
                         <div
@@ -427,7 +454,7 @@ const fileterFields = computed(() => [
                                         </tr>
 
                                         <tr v-for="(row, rowIndex) in storyReport?.data" :key="rowIndex"
-                                            :id="row.story_status_id" class="transition-hover" :class="[
+                                            :id="row.story_status_id" :class="[
                                                 { 'bg-primary bg-opacity-10': isSelected(row.story_status_id) },
                                                 highlightId.includes(row.story_status_id) ? (highlightType === 'create' ? 'blink-green' : 'blink-blue') : ''
                                             ]">
@@ -447,9 +474,8 @@ const fileterFields = computed(() => [
                                             </td>
 
                                             <td class="text-center">
-                                                <span
-                                                    class="font-monospace bg-light border px-2 py-1 rounded text-dark">
-                                                    {{ row.report_code }}
+                                                <span class="font-monospace bg-light border px-2 py-1 rounded text-dark"
+                                                    v-html="highlight(row.report_code, filters.keyword)">
                                                 </span>
                                             </td>
 
@@ -467,7 +493,8 @@ const fileterFields = computed(() => [
                                             </td>
 
                                             <td class="text-center">
-                                                <span class="badge bg-light text-dark border fw-normal fs-6">
+                                                <span class="badge bg-light text-dark border fw-normal"
+                                                    style="font-size: 0.9rem;">
                                                     <i class="far fa-clock me-1"></i> {{ row.report_time.slice(0, 5) }}
                                                 </span>
                                             </td>
@@ -488,8 +515,8 @@ const fileterFields = computed(() => [
 
                                             <td class="text-center">
                                                 <div class="dropdown dropstart">
-                                                    <button class="btn btn-light bg-gradient border" type="button"
-                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <button class="btn btn-light bg-gradient border text-secondary"
+                                                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="fas fa-cog"></i>
                                                     </button>
                                                     <ul
