@@ -145,6 +145,7 @@ class ScrapeProducts extends Command
 
                         if (!$existing) {
                             ProductModel::create([
+                                'source' => 'scrape',
                                 'link' => $link,
                                 'name' => $nama,
                                 'price_original' => $priceOriginal,
@@ -163,6 +164,7 @@ class ScrapeProducts extends Command
                         $changes = [];
 
                         $fields = [
+                            'source' => 'scrape',
                             'name' => $nama,
                             'price_original' => $priceOriginal,
                             'price_discount' => $priceDiscount,
@@ -204,6 +206,7 @@ class ScrapeProducts extends Command
                         $this->error("Gagal simpan ($nama): " . $e->getMessage());
                     }
                     $results[] = [
+                        'source' => 'scrape',
                         'name' => $nama,
                         'price_original' => $priceOriginal,
                         'price_discount' => $priceDiscount,

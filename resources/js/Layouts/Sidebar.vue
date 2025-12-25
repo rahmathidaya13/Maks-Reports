@@ -138,7 +138,8 @@ const permissions = page.props.auth.user?.permissions ?? [];
                     <div class="sb-sidenav-menu-heading">Laporan
                     </div>
 
-                    <Link @click.prevent="transaction" :href="route('transaction')" class="nav-link"
+                    <Link v-if="permissions.includes('transaction.view')" @click.prevent="transaction"
+                        :href="route('transaction')" class="nav-link"
                         :class="{ 'active active-link': is('transaction*') }">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-money-bill"></i>

@@ -22,6 +22,21 @@ const goToEditProfile = (id) => {
         onFinish: () => loaderActive.value?.hide()
     });
 }
+
+function daysTranslate(dayValue) {
+    const dayConvert = {
+        "Sunday": "Minggu",
+        "Monday": "Senin",
+        "Tuesday": "Selasa",
+        "Wednesday": "Rabu",
+        "Thursday": "Kamis",
+        "Friday": "Jumat",
+        "Saturday": "Sabtu",
+    };
+    const dateFormat = moment(dayValue).format("DD/MM/YYYY");
+    return dateFormat;
+}
+
 </script>
 
 <template>
@@ -36,147 +51,221 @@ const goToEditProfile = (id) => {
                 { text: 'Detail Profil' },
             ]" />
 
-            <alert :variant="$page.props.flash.message ? 'success' : 'danger'" :duration="10"
+            <callout :type="$page.props.flash.message ? 'success' : 'danger'" :duration="10"
                 :message="$page.props.flash.message || $page.props.flash.error" />
-            <div class="row">
-                <div class="col-xl-12 pb-3">
-                    <div class="card shadow border border-secondary-subtle overflow-hidden">
-                        <div class="card-body p-0">
-                            <div class="row">
-                                <div
-                                    class="text-bg-grey col-md-12 col-xl-4 col-12 d-flex flex-column align-items-center profile-wrapper">
-                                    <div class="profile-image-container mb-3">
-                                        <img :src="imageSource" alt="Foto Profil"
-                                            class="img-fluid profile-img-circle border border-5 border-light shadow-sm">
-                                    </div>
-                                    <h3 class="fw-bold text-center">
-                                        {{ textToUppercase(props.detail?.user.name) ?? 'Nama Pengguna' }}
-                                    </h3>
-                                    <h6 class="text-muted">
-                                        {{ textToUppercase(props.detail?.job_title.title) ?? 'Jabatan/Peran' }}
-                                    </h6>
 
-                                    <div class="d-flex justify-content-center gap-1 mt-3">
-                                        <button @click="goToEditProfile(props.detail?.users_id)"
-                                            class="btn btn-outline-success bg-gradient">
-                                            <i class="fas fa-edit"></i>
-                                            Perbarui Profil
-                                        </button>
-                                    </div>
+            <div class="row g-4 pb-4">
 
+                <div class="col-xl-4 col-lg-5">
+                    <div class="card card-profile border-0 shadow-sm rounded-4 overflow-hidden position-sticky"
+                        style="top:80px">
+
+                        <div class="card-header-banner bg-gradient-primary"></div>
+
+                        <div class="card-body text-center p-4 position-relative">
+                            <div class="profile-avatar-wrapper mx-auto mb-3">
+                                <img :src="imageSource" alt="Foto Profil"
+                                    class="img-fluid rounded-circle shadow border border-4 border-white object-fit-cover"
+                                    style="width: 120px; height: 120px;">
+                            </div>
+
+                            <h5 class="fw-bold text-dark mb-1">
+                                {{ textToUppercase(props.detail?.user.name) ?? 'NAMA PENGGUNA' }}
+                            </h5>
+                            <p class="text-primary fw-semibold mb-2">
+                                {{ textToUppercase(props.detail?.job_title.title) ?? 'Jabatan Tidak Diketahui' }}
+                            </p>
+                            <div class="badge bg-light text-secondary border px-3 py-2 rounded-pill mb-4">
+                                {{ props.detail?.employee_id_number ?? 'No ID' }}
+                            </div>
+
+                            <div class="d-flex justify-content-center gap-2 mb-4">
+                                <a :href="'mailto:' + props.detail?.user.email"
+                                    class="btn btn-light btn-sm rounded-circle shadow-sm" title="Email">
+                                    <i class="fas fa-envelope text-danger"></i>
+                                </a>
+                                <a href="#" class="btn btn-light btn-sm rounded-circle shadow-sm" title="Telepon">
+                                    <i class="fas fa-phone text-success"></i>
+                                </a>
+                            </div>
+
+                            <button @click="goToEditProfile(props.detail?.users_id)"
+                                class="btn btn-primary w-100 rounded-3 shadow-sm btn-hover-effect">
+                                <i class="fas fa-user-edit me-2"></i> Perbarui Profil
+                            </button>
+                        </div>
+
+                        <div class="card-footer bg-white border-0 py-2 text-center mb-2">
+                            <small class="text-muted text-uppercase fs-8 fw-bold ls-1">Status:
+                                <span class="text-success">
+                                    {{ textToUppercase(props.detail?.employee_status) ?? 'AKTIF' }}
+                                </span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-8 col-lg-7">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+
+                            <div class="mb-5">
+                                <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
+                                    <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-3 me-3">
+                                        <i class="bi bi-person-lines-fill fs-5"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-0 text-uppercase ls-1">Informasi Pribadi</h6>
                                 </div>
 
-                                <div class="col-xl-8 col-md-12 p-xl-3 p-4 col-12 ">
-                                    <div>
-                                        <h5 class="text-secondary mb-3 text-uppercase"><i
-                                                class="bi bi-person-lines-fill me-2"></i>Data
-                                            Pribadi</h5>
-                                        <div class="row detail-row personal">
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">NIK:</p>
-                                                <p class="text-muted">
-                                                    {{ props.detail?.national_id_number }}
-                                                </p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Tempat Lahir:</p>
-                                                <p class="text-muted">
-                                                    {{ textToUppercase(props.detail?.birthplace) }}
-                                                </p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Tanggal Lahir:</p>
-                                                <p class="text-muted">
-                                                    {{ moment(props.detail?.birthdate).format("DD-MM-YYYY") }}
-                                                </p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Jenis Kelamin:</p>
-                                                <p class="text-muted">{{ props.detail?.gender == 'male'
-                                                    ? 'Laki-laki' : 'Perempuan' }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Agama:</p>
-                                                <p class="text-muted">
-                                                    {{ textToUppercase(props.detail?.religion) }}
-                                                </p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Email:</p>
-                                                <p class="text-muted">{{ props.detail?.user.email }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Nomor Telepon:</p>
-                                                <p class="text-muted">{{ props.detail?.number_phone }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Alamat Lengkap:</p>
-                                                <p class="text-muted">{{ props.detail?.address }}</p>
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Nomor Induk Kependudukan
+                                                (NIK)</label>
+                                            <div class="fw-bold text-dark">{{ props.detail?.national_id_number || '-' }}
                                             </div>
                                         </div>
                                     </div>
-
-
-                                    <div>
-                                        <h5 class="text-secondary mb-3 text-uppercase"><i
-                                                class="fas fa-graduation-cap me-2"></i>Data
-                                            Pendidikan</h5>
-
-                                        <div class="row detail-row education">
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Tahun Masuk:</p>
-                                                <p class="text-muted">{{ props.detail?.entry_year ?? '-' }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Pendidikan Terakhir:</p>
-                                                <p class="text-muted">{{ props.detail?.education }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Jurusan:</p>
-                                                <p class="text-muted">{{ textToUppercase(props.detail?.major) }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Tahun Lulus:</p>
-                                                <p class="text-muted">{{ props.detail?.graduation_year ?? '-' }}</p>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Email</label>
+                                            <div class="fw-bold text-dark">{{ props.detail?.user.email }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Tempat, Tanggal
+                                                Lahir</label>
+                                            <div class="fw-bold text-dark">
+                                                {{ textToUppercase(props.detail?.birthplace) }}, {{
+                                                    daysTranslate(props.detail?.birthdate) }}
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Agama
+                                            </label>
+                                            <div class="fw-bold text-dark">
+                                                {{ textToUppercase(props.detail?.religion) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Jenis Kelamin </label>
+                                            <div class="fw-bold text-dark">
+                                                {{ props.detail?.gender == 'male' ? 'Laki-laki' : 'Perempuan' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Kontak Telepon</label>
+                                            <div class="fw-bold text-dark">{{ props.detail?.number_phone || '-' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="info-group p-3 bg-light rounded-3">
+                                            <label class="text-muted text-uppercase fs-8 mb-1"><i
+                                                    class="fas fa-map-marker-alt me-1"></i>Alamat Lengkap</label>
+                                            <div class="fw-bold text-dark">{{ props.detail?.address || '-' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                    <div>
-                                        <h5 class="text-secondary mb-3 text-uppercase"><i
-                                                class="bi bi-info-circle me-2"></i> Data
-                                            Pegawai</h5>
-                                        <div class="row detail-row">
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">ID Karyawan:</p>
-                                                <p class="text-muted">{{ props.detail?.employee_id_number ?? '-' }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Status:</p>
-                                                <p class="text-muted">{{ textToUppercase(props.detail?.employee_status)
-                                                    ??
-                                                    '-' }}</p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Cabang/Unit:</p>
-                                                <p class="text-muted">{{ textToUppercase(props.detail?.branch.name) ??
-                                                    'Tidak Ditentukan' }}
-                                                </p>
-                                            </div>
-                                            <div class="col-xl-6 col-6 mb-2">
-                                                <p class="mb-0 fw-bold">Tanggal Masuk:</p>
-                                                <p class="text-muted">
-                                                    {{ moment(props.detail?.date_of_entry).format("DD-MM-YYYY") }}
-                                                </p>
+                            <div class="mb-5">
+                                <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
+                                    <div class="icon-box bg-info bg-opacity-10 text-info rounded-3 me-3">
+                                        <i class="fas fa-graduation-cap fs-5"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-0 text-uppercase ls-1">Riwayat Pendidikan</h6>
+                                </div>
+
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Jenjang</label>
+                                            <div class="fw-bold text-dark">{{ props.detail?.education }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Jurusan / Program
+                                                Studi</label>
+                                            <div class="fw-bold text-dark">{{ textToUppercase(props.detail?.major) ||
+                                                '-' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Tahun Masuk</label>
+                                            <div class="fw-bold text-dark">{{ props.detail?.entry_year || '-' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Tahun Lulus</label>
+                                            <div class="fw-bold text-dark">{{ props.detail?.graduation_year || '-' }}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <div>
+                                <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
+                                    <div class="icon-box bg-success bg-opacity-10 text-success rounded-3 me-3">
+                                        <i class="fas fa-briefcase fs-5"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-0 text-uppercase ls-1">Data Kepegawaian</h6>
+                                </div>
+
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">ID Karyawan</label>
+                                            <div class="fw-bold text-dark">{{
+                                                props.detail?.employee_id_number || '-' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Tanggal Bergabung</label>
+                                            <div class="fw-bold text-dark">{{
+                                                daysTranslate(props.detail?.date_of_entry) }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Cabang / Unit
+                                                Kerja</label>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-building text-secondary me-2"></i>
+                                                <span class="fw-bold text-dark">{{
+                                                    textToUppercase(props.detail?.branch.name) || 'PUSAT' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <label class="text-muted text-uppercase fs-8 mb-1">Status
+                                                Kepegawaian</label>
+                                            <span
+                                                class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2">
+                                                {{ textToUppercase(props.detail?.employee_status) || '-' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
+
         </template>
     </app-layout>
 </template>
@@ -213,6 +302,7 @@ const goToEditProfile = (id) => {
     /* border-radius: 50%; */
 }
 
+
 /* Gaya untuk baris detail agar lebih terstruktur */
 .employee_info,
 .personal,
@@ -234,5 +324,67 @@ const goToEditProfile = (id) => {
         width: 150px;
         height: 150px;
     }
+}
+
+
+/* Styling Kartu Profil Kiri */
+.card-profile {
+    background: #fff;
+    transition: transform 0.3s;
+}
+
+/* Banner Gradient di header kartu */
+.card-header-banner {
+    height: 100px;
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    /* Biru ke Cyan */
+    width: 100%;
+}
+
+/* Wrapper agar foto naik ke atas banner */
+.profile-avatar-wrapper {
+    margin-top: -60px;
+    /* Menarik foto ke atas */
+    position: relative;
+    z-index: 2;
+}
+
+/* Typography Helpers */
+.fs-8 {
+    font-size: 0.75rem !important;
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+/* Icon Box untuk Header Section */
+.icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Animasi Halus Tombol */
+.btn-hover-effect {
+    transition: all 0.3s ease;
+}
+
+.btn-hover-effect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Info Group Styling */
+.info-group label {
+    display: block;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.info-group .fw-bold {
+    font-size: 0.95rem;
 }
 </style>

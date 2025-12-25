@@ -58,7 +58,7 @@ class GoogleAuthController extends Controller
             ]);
             $user->syncRoles('user');
             // $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
-            (new \App\Services\UserService())->checkAndBroadcastStatus();
+            // (new \App\Services\UserService())->checkAndBroadcastStatus();
             Auth::login($user, true);
 
             return redirect()->intended('/home')->with('message', 'Berhasil login menggunakan akun Google.');

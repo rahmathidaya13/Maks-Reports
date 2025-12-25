@@ -253,7 +253,7 @@ const fileterFields = computed(() => [
 
                         <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0 custom-table">
+                                <table class="table table-hover align-middle mb-0 custom-table text-nowrap">
                                     <thead class="bg-light">
                                         <tr>
                                             <th v-if="perm.includes('job.title.delete')" class="text-center">
@@ -303,7 +303,7 @@ const fileterFields = computed(() => [
                                             <td class="text-center">
                                                 <div v-html="highlight(item[header[3].key], filters.keyword)"></div>
                                             </td>
-                                            <td class="ps-3 text-wrap" style="max-width: 250px;">
+                                            <td class="ps-3">
                                                 <div class="text-muted" v-html="item[header[4].key]"></div>
                                             </td>
 

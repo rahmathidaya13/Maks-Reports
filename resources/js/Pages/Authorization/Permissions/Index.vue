@@ -136,7 +136,7 @@ const fileterFields = [
         col: 'col-xl-8 col-12',
         props: {
             placeholder: 'Masukan pencarian...',
-            inputClass: 'border-dark border-1 border input-height-1',
+            inputClass: 'input-height-1',
             autofocus: true,
             isValid: false,
         }
@@ -147,7 +147,7 @@ const fileterFields = [
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
         props: {
-            selectClass: 'border-dark border-1 border input-height-1',
+            selectClass: 'input-height-1',
             isValid: false,
         },
         options: [
@@ -165,7 +165,7 @@ const fileterFields = [
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
         props: {
-            selectClass: 'border-dark border-1 border input-height-1',
+            selectClass: 'input-height-1',
             isValid: false,
         },
         options: [

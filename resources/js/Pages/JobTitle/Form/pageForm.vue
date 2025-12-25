@@ -80,34 +80,31 @@ const goBack = () => {
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
             <div class="row pb-3">
                 <div class="col-xl-12 col-sm-12 ">
-
-                    <div class="d-block d-xl-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h4 class="fw-bold text-dark mb-1">Input Jabatan</h4>
-                            <p class="text-muted small mb-0">Isi data jabatan dengan lengkap pada form di
-                                bawah.</p>
-                        </div>
-                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm hover-scale">
-                            <i class="fas fa-arrow-left me-2"></i>Kembali
-                        </Link>
-                    </div>
-
                     <div class="card form-card border-0 shadow-lg rounded-4 overflow-hidden">
-
-                        <div class="card-header bg-white p-4 border-bottom-0 d-flex align-items-center">
-                            <div class="icon-square-lg bg-primary bg-opacity-10 text-primary rounded-3 me-3">
-                                <i class="fas fa-briefcase fs-4"></i>
+                        <div
+                            class="card-header bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-square-lg bg-success bg-opacity-10 text-success rounded-3 me-3">
+                                    <i class="fas fa-building fs-4"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">Form Data Jabatan</h5>
+                                    <p class="text-muted small mb-0">Kelola informasi Jabatan.</p>
+                                </div>
                             </div>
-                            <div>
-                                <h5 class="fw-bold text-dark mb-1">Form Data Jabatan</h5>
-                            </div>
+                            <Link @click.prevent="goBack" :href="url"
+                                class="btn btn-danger fw-bold border hover-scale px-3">
+                                <i class="fas fa-arrow-left me-2"></i> Kembali
+                            </Link>
                         </div>
+
+
 
                         <div v-if="form.processing"
                             class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
                             style="z-index: 10;">
                             <loader-horizontal
-                                :message="props.storyReport?.story_status_id ? 'Memperbarui Laporan...' : 'Menyimpan Laporan...'" />
+                                :message="props.jobTitle?.job_title_id ? 'Memperbarui Data Jabatan...' : 'Mendaftarkan Jabatan Baru...'" />
                         </div>
 
 
@@ -154,7 +151,9 @@ const goBack = () => {
                                     </div>
                                 </div>
 
-                                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                                <div class="d-flex justify-content-end mt-4 pt-3 gap-2 border-top">
+                                    <button @click.prevent="goBack"
+                                        class="btn btn-outline-secondary px-4">Batal</button>
                                     <base-button :loading="form.processing"
                                         class="btn btn-height-1 rounded-3 px-4 shadow-sm btn-save-animate"
                                         :icon="props.jobTitle?.job_title_id ? 'fas fa-check-circle' : 'fas fa-paper-plane'"

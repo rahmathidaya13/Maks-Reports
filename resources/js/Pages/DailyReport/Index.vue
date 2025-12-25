@@ -443,15 +443,6 @@ onMounted(() => {
                                     </div>
                                 </div>
 
-                                <div v-if="isLoading"
-                                    class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                                    style="z-index: 10;">
-                                    <div class="text-center">
-                                        <div class="spinner-border text-primary mb-2" role="status"></div>
-                                        <p class="fw-bold text-dark">Memproses...</p>
-                                    </div>
-                                </div>
-
                                 <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
                                     <div class="table-responsive">
                                         <table class="table table-hover align-middle mb-0">

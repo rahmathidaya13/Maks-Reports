@@ -5,24 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductModel extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
     protected $table = 'products';
     protected $primaryKey = 'product_id';
 
     protected $fillable = [
         'created_by',
+        'source',
         'name',
         'price_original',
         'price_discount',
         'link',
         'image_link',
         'image_url',
+        'image_path',
         'category',
         'description',
     ];
+
+    protected $dates = ['deleted_at'];
     protected $casts = [
         'image_url' => 'array',
     ];

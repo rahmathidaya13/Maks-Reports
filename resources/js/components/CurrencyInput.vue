@@ -31,6 +31,10 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    inputClass: {
+        type: [String, Array, Object],
+        default: ""
+    }
 })
 
 const emit = defineEmits(["update:modelValue"])
@@ -91,7 +95,7 @@ const errors = page.props.errors
 </script>
 
 <template>
-    <input type="text" :class="['form-control', {
+    <input type="text" :class="['form-control', inputClass, {
         'is-invalid': isInvalid && $page.props.errors[props.name],
         'is-valid': isValid && modelValue && !$page.props.errors[props.name]
     }]" :name="name" :id="name" v-model="displayValue" @input="onInput" />

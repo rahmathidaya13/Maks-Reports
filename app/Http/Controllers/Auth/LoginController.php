@@ -47,7 +47,7 @@ class LoginController extends Controller
 
         $this->authenticate($request);
         $request->session()->regenerate();
-        (new \App\Services\UserService())->checkAndBroadcastStatus();
+        // (new \App\Services\UserService())->checkAndBroadcastStatus();
         return redirect()->intended('/home');
     }
 
@@ -111,7 +111,7 @@ class LoginController extends Controller
             $user->setRememberToken(null);
             $user->save();
         }
-        (new \App\Services\UserService())->checkAndBroadcastStatus();
+        // (new \App\Services\UserService())->checkAndBroadcastStatus();
         Auth::guard('web')->logout();
 
         // Hapus sesi & regenerasi token CSRF

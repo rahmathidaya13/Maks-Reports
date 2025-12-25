@@ -184,7 +184,7 @@ const sync = () => {
                                 <div class="col-xl-6 col-md-12">
                                     <input-label for="keyword" value="Pencarian" class="fw-semibold" />
                                     <div class="input-group mb-xl-0">
-                                        <text-input input-class="border-dark border-1 border input-height-1"
+                                        <text-input input-class="input-height-1"
                                             :is-valid="false" autofocus v-model="filters.keyword" name="keyword"
                                             placeholder="Masukan pencarian....." />
                                     </div>
@@ -192,7 +192,7 @@ const sync = () => {
                                 <div class="col-xl-2 col-md-4 col-4">
                                     <input-label for="limit" value="Batas" class="fw-semibold" />
                                     <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border input-height-1"
+                                        <select-input select-class="input-height-1"
                                             :is-valid="false" v-model="filters.limit" name="limit" :options="[
                                                 { value: null, label: 'Pilih Batas Data' },
                                                 { value: 10, label: '10' },
@@ -206,7 +206,7 @@ const sync = () => {
                                 <div class="col-xl-2 col-md-4 col-4">
                                     <input-label for="order_by" value="Urutkan" class="fw-semibold" />
                                     <div class="input-group">
-                                        <select-input select-class="border-dark border-1 border input-height-1"
+                                        <select-input select-class="input-height-1"
                                             :is-valid="false" v-model="filters.order_by" name="order_by" :options="[
                                                 { value: null, label: 'Pilih Urutan' },
                                                 { value: 'desc', label: 'Terbaru' },
@@ -217,7 +217,7 @@ const sync = () => {
                                 <div class="col-xl-2 col-md-4 col-4">
                                     <input-label for="active_emp" value="Status" class="fw-semibold" />
                                     <div class="input-group">
-                                        <select-input select-class="border border-1 border-dark input-height-1"
+                                        <select-input select-class="input-height-1"
                                             :is-valid="false" v-model="filters.active_emp" name="active_emp" :options="[
                                                 { value: 'active', label: 'Aktif' },
                                                 { value: 'inactive', label: 'Non-Aktif' },

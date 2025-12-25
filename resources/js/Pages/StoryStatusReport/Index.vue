@@ -406,12 +406,8 @@ const fileterFields = computed(() => [
                         </div>
 
                         <div v-if="isLoading"
-                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                            style="z-index: 10;">
-                            <div class="text-center">
-                                <div class="spinner-border text-primary mb-2" role="status"></div>
-                                <p class="fw-bold text-dark">Memproses...</p>
-                            </div>
+                            class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center z-3">
+                            <loader-horizontal message="Memuat..." />
                         </div>
 
                         <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">

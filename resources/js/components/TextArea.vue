@@ -12,6 +12,10 @@ defineProps({
     cols: {
         type: Number,
         default: 0
+    },
+    inputClass: {
+        type: [Array, Object, String],
+        default: ""
     }
 })
 const model = defineModel({
@@ -31,7 +35,7 @@ defineExpose({ focus: () => textarea.value.focus() });
 </script>
 
 <template>
-    <textarea v-model="model" :class="['form-control text-bg-grey', {
+    <textarea v-model="model" :class="['form-control text-bg-grey', inputClass, {
         'is-invalid': $page.props.errors[name],
         'is-valid': model && !$page.props.errors[name]
     }]" ref="textarea" :rows="rows" :cols="cols" :name="name" :id="name"></textarea>

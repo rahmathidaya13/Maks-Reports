@@ -81,27 +81,26 @@ function formatCurrency(value) {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-            <div class="d-flex justify-content-between">
-                <Link @click.prevent="goBack" :href="url" class="btn btn-danger mb-3">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali
-                </Link>
-            </div>
-            <div class="row justify-content-center mt-3">
-                <div class="col-xl-6 col-12 pb-5">
+            <div class="row pb-3">
+                <div class="col-xl-12 col-12">
                     <div class="card border-0 shadow rounded-4 overflow-hidden">
 
-                        <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                            <div class="d-flex align-items-center justify-content-between">
+                        <div
+                            class="card-header bg-white p-4 border-bottom-0 d-xl-flex d-block justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-square-lg bg-primary bg-opacity-10 text-primary rounded-3 me-3">
+                                    <i class="fas fa-wallet fs-4"></i>
+                                </div>
                                 <div>
                                     <h5 class="fw-bold text-dark mb-1">Pelunasan Transaksi {{
                                         transaction.customer.customer_name }}</h5>
                                     <p class="text-muted small mb-0">Selesaikan pembayaran untuk pesanan ini.</p>
                                 </div>
-                                <div class="icon-shape bg-light text-primary rounded-circle p-3">
-                                    <i class="fas fa-wallet fa-lg"></i>
-                                </div>
                             </div>
+                            <Link @click.prevent="goBack" :href="url"
+                                class="btn btn-danger fw-bold border hover-scale px-3 mt-3 mt-xl-0">
+                                <i class="fas fa-arrow-left me-2"></i> Kembali
+                            </Link>
                         </div>
 
                         <div v-if="form.processing"
@@ -181,7 +180,7 @@ function formatCurrency(value) {
                                         value="Pilih Metode Pembayaran" />
 
                                     <select-input
-                                        select-class="form-select-lg shadow-none border-secondary border-opacity-25"
+                                        select-class="input-height-2 shadow-none border-secondary border-opacity-25"
                                         name="payment_method" :options="[
                                             { value: null, label: '— Pilih Metode —' },
                                             { value: 'cash', label: '💵 Tunai (Cash)' },
@@ -201,7 +200,7 @@ function formatCurrency(value) {
                                 </div>
 
                                 <div class="d-grid">
-                                    <button class="btn btn-primary btn-lg rounded-3 py-3 fw-bold shadow-sm"
+                                    <button class="btn btn-primary btn-height-2 rounded-3 fw-bold shadow-sm"
                                         :class="{ 'disabled': !canSubmit || form.processing }"
                                         :disabled="!canSubmit || form.processing">
                                         <span v-if="!form.processing">
@@ -234,5 +233,22 @@ function formatCurrency(value) {
     pointer-events: none;
     user-select: none;
     opacity: 0.6;
+}
+
+.icon-square-lg {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.hover-scale {
+    transition: transform 0.2s;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
 }
 </style>

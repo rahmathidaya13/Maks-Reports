@@ -135,17 +135,14 @@ function formatCurrency(value) {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-            <div class="d-flex justify-content-between">
-                <Link @click.prevent="goBack" :href="url" class="btn btn-danger mb-3">
-                    <i class="fas fa-arrow-left"></i>
-                    Kembali
-                </Link>
-            </div>
+
             <div class="row g-4 pb-3">
 
                 <div class="col-xl-8 col-lg-8 col-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                        <div class="card-header bg-white py-3 px-4 border-bottom">
+                        <div
+                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+
                             <div class="d-flex align-items-center">
                                 <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
                                     <i class="fas fa-file-invoice fs-4"></i>
@@ -155,13 +152,17 @@ function formatCurrency(value) {
                                     <small class="text-muted">Isi detail transaksi pelanggan di bawah ini</small>
                                 </div>
                             </div>
+                            <Link @click.prevent="goBack" :href="url" class="btn btn-sm btn-danger mb-3">
+                                <i class="fas fa-arrow-left"></i>
+                                Kembali
+                            </Link>
                         </div>
 
                         <div v-if="form.processing"
                             class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
                             style="z-index: 10;">
                             <loader-horizontal
-                                :message="props.transaction?.transaction_id ? 'Memperbarui...' : 'Menyimpan...'" />
+                                :message="props.transaction?.transaction_id ? 'Memperbarui Transaksi...' : 'Menyimpan Transaksi...'" />
                         </div>
 
                         <div class="card-body p-4">

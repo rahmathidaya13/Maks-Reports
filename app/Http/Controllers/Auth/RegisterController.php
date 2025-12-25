@@ -83,7 +83,7 @@ class RegisterController extends Controller
         event(new Registered($user));
 
         Auth::login($user, true);
-        $userService->checkAndBroadcastStatus();
+        // $userService->checkAndBroadcastStatus();
         return redirect(RouteServiceProvider::HOME);
     }
 }

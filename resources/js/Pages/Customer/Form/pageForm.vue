@@ -117,7 +117,7 @@ onMounted(() => {
                             style="z-index: 10">
                             <loader-horizontal :message="props.customers?.customer_id
                                 ? 'Menyimpan perubahan...'
-                                : 'Mendaftarkan pelanggan...'
+                                : 'Mendaftarkan Pelanggan Baru...'
                                 " />
                         </div>
 

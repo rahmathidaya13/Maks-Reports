@@ -83,61 +83,104 @@ const goToBack = (id) => {
                     { text: 'Ubah Profil' },
                 ]" />
             <loader-page ref="loaderActive" />
-            <alert :variant="$page.props.flash.message ? 'success' : 'danger'" :duration="10" :message="message" />
-            <div class="row pb-3">
-                <div class="col-xl-12 col-12">
-                    <div class="card bg-light shadow-sm rounded-3 rounded overflow-hidden border-secondary-subtle">
-                        <h5 class="card-header fw-bold text-uppercase p-3 text-bg-dark">
-                            <i class="fas fa-clipboard me-1 text-light"></i>
-                            Form Profil
-                        </h5>
-                        <div v-if="form.processing">
-                            <loader-horizontal message="Sedang memperbarui profil" />
-                        </div>
-                        <div class="card-body" :class="['blur-area', form.processing ? 'is-blurred' : '']">
-                            <form-wrapper @submit="submit">
-                                <div class="row g-0 border text-bg-grey p-3">
-                                    <div class="col-xl-4 col-md-12 col-sm-12">
-                                        <div class="d-flex justify-content-center">
-                                            <file-input :width="250" :height="280"
-                                                :pathUrls="props.profile?.images ? '/storage/' + props.profile?.images : ''"
-                                                objectFit="fill" @preview="onPreview" name="images"
-                                                v-model="form.images" />
-                                        </div>
-                                        <div class="text-center">
-                                            <input-error :message="form.errors.images" />
-                                        </div>
-                                    </div>
+            <callout :type="$page.props.flash.message ? 'success' : 'danger'" :duration="10" :message="message" />
 
-                                    <div class="col-xl-8 col-md-12 col-sm-12">
-                                        <div class="row g-1">
-                                            <div class="col-xl-6 mb-2">
-                                                <input-label class="fw-bold" for="name" value="Nama" />
-                                                <div class="input-group">
+            <div class="row pb-4">
+                <div class="col-12">
+
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="icon-square-lg bg-primary text-white rounded-circle shadow-sm me-3">
+                            <i class="fas fa-user-circle fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0">Profil Saya</h4>
+                            <p class="text-muted small mb-0">Kelola informasi pribadi dan data kepegawaian Anda.</p>
+                        </div>
+                    </div>
+                    <div v-if="form.processing"
+                        class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                        style="z-index: 10;">
+                        <loader-horizontal message="Memperbarui Profil" />
+                    </div>
+
+                    <form-wrapper @submit="submit">
+                        <div class="row g-4">
+
+                            <div class="col-xl-4 col-lg-5">
+                                <div class="card profile-card border-0 shadow-sm rounded-4 text-center overflow-hidden position-sticky"
+                                    style="top: 100px;">
+                                    <div class="card-body p-4">
+                                        <h6 class="text-uppercase fw-bold text-muted small mb-3">Foto Profil</h6>
+
+                                        <div class="avatar-upload-container mb-3 mx-auto">
+                                            <file-input :width="200" :height="200"
+                                                :pathUrls="props.profile?.images ? '/storage/' + props.profile?.images : ''"
+                                                objectFit="cover" @preview="onPreview" name="images"
+                                                v-model="form.images" class="rounded-circle shadow-sm" />
+                                        </div>
+                                        <input-error :message="form.errors.images" />
+
+                                        <h5 class="fw-bold text-dark mt-3 mb-2">{{ form.name || 'Nama Pengguna' }}</h5>
+                                        <span
+                                            class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                                            {{ form.national_id_number || 'NIK Belum Diisi' }}
+                                        </span>
+                                    </div>
+                                    <div class="card-footer bg-light p-3 border-0">
+                                        <small class="text-muted fst-italic">
+                                            <i class="fas fa-info-circle me-1"></i>Pastikan foto wajah terlihat jelas.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-8 col-lg-7">
+                                <div class="card profile-card border-0 shadow-sm rounded-4">
+                                    <div class="card-body p-4"
+                                        :class="['blur-area', form.processing ? 'is-blurred' : '']">
+
+                                        <div class="form-section mb-5">
+                                            <h6 class="section-title text-primary mb-4">
+                                                <i class="fas fa-address-card me-2"></i>Identitas Diri
+                                            </h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-12">
+                                                    <input-label class="form-label-custom" for="name"
+                                                        value="NAMA LENGKAP" />
                                                     <text-input type="text" name="name" v-model="form.name" />
+                                                    <input-error :message="form.errors.name" />
                                                 </div>
-                                                <input-error :message="form.errors.name" />
-                                            </div>
-                                            <div class="mb-2 col-xl-6">
-                                                <input-label class="fw-bold" for="national_id_number" value="NIK" />
-                                                <div class="input-group">
-                                                    <text-input placeholder="1234567890" type="text"
-                                                        name="national_id_number" v-model="form.national_id_number" />
-                                                </div>
-                                                <input-error :message="form.errors.national_id_number" />
-                                            </div>
-                                            <div class="mb-2 col-xl-6">
-                                                <input-label class="fw-bold" for="birthplace" value="Tempat Lahir" />
-                                                <div class="input-group">
+
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="birthplace"
+                                                        value="TEMPAT LAHIR" />
                                                     <text-input type="text" name="birthplace"
                                                         v-model="form.birthplace" />
+                                                    <input-error :message="form.errors.birthplace" />
                                                 </div>
-                                                <input-error :message="form.errors.birthplace" />
-                                            </div>
-                                            <div class="mb-2 col-xl-6">
-                                                <input-label class="fw-bold" for="religion" value="Agama" />
-                                                <div class="input-group">
-                                                    <select-input text="Pilih Agama" name="religion"
+
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="birthdate"
+                                                        value="TANGGAL LAHIR" />
+                                                    <text-input type="date" name="birthdate" v-model="form.birthdate" />
+                                                    <input-error :message="form.errors.birthdate" />
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="gender"
+                                                        value="JENIS KELAMIN" />
+                                                    <select-input text="-- Pilih --" name="gender" v-model="form.gender"
+                                                        :options="[
+                                                            { value: 'male', label: 'Laki-laki' },
+                                                            { value: 'female', label: 'Perempuan' },
+                                                        ]" />
+                                                    <input-error :message="form.errors.gender" />
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="religion"
+                                                        value="AGAMA" />
+                                                    <select-input text="-- Pilih --" name="religion"
                                                         v-model="form.religion" :options="[
                                                             { value: 'islam', label: 'Islam' },
                                                             { value: 'kristen', label: 'Kristen' },
@@ -146,173 +189,153 @@ const goToBack = (id) => {
                                                             { value: 'budha', label: 'Budha' },
                                                             { value: 'konghucu', label: 'Konghucu' },
                                                         ]" />
+                                                    <input-error :message="form.errors.religion" />
                                                 </div>
-                                                <input-error :message="form.errors.religion" />
+
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="national_id_number"
+                                                        value="NOMOR NIK" />
+                                                    <text-input placeholder="16 digit NIK" type="text"
+                                                        name="national_id_number" v-model="form.national_id_number" />
+                                                    <input-error :message="form.errors.national_id_number" />
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="number_phone"
+                                                        value="NO. HANDPHONE" />
+                                                    <input-number placeholder="08xxx" name="number_phone"
+                                                        v-model="form.number_phone" />
+                                                    <input-error :message="form.errors.number_phone" />
+                                                </div>
+
+                                                <div class="col-12 col-md-12">
+                                                    <input-label class="form-label-custom" for="address"
+                                                        value="ALAMAT LENGKAP" />
+                                                    <text-area :rows="4" name="address" v-model="form.address"
+                                                        placeholder="Jalan, RT/RW, Kelurahan..."
+                                                        input-class="bg-light" />
+                                                    <input-error :message="form.errors.address" />
+                                                </div>
                                             </div>
-                                            <div class="mb-2 col-xl-6">
-                                                <input-label class="fw-bold" for="gender" value="Jenis Kelamin" />
-                                                <div class="input-group">
-                                                    <select-input text="Pilih Jenis Kelamin" name="gender"
-                                                        v-model="form.gender" :options="[
-                                                            { value: 'male', label: 'Laki-laki' },
-                                                            { value: 'female', label: 'Perempuan' },
+                                        </div>
+
+                                        <hr class="border-light my-4">
+
+                                        <div class="form-section mb-5">
+                                            <h6 class="section-title text-info mb-4">
+                                                <i class="fas fa-graduation-cap me-2"></i>Riwayat Pendidikan
+                                            </h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="education"
+                                                        value="JENJANG" />
+                                                    <select-input text="-- Pilih Jenjang --" name="education"
+                                                        v-model="form.education" :options="[
+                                                            { value: 'SD', label: 'SD' },
+                                                            { value: 'SMP', label: 'SMP/MTS' },
+                                                            { value: 'SMA', label: 'SMA/SMK' },
+                                                            { value: 'S1/Sarjana', label: 'S1/Sarjana' },
+                                                            { value: 'S2/Magister', label: 'S2/Magister' },
+                                                            { value: 'S3/Doktor', label: 'S3/Doktor' },
                                                         ]" />
+                                                    <input-error :message="form.errors.education" />
                                                 </div>
-                                                <input-error :message="form.errors.gender" />
-                                            </div>
-                                            <div class="mb-2 col-xl-6">
-                                                <input-label class="fw-bold" for="birthdate" value="Tanggal Lahir" />
-                                                <div class="input-group">
-                                                    <text-input type="date" name="birthdate" v-model="form.birthdate" />
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="major"
+                                                        value="JURUSAN" />
+                                                    <text-input type="text" name="major" v-model="form.major"
+                                                        placeholder="Contoh: Teknik Informatika" />
+                                                    <input-error :message="form.errors.major" />
                                                 </div>
-                                                <input-error :message="form.errors.birthdate" />
-                                            </div>
-                                            <div class="col-xl-12">
-                                                <input-label class="fw-bold" for="address" value="Alamat" />
-                                                <div class="input-group">
-                                                    <text-area :rows="5" :cols="5" name="address"
-                                                        v-model="form.address" />
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="entry_year"
+                                                        value="TAHUN MASUK" />
+                                                    <input-years :placeholder="'YYYY'" name="entry_year"
+                                                        v-model="form.entry_year" />
+                                                    <input-error :message="form.errors.entry_year" />
                                                 </div>
-                                                <input-error :message="form.errors.address" />
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="graduation_year"
+                                                        value="TAHUN LULUS" />
+                                                    <input-years :placeholder="'YYYY'" name="graduation_year"
+                                                        v-model="form.graduation_year" />
+                                                    <input-error :message="form.errors.graduation_year" />
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row g-2 border text-bg-grey p-3">
-                                    <div class="text-bg-dark mb-3">
-                                        <h5 class="text-uppercase p-2">
-                                            <i class="fas fa-graduation-cap me-2"></i>Data Pendidikan
-                                        </h5>
-                                    </div>
-                                    <div class="col-xl-6 col-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="entry_year" value="Tahun Masuk" />
-                                            <div class="input-group">
-                                                <input-years :placeholder="'contoh: ' + moment().format('YYYY')"
-                                                    name="entry_year" v-model="form.entry_year" />
-                                            </div>
-                                            <input-error :message="form.errors.entry_year" />
-                                        </div>
-                                    </div>
-
-                                    <div class="col-xl-6 col-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="education" value="Pendidikan Terakhir" />
-                                            <div class="input-group">
-                                                <select-input text="Pilih Pendidikan Terakhir" name="education"
-                                                    v-model="form.education" :options="[
-                                                        { value: 'SD', label: 'SD' },
-                                                        { value: 'SMP', label: 'SMP/MTS/Sederajat' },
-                                                        { value: 'SMA', label: 'SMA/SMK/MA/PAKET C/Sederajat' },
-                                                        { value: 'S1/Sarjana', label: 'S1/Sarjana' },
-                                                        { value: 'S2/Magister', label: 'S2/Magister' },
-                                                        { value: 'S3/Doktor', label: 'S3/Doktor' },
-                                                    ]" />
-                                            </div>
-                                            <input-error :message="form.errors.education" />
                                         </div>
 
-                                    </div>
-                                    <div class="col-xl-6">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="major" value="Jurusan" />
-                                            <div class="input-group">
-                                                <text-input type="text" name="major" v-model="form.major" />
+                                        <hr class="border-light my-4">
+
+                                        <div class="form-section">
+                                            <h6 class="section-title text-success mb-4">
+                                                <i class="fas fa-briefcase me-2"></i>Data Kepegawaian
+                                            </h6>
+                                            <div class="p-3 rounded-3 bg-light border border-light-subtle">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <input-label class="form-label-custom" for="employee_id_number"
+                                                            value="ID PEGAWAI" />
+                                                        <text-input type="text" name="employee_id_number"
+                                                            v-model="form.employee_id_number"
+                                                            placeholder="1234567890" />
+                                                        <input-error :message="form.errors.employee_id_number" />
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <input-label class="form-label-custom" for="date_of_entry"
+                                                            value="TANGGAL BERGABUNG" />
+                                                        <text-input type="date" name="date_of_entry"
+                                                            v-model="form.date_of_entry" />
+                                                        <input-error :message="form.errors.date_of_entry" />
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <input-label class="form-label-custom" for="jobTitle"
+                                                            value="JABATAN" />
+                                                        <select-input text="Pilih Jabatan" name="jobTitle"
+                                                            v-model="form.jobTitle" :options="jobTitleOptions" />
+                                                        <input-error :message="form.errors.jobTitle" />
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <input-label class="form-label-custom" for="branches"
+                                                            value="LOKASI CABANG" />
+                                                        <select-input text="Pilih Lokasi" name="branches"
+                                                            v-model="form.branches" :options="branchOptions" />
+                                                        <input-error :message="form.errors.branches" />
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <input-label class="form-label-custom" for="employee_status"
+                                                            value="STATUS PEGAWAI" />
+                                                        <div class="d-flex gap-2">
+                                                            <div class="form-check form-check-inline" v-for="status in [
+                                                                { value: 'contract', label: 'Kontrak' },
+                                                                { value: 'permanent', label: 'Pegawai Tetap' },
+                                                                { value: 'intern', label: 'Magang' },
+                                                                { value: 'freelance', label: 'Freelance' },
+                                                            ]" :key="status.value">
+                                                                <input class="form-check-input" type="radio"
+                                                                    :value="status.value" v-model="form.employee_status"
+                                                                    :id="status.value">
+                                                                <label class="form-check-label" :for="status.value">{{
+                                                                    status.label }}</label>
+                                                            </div>
+                                                        </div>
+                                                        <input-error :message="form.errors.employee_status" />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <input-error :message="form.errors.major" />
                                         </div>
-                                    </div>
-                                    <div class="col-xl-6 col-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="graduation_year" value="Tahun Lulus" />
-                                            <div class="input-group">
-                                                <input-years :placeholder="'contoh: ' + moment().format('YYYY')"
-                                                    name="graduation_year" v-model="form.graduation_year" />
-                                            </div>
-                                            <input-error :message="form.errors.graduation_year" />
+
+                                        <div class="d-flex justify-content-end mt-5 pt-3">
+                                            <base-button waiting="Menyimpan..." :loading="form.processing"
+                                                button-class="rounded-3 px-3 btn-height-1 shadow btn-save-animate"
+                                                type="submit" icon="fas fa-save" name="submit" label="Simpan Perubahan"
+                                                variant="primary" />
                                         </div>
+
                                     </div>
                                 </div>
-                                <div class="row g-2 border text-bg-grey p-3">
-                                    <div class="text-bg-dark mb-3">
-                                        <h5 class="text-uppercase p-2">
-                                            <i class="fas fa-user me-2"></i>Data Pegawai
-                                        </h5>
-                                    </div>
-                                    <div class="col-xl-6 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="employee_id_number" value="ID Pegawai" />
-                                            <div class="input-group">
-                                                <text-input type="text" name="employee_id_number"
-                                                    v-model="form.employee_id_number" />
-                                            </div>
-                                            <input-error :message="form.errors.employee_id_number" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="date_of_entry" value="Tanggal Masuk" />
-                                            <div class="input-group">
-                                                <text-input type="date" name="date_of_entry"
-                                                    v-model="form.date_of_entry" />
-                                            </div>
-                                            <input-error :message="form.errors.date_of_entry" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="date_of_entry" value="Status Pegawai" />
-                                            <div class="input-group">
-                                                <select-input text="Pilih Status Pegawai" name="employee_status"
-                                                    v-model="form.employee_status" :options="[
-                                                        { value: 'contract', label: 'Kontrak' },
-                                                        { value: 'permanent', label: 'Permanen' },
-                                                        { value: 'intern', label: 'Magang' },
-                                                        { value: 'freelance', label: 'Freelance' },
-                                                    ]" />
-                                            </div>
-                                            <input-error :message="form.errors.date_of_entry" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="number_phone" value="No.Handphone" />
-                                            <div class="input-group">
-                                                <input-number placeholder="0" name="number_phone"
-                                                    v-model="form.number_phone" />
-                                            </div>
-                                            <input-error :message="form.errors.number_phone" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="jobTitle" value="Jabatan" />
-                                            <div class="input-group">
-                                                <select-input text="Pilih Jabatan" name="jobTitle"
-                                                    v-model="form.jobTitle" :options="jobTitleOptions" />
-                                            </div>
-                                            <input-error :message="form.errors.jobTitle" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-md-12 col-sm-12">
-                                        <div class="mb-2">
-                                            <input-label class="fw-bold" for="branches" value="Lokasi" />
-                                            <div class="input-group">
-                                                <select-input text="Pilih Lokasi/Cabang" name="branches"
-                                                    v-model="form.branches" :options="branchOptions" />
-                                            </div>
-                                            <input-error :message="form.errors.branches" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-grid d-xl-flex justify-content-xl-end mt-3">
-                                    <base-button waiting="Memproses...." :loading="form.processing" class="btn-height-1"
-                                        type="submit" :icon="!form.processing ? 'fas fa-user-edit' : ''" name="submit"
-                                        label="Perbarui profile" variant="success" />
-                                </div>
-                            </form-wrapper>
+                            </div>
                         </div>
-                    </div>
+                    </form-wrapper>
                 </div>
             </div>
         </template>
@@ -335,5 +358,83 @@ const goToBack = (id) => {
     height: auto;
     object-fit: cover;
     object-position: center;
+}
+
+
+/* Container Utama */
+.profile-card {
+    background: #ffffff;
+    transition: all 0.3s ease;
+}
+
+/* Header Avatar Icon */
+.icon-square-lg {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Judul Bagian (Section Title) */
+.section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Label Input yang Konsisten */
+.form-label-custom {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    /* Abu-abu profesional */
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+}
+
+/* Styling Khusus Input */
+/* Menghapus border radius berlebih pada input group */
+.input-group-text {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+/* Styling Container Foto Profil */
+.avatar-upload-container {
+    width: fit-content;
+    padding: 5px;
+    background: #fff;
+    border: 1px dashed #dee2e6;
+    /* border-radius: 50%; */
+}
+
+/* Efek Tombol Simpan */
+.btn-save-animate {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: transform 0.2s;
+}
+
+.btn-save-animate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3) !important;
+}
+
+/* Radio Button Styling (Status Pegawai) */
+.form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+/* Responsive Padding */
+@media (max-width: 768px) {
+    .profile-card .card-body {
+        padding: 1.5rem !important;
+    }
 }
 </style>

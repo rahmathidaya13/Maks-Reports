@@ -42,7 +42,8 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //
+        $this->productRepository->clearCache(auth()->id());
+        return Inertia::render('Product/Form/pageForm');
     }
 
     /**
@@ -50,7 +51,37 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $finalImageLink = $request->input('image_link') ?? null;
+        if ($request->hasFile('image_path')) {
+            // Simpan file baru (nama unik biar nggak tabrakan)
+            $path = $request->file('image_path')->store('product/cover', 'public');
+            $finalImageLink = 'storage/' . $path;
+        }
+
+        $galleryPaths = [];
+        if ($request->hasFile('image_url')) {
+            foreach ($request->file('image_url') as $file) {
+                // Simpan file dan ambil path-nya
+                $path = $file->store('product/gallery', 'public');
+                $galleryPaths[] = 'storage/' . $path;
+            }
+        }
+
+        $product = ProductModel::create([
+            'created_by'     => auth()->id(),
+            'source'         => 'manual',
+            'name'           => $request['name'],
+            'category'       => $request['category'],
+            'price_original' => $request['price_original'],
+            'price_discount' => $request['price_discount'],
+            'link'           => $request['link'], // Bisa null
+            'image_link'     => $finalImageLink, // String (Path File atau URL)
+            'image_url'      => $galleryPaths, // Laravel otomatis cast ke JSON jika di model dicasting
+            'description'    => $request['description'],
+        ]);
+
+        $this->productRepository->clearCache(auth()->id());
+        return redirect()->route('product')->with('success', 'Produk ' . $product->name . ' Berhasil Ditambahkan');
     }
 
     /**
@@ -86,8 +117,11 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ProductModel $productModel)
+    public function destroy(ProductModel $productModel, string $id)
     {
-        //
+        $product = $productModel::findOrFail($id);
+        $product->delete();
+        $this->productRepository->clearCache(auth()->id());
+        return redirect()->route('product')->with('message', 'Produk ' . $product->name . '  Berhasil Dihapus');
     }
 }
