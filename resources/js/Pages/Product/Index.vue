@@ -82,7 +82,7 @@ watch(() => getById.value,
             getById.value = null;
             return;
         }
-        const { data } = await axios.get(route('product.show', newId));
+        const { data } = await axios.get(route('product.detail', newId));
         if (data.status) {
             imageGallery.value = data.galleryImages
 
@@ -139,6 +139,12 @@ const deleted = (nameRoute, data) => {
         },
     })
 }
+const goToDetail = (nameRoute, data) => {
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route(nameRoute, data.product_id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
 </script>
 <template>
 
@@ -178,7 +184,7 @@ const deleted = (nameRoute, data) => {
                                 <div class="col-xl-3 col-md-4">
                                     <input-label class="form-label-custom mb-1" for="category" value="KATEGORI" />
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                                        <span class="input-group-text border-end-0 text-muted ps-3">
                                             <i class="fas fa-tags"></i>
                                         </span>
                                         <select-input text="Semua Kategori" :is-valid="false" v-model="filters.category"
@@ -190,7 +196,7 @@ const deleted = (nameRoute, data) => {
                                 <div class="col-xl-2 col-md-4 col-6">
                                     <input-label class="form-label-custom mb-1" for="limit" value="TAMPILKAN" />
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                                        <span class="input-group-text border-end-0 text-muted ps-3">
                                             <i class="fas fa-list-ol"></i>
                                         </span>
                                         <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
@@ -205,7 +211,7 @@ const deleted = (nameRoute, data) => {
                                 <div class="col-xl-2 col-md-4 col-6">
                                     <input-label class="form-label-custom mb-1" for="order_by" value="URUTAN" />
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                                        <span class="input-group-text border-end-0 text-muted ps-3">
                                             <i class="fas fa-sort"></i>
                                         </span>
                                         <select-input :is-valid="false" v-model="filters.order_by" name="order_by"
@@ -309,8 +315,8 @@ const deleted = (nameRoute, data) => {
                         </div>
 
                         <div class="card-action-overlay d-flex justify-content-center align-items-center gap-2">
-                            <button @click="openModal(row.product_id)" class="btn btn-light rounded-circle shadow-sm"
-                                title="Lihat Detail">
+                            <button @click.prevent="goToDetail('product.detail', row)"
+                                class="btn btn-light rounded-circle shadow-sm" title="Lihat Detail">
                                 <i class="fas fa-eye text-primary"></i>
                             </button>
                             <a :href="row.link" target="_blank" class="btn btn-light rounded-circle shadow-sm"
@@ -557,7 +563,6 @@ iframe {
     border-color: #dee2e6;
     /* Warna border default bootstrap */
     border-right: none;
-    /* Hilangkan border kanan ikon */
 }
 
 /* Target input/select komponen Vue kamu */

@@ -136,10 +136,10 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
 
     Route::controller(ProductController::class)->group(function () {
         Route::get('/product/list', 'index')->name('product');
-        Route::get('/product/create', 'create')->name('product.create');
+        Route::get('/product/create-product', 'create')->name('product.create');
         Route::post('/product/store', 'store')->name('product.store');
-        Route::get('/product/edit/{id}', 'edit')->name('product.edit');
-        Route::get('/product/show/{id}', 'show')->name('product.show');
+        Route::get('/product/edit-product/{id}', 'edit')->name('product.edit');
+        Route::get('/product/detail-product/{id}', 'show')->name('product.detail');
         Route::put('/product/update/{id}', 'update')->name('product.update');
         Route::delete('/product/destroy/{id}', 'destroy')->name('product.deleted');
         Route::post('/product/delete_all', 'destroy_all')->name('product.destroy_all');

@@ -7,7 +7,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class TransactionRepository extends BaseCacheRepository
 {
-    protected string $cachePrefix = 'job_title';
+    protected string $cachePrefix = 'transaction_cache_';
     /**
      * Override: definisikan cara ambil data dari database
      */
