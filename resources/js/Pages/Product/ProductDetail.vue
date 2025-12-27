@@ -1,10 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
+import Swal from "sweetalert2";
 const props = defineProps({
     product: Object,
 })
-
 // State untuk loader dan Crud
 const loaderActive = ref(null);
 const goBack = () => {
@@ -14,16 +14,34 @@ const goBack = () => {
     });
 }
 const edit = (id) => {
-    loaderActive.value?.show("Memproses...");
+    loaderActive.value?.show("Sedang memuat data...");
     router.get(route('product.edit', id), {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
 const destroy = (id) => {
-    loaderActive.value?.show("Memproses...");
-    router.delete(route('product.destroy', id), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
+
+    Swal.fire({
+        title: 'Hapus Produk?',
+        text: `Produk ${props.product.name} akan dihapus. Data tidak dapat dikembalikan!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Tetap hapus!',
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: "btn btn-danger",
+            cancelButton: "btn btn-outline-secondary",
+        },
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('product.deleted', id), {}, {
+                onFinish: () => loaderActive.value?.hide()
+            });
+        }
+
+    })
 }
 
 // State untuk gambar aktif
@@ -36,6 +54,9 @@ const allImages = computed(() => {
     // 1. Masukkan Cover Image (jika ada)
     if (props.product.image_link) {
         images.push(props.product.image_link);
+    }
+    if (props.product.image_path) {
+        images.push(props.product.image_path);
     }
 
     // 2. Masukkan Galeri (JSON array)
@@ -50,15 +71,14 @@ const allImages = computed(() => {
 // Set gambar pertama saat load
 onMounted(() => {
     if (allImages.value.length > 0) {
-        activeImage.value = allImages.value[1];
+        activeImage.value = allImages.value[0];
     }
 });
 
 // Helper: Resolve Image Path (Hybrid Logic)
 const resolveImage = (path) => {
-    if (!path) return 'https://via.placeholder.com/500?text=No+Image';
-    if (path.startsWith('http')) return path;
-    return `/${path}`; // Untuk local storage
+    if (!path) return 'https://ui-avatars.com/api/?name=??';
+    return `/storage/${path}`; // Untuk local storage
 };
 
 // Helper: Hitung % Diskon
@@ -98,23 +118,21 @@ const formatCurrency = (value) => {
                 <div class="d-flex align-items-center gap-2">
 
                     <button type="button" @click.prevent="goBack"
-                        class="btn btn-danger border fw-bold px-3 hover-scale">
+                        class="btn btn-danger border btn-sm bg-gradient fw-bold px-3 hover-scale">
                         <i class="fas fa-arrow-left me-2"></i>Kembali
                     </button>
 
-                    <div class="vr mx-1 h-75 align-self-center text-secondary"></div>
+                    <div class="vr h-75 align-self-center text-secondary"></div>
 
                     <button @click.prevent="edit(props.product.product_id)"
-                        class="btn btn-warning btn-sm text-white fw-bold px-3 shadow-sm hover-scale"
-                        title="Edit Produk">
-                        <i class="fas fa-edit"></i> <span class="d-none d-sm-inline ms-1">Edit</span>
+                        class="btn btn-outline-warning btn-sm bg-gradient fw-bold px-3 hover-scale" title="Edit Produk">
+                        <i class="fas fa-edit"></i> <span class="d-none d-sm-inline">Edit</span>
                     </button>
-                    <!--
-                    <button @click="deleteProduct" class="btn btn-danger btn-sm fw-bold px-3 shadow-sm hover-scale"
-                        title="Hapus Produk">
-                        <i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline ms-1">Hapus</span>
-                    </button> -->
 
+                    <button @click.prevent="destroy(props.product.product_id)"
+                        class="btn btn-outline-danger btn-sm bg-gradient fw-bold px-3 hover-scale" title="Hapus Produk">
+                        <i class="fas fa-trash"></i> <span class="d-none d-sm-inline">Hapus</span>
+                    </button>
                 </div>
             </div>
 
@@ -122,15 +140,14 @@ const formatCurrency = (value) => {
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-4 h-100 py-3">
 
-                        <div
-                            class="main-image-wrapper mb-3 rounded-3 overflow-hidden border bg-light d-flex align-items-center justify-content-center position-relative mx-auto">
+                        <div class="main-image-wrapper">
                             <transition name="fade" mode="out-in">
                                 <img :key="activeImage" :src="resolveImage(activeImage)"
                                     class="img-fluid w-100 h-100 object-fit-contain" alt="Product Image">
                             </transition>
 
                             <div class="position-absolute bottom-0 end-0 m-3 text-muted opacity-50">
-                                <i class="fas fa-search-plus"></i>
+                                <i class="fas fa-search-plus fs-4"></i>
                             </div>
                         </div>
 
@@ -154,9 +171,9 @@ const formatCurrency = (value) => {
                                 </span>
                             </div>
 
-                            <h1 class="fw-bold text-dark mb-3 lh-base">{{ props.product.name }}</h1>
+                            <h1 class="fw-bold text-dark mb-3 lh-1">{{ props.product.name }}</h1>
 
-                            <div class="p-4 bg-light rounded-0 mb-3 border border-light-subtle shadow-sm">
+                            <div class="p-4 bg-light rounded-4 mb-3 border d-flex justify-content-between shadow-sm">
                                 <div class="d-flex align-items-end gap-3 flex-wrap">
                                     <h2 class="fw-bold text-success mb-0 display-6">
                                         {{ formatCurrency(props.product.price_discount || props.product.price_original)
@@ -175,16 +192,17 @@ const formatCurrency = (value) => {
                                 </div>
                             </div>
 
-                            <div class="row g-3 mb-4 text-muted small">
-                                <div class="col-6 col-md-4">
+                            <div
+                                class="row g-xl-2 row-cols-1 row-cols-xl-3 mb-4 text-muted small justify-content-evenly">
+                                <div class="col">
                                     <i class="fas fa-barcode me-2"></i> ID: <span class="text-dark fw-bold">{{
                                         props.product.product_id.replace(/-/g, '') }}...</span>
                                 </div>
-                                <div class="col-6 col-md-4">
-                                    <i class="fas fa-user-edit me-2"></i> Oleh: <span class="text-dark fw-bold">{{
+                                <div class="col">
+                                    <i class="fas fa-user-edit me-1"></i> Oleh: <span class="text-dark fw-bold">{{
                                         props.product.creator?.name ?? '-' }}</span>
                                 </div>
-                                <div class="col-6 col-md-4">
+                                <div class="col">
                                     <i class="far fa-clock me-2"></i> Update: <span class="text-dark fw-bold">{{ new
                                         Date(props.product.updated_at).toLocaleDateString() }}</span>
                                 </div>
@@ -200,7 +218,7 @@ const formatCurrency = (value) => {
                                 </button>
                             </div>
 
-                            <hr class="border-light-subtle mb-4">
+                            <hr class=" mb-4">
 
                             <div class="product-description">
                                 <h5 class="fw-bold text-dark mb-3"><i
@@ -232,10 +250,18 @@ const formatCurrency = (value) => {
 
 /* Main Image Wrapper */
 .main-image-wrapper {
-    height: 550px;
-    width: 550px;
-    /* Tinggi fix untuk cover utama */
+    height: 650px;
+    width: 600px;
     background-color: #fff;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    padding: 10px;
+
 }
 
 /* Thumbnail Styling */

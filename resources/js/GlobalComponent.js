@@ -40,6 +40,7 @@ import LoaderPerPage from "./components/LoaderPerPage.vue";
 import InputYears from "./components/inputYears.vue";
 import Callout from "./components/Callout.vue";
 import FilterDynamic from "./components/FilterDynamic.vue";
+import ChartBar from "./components/ChartBar.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
@@ -82,5 +83,6 @@ export default {
         app.component("pagination", Pagination);
         app.component("summernote-editor", SummernoteEditor);
         app.component("filter-dynamic", FilterDynamic);
+        app.component("chart-bar", ChartBar);
     },
 };

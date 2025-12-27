@@ -47,7 +47,7 @@ const goToPage = (url) => {
 }
 </script>
 <template>
-    <nav aria-label="Page navigation example">
+    <nav aria-label="Page navigation">
         <ul :class="['pagination justify-content-end', props.size]">
 
             <li :class="{ 'page-item': true, disabled: !links[0].url }">
@@ -71,3 +71,4 @@ const goToPage = (url) => {
         </ul>
     </nav>
 </template>
+ 

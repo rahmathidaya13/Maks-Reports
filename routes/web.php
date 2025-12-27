@@ -140,9 +140,11 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::post('/product/store', 'store')->name('product.store');
         Route::get('/product/edit-product/{id}', 'edit')->name('product.edit');
         Route::get('/product/detail-product/{id}', 'show')->name('product.detail');
-        Route::put('/product/update/{id}', 'update')->name('product.update');
+        Route::post('/product/update/{id}', 'update')->name('product.update');
         Route::delete('/product/destroy/{id}', 'destroy')->name('product.deleted');
         Route::post('/product/delete_all', 'destroy_all')->name('product.destroy_all');
+
+        Route::delete('/product/delete/image-gallery/{id}', 'deletedGalleryImage')->name('product.deleted_gallery_image');
     });
 
     // cetak laporan

@@ -20,7 +20,7 @@ export default defineConfig({
             },
         }),
 
-        // Inject jQuery TAPI JANGAN KE SEMUA FILE
+        // Inject jQuery
         inject({
             $: "jquery",
             jQuery: "jquery",

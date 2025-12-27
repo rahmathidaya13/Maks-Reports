@@ -10,7 +10,7 @@ trait ProfileValidation
     {
         return Validator::make($request, [
             'name' => 'required|string|max:50|regex:/^[a-zA-Z\s]+$/u',
-            'employee_id_number' => 'required|string|unique:profile,employee_id_number,' . $id . ',users_id',
+            'employee_id_number' => 'required|string|max:13|unique:profile,employee_id_number,' . $id . ',users_id',
             'national_id_number' => 'required|string|unique:profile,national_id_number,' . $id . ',users_id',
             'employee_status' => 'required|in:contract,permanent,intern,freelance',
             'jobTitle' => 'required|exists:job_title,job_title_id',
@@ -38,6 +38,7 @@ trait ProfileValidation
 
             'employee_id_number.required' => 'ID Karyawan wajib diisi.',
             'employee_id_number.string' => 'ID Karyawan tidak valid.',
+            'employee_id_number.max' => 'Jumlah ID Pegawai maksimal 13 karakter.',
             'employee_id_number.unique' => 'ID Karyawan sudah terdaftar.',
 
             'national_id_number.required' => 'NIK KTP wajib diisi.',

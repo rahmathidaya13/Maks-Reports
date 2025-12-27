@@ -34,7 +34,7 @@ defineProps({
                     <i :class="icon"></i>
                 </div>
                 <div>
-                    <h3 class="fw-bold text-dark mb-0 ls-tight text-capitalize">{{ title }}</h3>
+                    <h4 class="fw-bold text-dark mb-0 ls-tight text-capitalize ">{{ title }}</h4>
                 </div>
             </div>
 

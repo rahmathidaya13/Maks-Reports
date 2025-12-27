@@ -16,6 +16,8 @@ class ProductModel extends Model
     protected $fillable = [
         'created_by',
         'source',
+        'status',
+        'slug',
         'name',
         'price_original',
         'price_discount',
@@ -30,6 +32,8 @@ class ProductModel extends Model
     protected $dates = ['deleted_at'];
     protected $casts = [
         'image_url' => 'array',
+        'price_original' => 'integer',
+        'price_discount' => 'integer',
     ];
     public function creator()
     {

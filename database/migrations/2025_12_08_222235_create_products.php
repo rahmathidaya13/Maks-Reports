@@ -20,9 +20,10 @@ return new class extends Migration
                 ->nullOnDelete();
 
             $table->enum('source', ['manual', 'scrape'])->default('manual')->index();
-
+            $table->enum('status', ['draft', 'published'])->default('published')->index();
             // nama produk, penting untuk pencarian
             $table->string('name')->index();
+             $table->string('slug')->nullable()->unique();
             $table->string('category')->index(); // Untuk filter kategori cepat
 
             // harga disimpan dalam integer (Rupiah)
@@ -30,6 +31,7 @@ return new class extends Migration
             $table->unsignedBigInteger('price_discount')->nullable()->index();
 
             $table->string('image_path')->nullable();
+
             // link bersifat unik agar tidak scrape ganda
             $table->string('link')->nullable();
             $table->string('image_link')->nullable();
@@ -37,7 +39,7 @@ return new class extends Migration
 
 
             $table->longText('description')->nullable();
-
+            $table->unique(['link', 'source']);
             $table->softDeletes();
             $table->timestamps();
         });

@@ -1,50 +1,197 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import { Head, router, usePage } from '@inertiajs/vue3';
-import formatCurrency from "@/helpers/formatCurrency";
-import { debounce, get } from "lodash";
-import { highlight } from "@/helpers/highlight";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { debounce } from "lodash";
 import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
+import { highlight } from "@/helpers/highlight";
 import { formatText } from "@/helpers/formatText";
+import moment from "moment";
+import Swal from "sweetalert2";
+moment.locale('id');
 
-import axios from "axios";
+
 const page = usePage();
-const message = computed(() => {
-    return page.props.flash.message || page.props.flash.error
-});
-
+const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
     product: Object,
     filters: Object,
     category: Array,
 })
+
+// cek permission
+const perm = page.props.auth.user.permissions
+
 const filters = reactive({
     keyword: props.filters.keyword ?? "",
-    category: props.filters.category ?? "",
-    limit: props.filters.limit ?? 10,
-    order_by: props.filters.order_by ?? "desc",
+    category: props.filters.category ?? null,
+    limit: props.filters.limit ?? null,
+    order_by: props.filters.order_by ?? null,
     page: props.filters?.page ?? 1,
 })
+
+const isLoading = ref(false)
 const liveSearch = debounce(() => {
+    isLoading.value = true
     router.get(route("product"), filters, {
         preserveScroll: true,
         replace: true,
         preserveState: true,
         only: ["product", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
+        onFinish: () => isLoading.value = false
     });
-}, 1000);
+}, 500);
 
-watch([
-    () => filters.keyword,
-    () => filters.limit,
-    () => filters.order_by,
-    () => filters.category
-], () => {
-    filters.page = 1;
-    liveSearch()
-}, {
-    deep: true
+
+const header = [
+    { label: "No", key: "__index" },
+    { label: "Nama Produk", key: "name" },
+    { label: "Kategori", key: "category" },
+    { label: "Harga Asli", key: "price_original" },
+    { label: "Harga Diskon", key: "price_discount" },
+    { label: "Status", key: "status" },
+    { label: "Aksi", key: "-" },
+];
+watch(
+    () => [
+        filters.keyword,
+        filters.limit,
+        filters.order_by,
+        filters.category
+    ],
+    () => {
+        filters.page = 1;
+        liveSearch();
+    }
+);
+
+
+// CRUD OPERATION
+const loaderActive = ref(null)
+const create = () => {
+    loaderActive.value?.show("Memproses...");
+    router.get(route("product.create"), {}, {
+        onFinish: () => {
+            loaderActive.value?.hide()
+        }
+    });
+}
+
+const edit = (id) => {
+    loaderActive.value?.show("Sedang memuat data...");
+    router.get(route("product.edit", id), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+
+
+const deleted = (data) => {
+    Swal.fire({
+        title: 'Hapus Produk?',
+        text: `Produk ${data.name} akan dihapus. Data tidak dapat dikembalikan!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Tetap hapus!',
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: "btn btn-danger",
+            cancelButton: "btn btn-outline-secondary",
+        },
+    }).then((result) => {
+        if (result.isConfirmed) {
+            loaderActive.value?.show("Sedang memuat data...");
+            router.delete(route('product.deleted', data.product_id), {}, {
+                onFinish: () => loaderActive.value?.hide()
+            });
+        }
+
+    })
+}
+// end CRUD OPERATION
+
+// MULTIPLE DELETE
+const selectedRow = ref([]);
+const isVisible = ref(false);
+
+const isAllSelected = computed(() => {
+    const rows = props.product?.data ?? [];
+    return rows.length > 0 && selectedRow.value.length === rows.length;
 })
+
+function deleteSelected() {
+    if (!selectedRow.value.length) {
+        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+    }
+    swalConfirmDelete({
+        title: 'Hapus Data Terpilih',
+        text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
+        confirmText: 'Ya, Hapus Semua!',
+        onConfirm: () => {
+            loaderActive.value?.show("Sedang memuat data...");
+            router.post(route('product.destroy_all'), { all_id: selectedRow.value }, {
+                onFinish: () => loaderActive.value?.hide(),
+                preserveScroll: true,
+                preserveState: false,
+            })
+        },
+    })
+}
+const isSelected = (id) => {
+    return selectedRow.value.includes(id);
+}
+const toggleAll = (evt) => {
+    if (evt.target.checked) {
+        selectedRow.value = props.product?.data.map(r => r.product_id);
+    } else {
+        selectedRow.value = [];
+    }
+}
+watch(selectedRow, (val) => {
+    if (val.length > 0) {
+        isVisible.value = true
+    } else {
+        isVisible.value = false
+    }
+})
+// END MULTIPLE DELETE
+
+// date convert
+function daysTranslate(dayValue) {
+    const dayConvert = {
+        "Sunday": "Minggu",
+        "Monday": "Senin",
+        "Tuesday": "Selasa",
+        "Wednesday": "Rabu",
+        "Thursday": "Kamis",
+        "Friday": "Jumat",
+        "Saturday": "Sabtu",
+    };
+    const dayName = moment(dayValue).format('dddd');
+    const dateFormat = moment(dayValue).format('DD-MM-YYYY, HH:mm:ss');
+    return dayConvert[dayName] + ", " + dateFormat ?? dayName;
+}
+function formatCurrency(value) {
+    if (!value) return "Rp 0";
+    return new Intl.NumberFormat('id-ID', {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(value)
+}
+const resolveImage = (path) => {
+    // 1. Jika path kosong/null, pakai placeholder
+    if (!path) return 'https://ui-avatars.com/api/?name=??';
+
+    // 2. Jika path dimulai dengan 'http', berarti ini link eksternal (Scrape)
+    if (path.startsWith('http')) {
+        return path;
+    }
+
+    return `/storage/${path}`;
+};
+
 function formatCategory(cat) {
     return cat
         .split('/')                      // pecah sub kategori
@@ -60,114 +207,31 @@ const categories = computed(() => [
     }))
 
 ]);
-
-// =========Tampilkan Modal========== //
-const showModal = ref(false);
-const getById = ref(null);
-const imageGallery = ref([]);
-const description = ref('');
-const mainImage = ref('https://via.placeholder.com/800')
-function openModal(id) {
-    showModal.value = true
-    getById.value = id;
-}
-
-// tutup modal SETELAH Bootstrap selesai animasi
-function closeModal() {
-    showModal.value = false
-}
-watch(() => getById.value,
-    async (newId) => {
-        if (!newId) {
-            getById.value = null;
-            return;
-        }
-        const { data } = await axios.get(route('product.detail', newId));
-        if (data.status) {
-            imageGallery.value = data.galleryImages
-
-            description.value = data.description;
-        }
-    })
-// =========Batas Fungsi untuk Tampilkan Modal========== //
-
-
-// 🔥 Jika imageGallery berubah → set gambar pertama
-watch(imageGallery, (newVal) => {
-    mainImage.value = newVal[0];
-});
-// ganti gambar utama
-const setMainImage = (img) => {
-    mainImage.value = img
-}
-
-const inputRef = ref(null);
+const inputRef = ref(null)
 onMounted(() => {
-    inputRef.value.focus();
+    inputRef.value.focus()
 })
-
-const resolveImage = (path) => {
-    // 1. Jika path kosong/null, pakai placeholder
-    if (!path) return 'https://via.placeholder.com/100?text=No+Img';
-
-    // 2. Jika path dimulai dengan 'http', berarti ini link eksternal (Scrape)
-    if (path.startsWith('https')) {
-        return path;
-    }
-
-    return `/${path}`;
-};
-
-// Crud Operation
-const loaderActive = ref(null)
-
-const deleted = (nameRoute, data) => {
-    swalConfirmDelete({
-        icon: 'warning',
-        title: 'Hapus',
-        text: `Kamu ingin menghapus Produk ${formatText(data.name)} ?`,
-        confirmText: 'Ya, Hapus!',
-
-        onConfirm: () => {
-            loaderActive.value?.show("Sedang memuat data...");
-            router.delete(route(nameRoute, data.product_id), {
-                onFinish: () => loaderActive.value?.hide(),
-                preserveScroll: false,
-                replace: true,
-                preserveState: true
-            });
-        },
-    })
-}
-const goToDetail = (nameRoute, data) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(route(nameRoute, data.product_id), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
 </script>
 <template>
 
-    <Head title="Halaman Produk" />
+    <Head title="Halaman Daftar Produk" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :home="false" icon="fas fa-tags" title="DAFTAR PRODUK" :items="[{ text: 'Daftar Produk' }]" />
-            <alert :variant="page.props.flash.message ? 'success' : 'danger'" :duration="10" :message="message" />
+            <bread-crumbs :home="false" icon="fas fa-tags" title="Daftar Produk" :items="[{ text: 'Daftar Produk' }]" />
+            <callout type="success" :duration="10" :message="message" />
 
-            <div class="row">
-                <div class="col-12">
+            <div class="row pb-5">
 
+                <div class="col-12 mb-3">
                     <div class="card border-0 shadow-sm rounded-4 mb-4 filter-card">
                         <div class="card-body p-4">
-
                             <div class="d-flex align-items-center mb-3">
-                                <div class="icon-box-sm bg-primary bg-opacity-10 text-primary rounded-circle me-2">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-2">
                                     <i class="fas fa-sliders-h fs-6"></i>
                                 </div>
-                                <h6 class="fw-bold text-dark mb-0 text-uppercase ls-1">Filter Produk</h6>
+                                <h5 class="fw-bold text-dark mb-0 text-uppercase ls-1">Filter Produk</h5>
                             </div>
-
                             <div class="row g-3 align-items-end">
                                 <div class="col-xl-5 col-md-12">
                                     <input-label class="form-label-custom mb-1" for="keyword" value="KATA KUNCI" />
@@ -175,24 +239,22 @@ const goToDetail = (nameRoute, data) => {
                                         <span class="input-group-text bg-white border-end-0 text-muted ps-3">
                                             <i class="fas fa-search"></i>
                                         </span>
-                                        <text-input ref="inputRef" placeholder="Cari nama produk..." name="keyword"
+                                        <text-input ref="inputRef" placeholder="Cari produk..." name="keyword"
                                             v-model="filters.keyword" type="text" :is-valid="false"
                                             input-class="border-start-0 ps-2 shadow-none" />
                                     </div>
                                 </div>
-
                                 <div class="col-xl-3 col-md-4">
                                     <input-label class="form-label-custom mb-1" for="category" value="KATEGORI" />
                                     <div class="input-group">
                                         <span class="input-group-text border-end-0 text-muted ps-3">
                                             <i class="fas fa-tags"></i>
                                         </span>
-                                        <select-input text="Semua Kategori" :is-valid="false" v-model="filters.category"
-                                            name="category" :options="categories"
+                                        <select-input text="--Pilih Kategori--" :is-valid="false"
+                                            v-model="filters.category" name="category" :options="categories"
                                             select-class="border-start-0 ps-2 shadow-none" />
                                     </div>
                                 </div>
-
                                 <div class="col-xl-2 col-md-4 col-6">
                                     <input-label class="form-label-custom mb-1" for="limit" value="TAMPILKAN" />
                                     <div class="input-group">
@@ -200,14 +262,14 @@ const goToDetail = (nameRoute, data) => {
                                             <i class="fas fa-list-ol"></i>
                                         </span>
                                         <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                            { value: 10, label: '10 Item' },
-                                            { value: 20, label: '20 Item' },
-                                            { value: 50, label: '50 Item' },
-                                            { value: 100, label: '100 Item' },
+                                            { value: null, label: 'Pilih Batas' },
+                                            { value: 10, label: '10 Baris' },
+                                            { value: 20, label: '20 Baris' },
+                                            { value: 50, label: '50 Baris' },
+                                            { value: 100, label: '100 Baris' },
                                         ]" select-class="border-start-0 ps-2 shadow-none" />
                                     </div>
                                 </div>
-
                                 <div class="col-xl-2 col-md-4 col-6">
                                     <input-label class="form-label-custom mb-1" for="order_by" value="URUTAN" />
                                     <div class="input-group">
@@ -216,326 +278,316 @@ const goToDetail = (nameRoute, data) => {
                                         </span>
                                         <select-input :is-valid="false" v-model="filters.order_by" name="order_by"
                                             :options="[
+                                                { value: null, label: 'Pilih Urutan' },
                                                 { value: 'desc', label: 'Terbaru' },
                                                 { value: 'asc', label: 'Terlama' },
                                             ]" select-class="border-start-0 ps-2 shadow-none" />
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div v-if="!product?.data.length" class="text-center py-5 my-5">
-                <div class="mb-3">
-                    <i class="bi bi-box2 display-1 text-muted opacity-25"></i>
-                </div>
-                <h5 class="fw-bold text-muted">Produk tidak ditemukan</h5>
-                <p class="text-muted small">Coba ubah kata kunci pencarian atau filter Anda.</p>
-            </div>
 
+                <div class="col-12">
+                    <div class="card card-modern border-0 shadow rounded-4 overflow-hidden">
 
+                        <div
+                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                                    <i class="fas fa-boxes fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">Data Produk</h5>
+                                    <p class="text-muted small mb-0">Total {{ props.product?.total ?? 0 }} produk
+                                        tersedia</p>
+                                </div>
+                            </div>
 
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-5 g-3 gy-5">
-                <div class="col" :id="row.product_id" v-for="(row, rowIndex) in product?.data" :key="rowIndex">
+                            <div class="d-flex gap-2">
+                                <transition name="pop">
+                                    <button v-if="selectedRow.length > 0" @click="deleteSelected" type="button"
+                                        class="btn btn-danger px-3 shadow-sm d-flex align-items-center">
+                                        <i class="fas fa-trash-alt me-2"></i> Hapus ({{ selectedRow.length }})
+                                    </button>
+                                </transition>
 
-                    <div class="d-flex justify-content-evenly mb-2 text-bg-light rounded-pill p-1 shadow-sm">
-                        <button class="btn btn-link btn-sm text-decoration-none p-0">
-                            <i class="fas fa-edit"></i> Ubah
-                        </button>
-                        <span class="border mx-1"></span>
-                        <button @click.prevent="deleted('product.deleted', row)"
-                            class="btn btn-link btn-sm text-decoration-none text-danger p-0">
-                            <i class="fas fa-trash"></i> Hapus
-                        </button>
-                    </div>
-                    <div class="card h-100 product-card border-0 shadow-sm rounded-4 overflow-hidden position-relative">
-
-                        <div class="product-image-wrapper position-relative bg-light">
-
-                            <div class="ratio ratio-1x1 overflow-hidden">
-                                <img :src="resolveImage(row.image_link)"
-                                    class="card-img-top object-fit-cover product-img transition-transform"
-                                    :alt="row.name" />
+                                <button type="button" @click.prevent="create"
+                                    class="btn btn-primary px-4 shadow-sm d-flex align-items-center fw-bold hover-lift">
+                                    <i class="fas fa-plus me-2"></i> Produk Baru
+                                </button>
                             </div>
                         </div>
 
-                        <div class="card-body d-flex flex-column p-3">
-
-                            <a :href="row.link" target="_blank" class="text-decoration-none text-dark mb-2">
-                                <h6 class="product-title fw-bold mb-0 text-capitalize line-clamp-2" :title="row.name"
-                                    v-html="highlight(row.name, filters.keyword)">
-                                </h6>
-                            </a>
-
-                            <span v-if="row.price_discount"
-                                class="badge position-absolute top-0 end-0 m-2 bg-info shadow-sm rounded-pill z-2">
-                                -{{ Math.round((1 - (row.price_discount / row.price_original)) * 100) }}%
-                            </span>
-
-
-                            <div class="small text-muted text-truncate mb-2" :title="formatCategory(row.category)">
-                                {{ formatCategory(row.category) }}
-                            </div>
-
-
-
-                            <div class="mt-auto">
-                                <div v-if="row.price_discount" class="d-flex flex-column">
-                                    <small class="text-decoration-line-through text-muted fs-8">
-                                        {{ formatCurrency(row.price_original) }}
-                                    </small>
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <span class="fw-bold text-danger fs-5">
-                                            {{ formatCurrency(row.price_discount) }}
-                                        </span>
-                                    </div>
-                                    <div class="mt-2">
-                                        <span
-                                            class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-1 w-100 py-1 fw-normal fs-8">
-                                            <i class="fas fa-tags me-1"></i> Hemat {{ formatCurrency(row.price_original
-                                                - row.price_discount) }}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div v-else>
-                                    <span class="fw-bold text-dark fs-5">
-                                        {{ formatCurrency(row.price_original) }}
-                                    </span>
-                                </div>
-
-                                <div class="mt-2 border-top border-dashed p-2">
-                                    <small class="text-muted fs-9 fst-italic px-2">
-                                        <i class="fas fa-map-marker-alt me-1 text-secondary"></i>Harga Jabodetabek
-                                    </small>
-                                </div>
+                        <div v-if="isLoading"
+                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
+                            style="z-index: 10;">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="fw-bold text-dark">Sedang memuat data...</p>
                             </div>
                         </div>
 
-                        <div class="card-action-overlay d-flex justify-content-center align-items-center gap-2">
-                            <button @click.prevent="goToDetail('product.detail', row)"
-                                class="btn btn-light rounded-circle shadow-sm" title="Lihat Detail">
-                                <i class="fas fa-eye text-primary"></i>
-                            </button>
-                            <a :href="row.link" target="_blank" class="btn btn-light rounded-circle shadow-sm"
-                                title="Buka Link">
-                                <i class="fas fa-external-link-alt text-dark"></i>
-                            </a>
+                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 custom-table text-nowrap ">
+                                    <thead class="bg-light border-bottom">
+                                        <tr>
+                                            <th width="50" class="text-center">
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input :disabled="!product?.data.length" type="checkbox"
+                                                        class="form-check-input custom-checkbox pointer"
+                                                        :checked="isAllSelected" @change="toggleAll($event)" />
+                                                </div>
+                                            </th>
+                                            <th class="text-secondary text-uppercase fw-bold ps-4">Produk</th>
+                                            <th class="text-secondary text-uppercase fw-bold">Kategori</th>
+                                            <th class="text-secondary text-uppercase fw-bold">Harga</th>
+                                            <th class="text-secondary text-uppercase fw-bold text-center">
+                                                Status</th>
+                                            <th class="text-secondary text-uppercase fw-bold text-center">
+                                                Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-if="!product?.data.length">
+                                            <td colspan="6" class="text-center py-5">
+                                                <div class="empty-state">
+                                                    <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                                                        <i class="fas fa-box-open text-muted opacity-50"></i>
+                                                    </div>
+                                                    <h6 class="fw-bold text-dark">Tidak ada produk ditemukan</h6>
+                                                    <p class="text-muted small">Coba ubah filter pencarian Anda.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <tr v-for="(item, index) in product?.data" :key="index"
+                                            :class="{ 'row-selected': isSelected(item.product_id) }"
+                                            class="transition-colors">
+
+                                            <td class="text-center">
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input type="checkbox"
+                                                        class="form-check-input custom-checkbox pointer"
+                                                        :value="item.product_id" v-model="selectedRow" />
+                                                </div>
+                                            </td>
+
+                                            <td class="ps-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div
+                                                        class="avatar-product me-3 shadow-sm rounded-3 overflow-hidden group-hover-img">
+                                                        <img :src="resolveImage(item.image_link)"
+                                                            class="w-100 h-100 object-fit-cover" alt="Product">
+                                                    </div>
+
+                                                    <div style="max-width: 250px;">
+                                                        <div class="fw-bold text-dark text-truncate mb-1"
+                                                            :title="item.name"
+                                                            v-html="highlight(item.name ?? '-', filters.keyword)">
+                                                        </div>
+                                                        <div class="small text-muted d-flex align-items-center gap-2">
+                                                            <span
+                                                                class="badge bg-light text-secondary border fw-normal">ID:
+                                                                {{ item.product_id.substr(0, 8) }}</span>
+                                                            <a v-if="item.link" :href="item.link" target="_blank"
+                                                                class="text-primary text-decoration-none hover-underline">
+                                                                <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <span
+                                                    class="d-inline-flex bg-gradient align-items-center text-secondary fw-medium px-2 py-1 rounded-2 bg-light border small">
+                                                    <i class="fas fa-tag me-2 fs-10"></i> {{
+                                                        formatCategory(item.category) }}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <template v-if="item.price_discount">
+                                                        <span class="fw-bold text-dark">{{
+                                                            formatCurrency(item.price_discount) }}</span>
+                                                        <small class="text-muted text-decoration-line-through fs-10">{{
+                                                            formatCurrency(item.price_original) }}</small>
+                                                    </template>
+                                                    <template v-else>
+                                                        <span class="fw-bold text-dark">{{
+                                                            formatCurrency(item.price_original) }}</span>
+                                                    </template>
+                                                </div>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <span class="badge rounded-pill px-3 py-2 fw-bold" :class="{
+                                                    'badge-soft-success': item.status === 'published',
+                                                    'badge-soft-secondary': item.status === 'draft'
+                                                }">
+                                                    <i class="me-1"
+                                                        :class="item.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
+                                                    {{ item.status === 'published' ? 'Publish' : 'Draft' }}
+                                                </span>
+                                            </td>
+
+                                            <td class="text-center ps-4">
+                                                <div class="dropdown dropstart">
+                                                    <button
+                                                        class="btn btn-icon btn-lg btn-light rounded-circle shadow-sm"
+                                                        type="button" data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-h text-muted"></i>
+                                                    </button>
+                                                    <ul
+                                                        class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-3">
+                                                        <li>
+                                                            <button @click.prevent="edit(item.product_id)"
+                                                                class="dropdown-item rounded-2 py-2 d-flex align-items-center">
+                                                                <div
+                                                                    class="icon-box-xs bg-primary bg-opacity-10 text-primary rounded-1 me-2">
+                                                                    <i class="fas fa-pen fs-10"></i>
+                                                                </div>
+                                                                <span>Ubah Produk</span>
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <hr class="dropdown-divider my-1">
+                                                        </li>
+                                                        <li>
+                                                            <button @click.prevent="deleted(item)"
+                                                                class="dropdown-item rounded-2 py-2 d-flex align-items-center text-danger">
+                                                                <div
+                                                                    class="icon-box-xs bg-danger bg-opacity-10 text-danger rounded-1 me-2">
+                                                                    <i class="fas fa-trash fs-10"></i>
+                                                                </div>
+                                                                <span>Hapus Produk</span>
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white border-top py-3 px-4 overflow-hidden">
+                            <div
+                                class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                                <span class="text-muted small">
+                                    Menampilkan <strong>{{ props.product?.from ?? 0 }}</strong> - <strong>{{
+                                        props.product?.to ?? 0 }}</strong>
+                                    dari <strong>{{ props.product?.total ?? 0 }}</strong> data
+                                </span>
+                                <pagination :links="props.product?.links" routeName="product" :additionalQuery="{
+                                    limit: filters.limit,
+                                    order_by: filters.order_by,
+                                    keyword: filters.keyword,
+                                    category: filters.category
+                                }" />
+                            </div>
                         </div>
 
                     </div>
-                </div>
-            </div>
-
-            <div
-                class="mt-5 d-flex flex-column align-items-center gap-3 mb-4 rounded-3 bg-white overflow-hidden text-wrap">
-                <div class="pt-4 text-center mb-3">
-                    <pagination :links="props.product?.links" routeName="product" :additionalQuery="{
-                        limit: filters.limit,
-                        order_by: filters.order_by,
-                        keyword: filters.keyword,
-                        category: filters.category
-                    }" />
-                    <div class="text-muted small">
-                        Menampilkan <strong>{{ props.product?.from ?? 0 }}</strong> - <strong>{{ props.product?.to ?? 0
-                            }}</strong>
-                        dari <strong>{{ props.product?.total ?? 0 }}</strong> produk
-                    </div>
-                </div>
-
-            </div>
-
-
-            <div class="row" v-if="showModal">
-                <div class="col-xl-12 col-sm-12 col-md-12 col-lg-12">
-                    <modal :footer="true" @opened="openModal" size="modal-xl" icon="fas fa-images" v-if="showModal"
-                        :show="showModal" title="Galleri Produk" @update:show="showModal = $event" @closed="closeModal">
-                        <template #body>
-                            <div class="row layout-overlay">
-                                <div class="product-gallery">
-                                    <div class="mb-3 mt-3">
-                                        <img :src="resolveImage(mainImage)"
-                                            class="img-fluid rounded shadow-sm first-image-gallery" />
-                                    </div>
-                                </div>
-                                <div class="d-flex gap-2 flex-wrap justify-content-center mb-5">
-                                    <div v-for="(img, index) in imageGallery" :key="index" class="thumbnail-wrapper"
-                                        @click="setMainImage(img)">
-                                        <img :src="resolveImage(img)" class="img-thumbnail gallery-thumb"
-                                            :class="{ active: mainImage === img }" />
-                                    </div>
-                                </div>
-                                <div v-html="description"></div>
-                            </div>
-                        </template>
-                    </modal>
                 </div>
             </div>
         </template>
     </app-layout>
 </template>
 <style scoped>
-.image-wrapper {
-    overflow: hidden;
-    height: 220px;
+.blur-area {
+    transition: all 0.3s ease;
+}
+
+.blur-area.is-blurred {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
+/* Card Modern */
+.card-modern {
+    background: #ffffff;
+    transition: all 0.3s ease;
+}
+
+/* Custom Table Styling */
+.custom-table thead th {
+    letter-spacing: 0.5px;
+    background-color: #f4f4f5;
+    /* Abu-abu sangat muda */
+    border-bottom: 2px solid #e9ecef;
+}
+
+.custom-table tbody td {
+    border-bottom: 1px solid #f1f3f5;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* Row Hover Effect */
+.custom-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.custom-table tbody tr:hover {
+    background-color: #f8faff;
+    /* Biru sangat pudar saat hover */
+}
+
+/* Row Selected State */
+.row-selected {
+    /* Biru muda jika checkbox dicentang */
+    background-color: #d7e0ec !important;
+}
+
+/* Custom Checkbox Size */
+.custom-checkbox {
+    width: 1.1em;
+    height: 1.1em;
+    cursor: pointer;
+}
+
+/* Avatar Circle untuk kolom Creator */
+.avatar-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    border: 1px solid #dadada;
-}
-
-
-.image-figure-product {
-    transition: transform 0.2s ease-in-out;
-    width: 100%;
-    height: 220px;
-    object-fit: fill;
-    object-position: center;
-}
-
-.image-figure-product:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.image-wrapper:hover {
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.432);
-}
-
-.first-image-gallery {
-    height: 550px;
-    width: 550px;
-    object-fit: contain;
-    object-position: center;
-    display: flex;
-    margin: auto;
-    border: 1px solid #d6d6d6;
-    padding: 5px;
-
-}
-
-.layout-overlay {
-    max-height: 100vh;
-    overflow-y: auto;
-    padding-right: 3px;
-    position: relative;
-}
-
-.gallery-thumb {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.gallery-thumb:hover {
-    transform: scale(1.05);
-}
-
-.gallery-thumb.active {
-    border: 2px solid #0d6efd;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
-}
-
-iframe {
-    width: 100%;
-    height: 360px;
-    border: none;
+    font-size: 0.7rem;
 }
 
 
 
-/* Card Base Styling */
-.product-card {
-    background: #ffffff;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    border: 1px solid rgba(0, 0, 0, 0.05) !important;
-    /* Border sangat tipis */
+/* Animation Utilities */
+.animate-pop {
+    animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
-/* Hover Effect: Card Lift */
-.product-card:hover {
-    transform: translateY(-5px);
-    /* Naik sedikit */
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
-    /* Shadow menebal */
-    border-color: rgba(0, 0, 0, 0.0) !important;
+@keyframes popIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
-/* Image Zoom Effect */
-.product-img {
-    transition: transform 0.5s ease;
+.fs-7 {
+    font-size: 0.75rem;
 }
-
-.product-card:hover .product-img {
-    transform: scale(1.08);
-    /* Gambar membesar sedikit */
-}
-
-/* Typography Helpers */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 2.5em;
-    /* Menjaga tinggi judul konsisten */
-    line-height: 1.25;
-}
-
-.fs-8 {
-    font-size: 0.75rem !important;
-}
-
-.fs-9 {
-    font-size: 0.7rem !important;
-}
-
-/* Overlay Action Buttons (Muncul saat hover) */
-.card-action-overlay {
-    position: absolute;
-    top: 45%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    transition: all 0.3s ease;
-    z-index: 5;
-    pointer-events: none;
-}
-
-/* Efek saat card di hover, overlay muncul */
-.product-card:hover .card-action-overlay {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.product-card:hover .product-image-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.1);
-    /* Sedikit gelap saat hover */
-    pointer-events: none;
-    transition: background 0.3s;
-}
-
-/* Border Dashed untuk info tambahan */
-.border-dashed {
-    border-style: dashed !important;
-}
-
-/* Cursor Pointer */
-.cursor-pointer {
-    cursor: pointer;
-}
-
 
 /* Card Filter */
 .filter-card {
@@ -545,24 +597,6 @@ iframe {
 
 .filter-card:hover {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Label Styling (Konsisten dengan halaman lain) */
-.form-label-custom {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: #8898aa;
-    /* Warna abu-abu soft */
-    text-transform: uppercase;
-}
-
-/* Styling Input Group agar terlihat Seamless */
-.input-group-text {
-    background-color: #fff;
-    border-color: #dee2e6;
-    /* Warna border default bootstrap */
-    border-right: none;
 }
 
 /* Target input/select komponen Vue kamu */
@@ -589,17 +623,138 @@ iframe {
     border-radius: 0.375rem;
 }
 
-/* Icon Box Kecil di Judul */
-.icon-box-sm {
-    width: 32px;
-    height: 32px;
+/* Label Styling (Konsisten dengan halaman lain) */
+.form-label-custom {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #8898aa;
+    /* Warna abu-abu soft */
+    text-transform: uppercase;
+}
+
+
+
+/* --- TABLE STYLING --- */
+.custom-table th {
+    font-weight: 700;
+    color: #64748b;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.custom-table td {
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* Hover Row Effect */
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+    /* Warna abu-abu sangat muda */
+}
+
+/* --- PRODUCT AVATAR --- */
+.avatar-product {
+    width: 50px;
+    height: 50px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.img-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.group-hover-img:hover .img-overlay {
+    opacity: 1;
+}
+
+/* --- SOFT BADGES --- */
+.badge-soft-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.badge-soft-secondary {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.dot-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-bottom: 1px;
+}
+
+/* --- TYPOGRAPHY --- */
+.fs-9 {
+    font-size: 0.75rem;
+}
+
+.fs-10 {
+    font-size: 0.8rem;
+}
+
+.ls-1 {
+    letter-spacing: 0.5px;
+}
+
+.hover-underline:hover {
+    text-decoration: underline !important;
+}
+
+/* --- DROPDOWN & ICON --- */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: #e9ecef;
+    transform: rotate(90deg);
+}
+
+.icon-box-xs {
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Letter Spacing */
-.ls-1 {
-    letter-spacing: 1px;
+/* --- ANIMATION --- */
+.hover-lift {
+    transition: transform 0.2s;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+/* Transition for Bulk Delete Button */
+.pop-enter-active,
+.pop-leave-active {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pop-enter-from,
+.pop-leave-to {
+    opacity: 0;
+    transform: scale(0.8);
 }
 </style>
