@@ -90,7 +90,7 @@ const handleFileUpload = (event) => {
     if (file) {
         // Buat preview lokal
         previewImage.value = URL.createObjectURL(file);
-        // Masukkan file ke form 
+        // Masukkan file ke form
         form.image = file;
     }
     console.log(previewImage.value)
@@ -148,18 +148,62 @@ onMounted(() => {
 });
 
 // Hapus Gambar dari Galeri
-const deletedImages = ref([]);
-const removeGalleryImage = (index) => {
-    const imageToDelete = galleryPreview.value[index];
-    // Jika gambar yang dihapus adalah gambar lama (bukan preview file baru)
-    // Masukkan ke daftar hapus agar Backend tau
-    if (typeof imageToDelete === 'string') {
-        deletedImages.value.push(imageToDelete);
-    }
-    galleryPreview.value.splice(index, 1);
+const galleryFiles = ref([]);
+const removeGalleryImage = (imagePathOrUrl, index) => {
+    const isLocalFile = typeof imagePathOrUrl === 'string' && imagePathOrUrl.startsWith('blob:');
 
-    form.gallery = galleryPreview.value;
-    form.deleted_images = deletedImages.value;
+    if (isLocalFile) {
+        // 1. Kita harus menghapus file aslinya di 'galleryFiles'
+        // Masalah: Index di 'galleryPreview' (campuran) BEDA dengan index di 'galleryFiles' (cuma file baru).
+        // Solusi: Hitung offset-nya.
+
+        // Hitung berapa banyak gambar DB yang ada di preview saat ini
+        const dbImagesCount = galleryPreview.value.filter(img => !img.startsWith('blob:')).length;
+        // Index relatif di array files
+        const fileIndex = index - dbImagesCount;
+
+        // Hapus dari array FILES (Data yang akan dikirim ke server)
+        if (galleryFiles.value[fileIndex]) {
+            galleryFiles.value.splice(fileIndex, 1);
+            form.gallery = galleryFiles.value; // Update data form
+        }
+
+        // 2. Hapus dari array PREVIEW (Tampilan layar)
+        galleryPreview.value.splice(index, 1);
+
+        return; // SELESAI. Jangan lanjut ke bawah.
+    }
+
+    // console.log(imagePathOrUrl, index)
+    if (props.product.product_id) {
+        if (confirm('Yakin ingin menghapus gambar ini secara permanen?')) {
+            let cleanPath = imagePathOrUrl;
+            if (typeof cleanPath === 'string') {
+                cleanPath = cleanPath.replace('/storage/', '').replace('storage/', '');
+                if (cleanPath.startsWith('http')) {
+                    // Jika URL lengkap, ambil path belakangnya saja (tergantung kasus)
+                    // Tapi biasanya replace storage di atas sudah cukup
+                }
+            }
+            // Panggil Route Delete yang kita buat di Laravel
+            router.delete(route('product.deleted.gallery.image', props.product.product_id), {
+                data: {
+                    image_path: imagePathOrUrl // Kirim path gambar yang mau dihapus
+                },
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Hapus dari tampilan lokal agar kerasa responsif
+                    // (Sebenarnya Inertia akan reload props, tapi ini biar smooth)
+                    galleryPreview.value.splice(index, 1);
+                },
+                onError: (errors) => {
+                    alert('Gagal menghapus gambar. Silakan coba lagi.');
+                    console.error(errors);
+                }
+            });
+        }
+    }
+
 };
 </script>
 <template>
@@ -356,7 +400,7 @@ const removeGalleryImage = (index) => {
                                                         <img :src="img" class="object-fit-cover w-100 h-100">
 
                                                         <button type="button"
-                                                            @click="removeGalleryImage(product.product_id, index)"
+                                                            @click.prevent="removeGalleryImage(img, index)"
                                                             class="btn position-absolute top-0 end-0 m-1 bg-danger text-white rounded-circle shadow d-flex align-items-center justify-content-center"
                                                             style="width: 20px; height: 20px; padding: 0;">
                                                             <i class="fas fa-times" style="font-size: 10px;"></i>

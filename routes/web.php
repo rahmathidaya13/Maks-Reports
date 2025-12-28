@@ -144,7 +144,7 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::delete('/product/destroy/{id}', 'destroy')->name('product.deleted');
         Route::post('/product/delete_all', 'destroy_all')->name('product.destroy_all');
 
-        Route::delete('/product/delete/image-gallery/{id}', 'deletedGalleryImage')->name('product.deleted_gallery_image');
+        Route::delete('/product/delete/image-gallery/{id}', 'deletedGalleryImage')->name('product.deleted.gallery.image');
     });
 
     // cetak laporan

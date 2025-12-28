@@ -63,7 +63,7 @@ onMounted(() => {
 
     // 3. Pasang event listener untuk perubahan teks
     quill.on("text-change", () => {
-        const length = quill.getLength() - 1
+        let length = quill.getLength() - 1
 
         // 🔒 Enforce max length (frontend guard)
         if (props.maxChar && length > props.maxChar) {

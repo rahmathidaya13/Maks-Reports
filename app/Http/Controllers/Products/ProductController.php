@@ -131,22 +131,6 @@ class ProductController extends Controller
         }
 
         $currentGallery = $product->image_url ?? [];
-        // 1. Hapus gallery yang dipilih admin
-        if ($request->filled('deleted_images')) {
-            // gagal menghapus file ketika mengganti produk atau menghapus produk gallery
-            foreach ($request->deleted_images as $pathToDelete) {
-
-                if (Storage::disk('public')->exists($pathToDelete)) {
-                    Storage::disk('public')->delete($pathToDelete);
-                }
-
-                $currentGallery = array_values(
-                    array_diff($currentGallery, [$pathToDelete])
-                );
-            }
-        }
-
-        // 2. Tambah gallery baru (append)
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $file) {
                 $currentGallery[] = $file
@@ -219,12 +203,29 @@ class ProductController extends Controller
         return redirect()->route('product')->with('message', 'Produk ' . $product->name . '  Berhasil Dihapus');
     }
 
-    public function deletedGalleryImage(ProductModel $productModel, string $id)
+    public function deletedGalleryImage(Request $request, ProductModel $productModel, string $id)
     {
         $product = $productModel::findOrFail($id);
+        $cleanPath = $request['image_path'];
+        $cleanPath = str_replace('/storage/', '', $cleanPath);
+        $cleanPath = str_replace('storage/', '', $cleanPath);
+        // 2. Hapus File Fisik
+        if (Storage::disk('public')->exists($cleanPath)) {
+            Storage::disk('public')->delete($cleanPath);
+        }
 
-        $currentGallery = $product->image_url;
-        dd($currentGallery);
-        // return redirect()->back();
+        $currentGallery = $product->image_url ?? [];
+
+        $updatedGallery = array_values(array_filter($currentGallery, function ($item) use ($cleanPath) {
+            // Kita juga bersihkan item dari DB buat jaga-jaga, biar perbandingannya apple-to-apple
+            $dbItemClean = str_replace('storage/', '', $item);
+
+            // Kembalikan TRUE jika item INI bukan yang mau dihapus
+            return $dbItemClean !== $cleanPath;
+        }));
+        $product->update([
+            'image_url' => $updatedGallery
+        ]);
+        return back()->with('success', 'Gambar berhasil dihapus');
     }
 }
