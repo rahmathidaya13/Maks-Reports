@@ -2,12 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\ScrapeProductJob;
-use App\Models\ProductModel;
-use Illuminate\Console\Command;
-use Symfony\Component\HttpClient\HttpClient;
 use Goutte\Client;
+use Illuminate\Support\Str;
+use App\Models\ProductModel;
+use App\Jobs\ScrapeProductJob;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpClient\HttpClient;
 
 class ScrapeProducts extends Command
 {
@@ -132,11 +133,11 @@ class ScrapeProducts extends Command
                     // end gambar utama
 
                     // --- gallery images ---
-                    $galleryImages = $this->scrapeGallery($client, $link);
+                    // $galleryImages = $this->scrapeGallery($client, $link);
                     // --- end gallery images ---
 
                     // --- description ---
-                    $description = $this->scrapeDescription($client, $link);
+                    // $description = $this->scrapeDescription($client, $link);
                     // --- end description ---
 
                     // ✔ Gunakan updateOrCreate agar tidak ganda
@@ -144,20 +145,24 @@ class ScrapeProducts extends Command
                         $existing = ProductModel::where('link', $link)->first();
 
                         if (!$existing) {
-                            ProductModel::create([
+                            $product = ProductModel::create([
                                 'source' => 'scrape',
                                 'link' => $link,
                                 'name' => $nama,
-                                'price_original' => $priceOriginal,
-                                'price_discount' => $priceDiscount,
                                 'image_link' => $img,
-                                'image_url' => $galleryImages,
                                 'category' => $category,
-                                'description' => $description,
                             ]);
 
-                            Log::info("\n[BARU] {$nama}" . " → Jumlah Galleri: " . count($galleryImages) . " gambar");
-                            $this->info("\n[BARU] {$nama}" . " → Jumlah Galleri: " . count($galleryImages) . " gambar");
+                            $product->prices()->create([
+                                'product_id' => $product->product_id,
+                                'base_price' => $priceOriginal ?? 0,
+                                'discount_price' => $priceDiscount ?? 0,
+                                'price_type' => isset($priceDiscount) && $priceDiscount > 0 ? 'discount' : 'normal',
+                            ]);
+
+
+                            Log::info("\n[BARU] {$nama}");
+                            $this->info("\n[BARU] {$nama}");
                             return;
                         }
 
@@ -166,12 +171,9 @@ class ScrapeProducts extends Command
                         $fields = [
                             'source' => 'scrape',
                             'name' => $nama,
-                            'price_original' => $priceOriginal,
-                            'price_discount' => $priceDiscount,
                             'image_link' => $img,
-                            'image_url' => $galleryImages,
                             'category' => $category,
-                            'description' => $description,
+                            'link' => $link,
                         ];
 
                         foreach ($fields as $key => $newValue) {
@@ -179,12 +181,12 @@ class ScrapeProducts extends Command
                             $oldValue = $existing->{$key};
 
                             // bandingkan array gallery
-                            if ($key === 'image_url') {
-                                if ($oldValue !== $newValue) {
-                                    $changes[$key] = $newValue;
-                                }
-                                continue;
-                            }
+                            // if ($key === 'image_url') {
+                            //     if ($oldValue !== $newValue) {
+                            //         $changes[$key] = $newValue;
+                            //     }
+                            //     continue;
+                            // }
 
                             // bandingkan normal field
                             if ($oldValue != $newValue) {
@@ -208,13 +210,9 @@ class ScrapeProducts extends Command
                     $results[] = [
                         'source' => 'scrape',
                         'name' => $nama,
-                        'price_original' => $priceOriginal,
-                        'price_discount' => $priceDiscount,
-                        'link' => $link,
                         'image_link' => $img,
-                        'image_url' => $galleryImages,
                         'category' => $category,
-                        'description' => $description,
+                        'link' => $link,
                     ];
                 });
                 $page++;

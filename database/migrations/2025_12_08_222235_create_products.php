@@ -23,22 +23,16 @@ return new class extends Migration
             $table->enum('status', ['draft', 'published'])->default('published')->index();
             // nama produk, penting untuk pencarian
             $table->string('name')->index();
-             $table->string('slug')->nullable()->unique();
+            $table->string('slug')->nullable()->unique();
             $table->string('category')->index(); // Untuk filter kategori cepat
 
-            // harga disimpan dalam integer (Rupiah)
-            $table->unsignedBigInteger('price_original')->nullable()->index();
-            $table->unsignedBigInteger('price_discount')->nullable()->index();
 
             $table->string('image_path')->nullable();
 
             // link bersifat unik agar tidak scrape ganda
             $table->string('link')->nullable();
             $table->string('image_link')->nullable();
-            $table->json('image_url')->nullable();
 
-
-            $table->longText('description')->nullable();
             $table->unique(['link', 'source']);
             $table->softDeletes();
             $table->timestamps();

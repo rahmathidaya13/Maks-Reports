@@ -6,24 +6,26 @@ const props = defineProps({
         type: Object,
         default: () => ({})
     },
+    branch: Array
 })
-
 const form = useForm({
-    name: props.product?.name ?? '',
-    link: props.product?.link ?? '',
-    category: props.product?.category ?? '',
-    price_original: props.product?.price_original ?? 0,
-    price_discount: props.product?.price_discount ?? 0,
-    description: props.product?.description ?? null,
-    status: props.product?.status ?? null,
+    name: props.product.product?.name ?? '',
+    link: props.product?.product?.link ?? '',
+    category: props.product?.product?.category ?? '',
+    status: props.product?.product?.status ?? null,
     image: null,
-    gallery: [],
-    deleted_images: [],
+
+    base_price: props.product?.base_price ?? 0,
+    discount_price: props.product?.discount_price ?? 0,
+    branch: props.product?.branch?.branches_id ?? [],
+    valid_from: props.product?.valid_from ?? '',
+    valid_until: props.product?.valid_until ?? '',
+
 });
-// console.log(props.product)
+
 const isSubmit = () => {
-    if (props.product?.product_id) {
-        form.post(route('product.update', props.product.product_id), {
+    if (props.product?.product_price_id) {
+        form.post(route('product.update', props.product.product_price_id), {
             forceFormData: true,
             _method: 'put',
             onSuccess: () => {
@@ -46,8 +48,8 @@ const title = ref("");
 const icon = ref("");
 const url = ref("")
 onMounted(() => {
-    if (props.product && props.product?.product_id) {
-        title.value = "Ubah Data Produk " + props.product?.name
+    if (props.product && props.product?.product_price_id) {
+        title.value = "Ubah Data Produk " + props.product?.product?.name
         icon.value = "fas fa-edit"
         url.value = route('product')
     } else {
@@ -57,7 +59,7 @@ onMounted(() => {
     }
 })
 const breadcrumbItems = computed(() => {
-    if (props.product && props.product?.product_id) {
+    if (props.product && props.product?.product_price_id) {
         return [
             { text: "Daftar Produk", url: route("product") },
             { text: "Tambah Produk Baru", url: route("product.create") },
@@ -71,6 +73,7 @@ const breadcrumbItems = computed(() => {
 })
 
 const loaderActive = ref(null);
+
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
     router.get(url.value, {}, {
@@ -78,13 +81,21 @@ const goBack = () => {
     });
 }
 
+// branch option
+const branchOptions = computed(() => {
+    return [{
+        value: '',
+        label: '-- Pilih Cabang --'
+    },
+    ...(props.branch?.map((branch) => ({
+        value: branch.branches_id,
+        label: branch.name
+    })))
+    ];
+})
 
 // State untuk Mode Gambar (Default 'upload' agar user manual mudah)
 const previewImage = ref(null);
-
-// State untuk Galeri
-const galleryPreview = ref([]); // Untuk menampilkan gambar di layar
-
 const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -93,34 +104,16 @@ const handleFileUpload = (event) => {
         // Masukkan file ke form
         form.image = file;
     }
-    console.log(previewImage.value)
 };
 
 // Hitung Diskon Otomatis
 const discountPercentage = computed(() => {
-    if (form.price_original > 0 && form.price_discount > 0 && form.price_original > form.price_discount) {
-        const discount = form.price_original - form.price_discount;
-        return Math.round((discount / form.price_original) * 100);
+    if (form.base_price > 0 && form.discount_price > 0 && form.base_price > form.discount_price) {
+        const discount = form.base_price - form.discount_price;
+        return Math.round((discount / form.base_price) * 100);
     }
     return 0;
 });
-
-
-
-// Handle Upload Banyak Gambar
-const handleGalleryUpload = (event) => {
-    const files = Array.from(event.target.files);
-    files.forEach(file => {
-        // Buat URL lokal untuk preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            galleryPreview.value.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
-    });
-
-    form.gallery = files;
-};
 
 // Fungsi ini penting agar gambar dari storage lokal dan link luar bisa tampil
 const resolveImage = (path) => {
@@ -139,72 +132,21 @@ onMounted(() => {
     if (props.product.image_path) {
         previewImage.value = resolveImage(props.product.image_path);
     }
-
-    // B. SET PREVIEW GALERI
-    if (props.product.image_url && Array.isArray(props.product.image_url)) {
-        // Mapping semua path dari DB ke format URL yang bisa dibaca browser
-        galleryPreview.value = props.product.image_url.map(img => resolveImage(img));
-    }
 });
-
-// Hapus Gambar dari Galeri
-const galleryFiles = ref([]);
-const removeGalleryImage = (imagePathOrUrl, index) => {
-    const isLocalFile = typeof imagePathOrUrl === 'string' && imagePathOrUrl.startsWith('blob:');
-
-    if (isLocalFile) {
-        // 1. Kita harus menghapus file aslinya di 'galleryFiles'
-        // Masalah: Index di 'galleryPreview' (campuran) BEDA dengan index di 'galleryFiles' (cuma file baru).
-        // Solusi: Hitung offset-nya.
-
-        // Hitung berapa banyak gambar DB yang ada di preview saat ini
-        const dbImagesCount = galleryPreview.value.filter(img => !img.startsWith('blob:')).length;
-        // Index relatif di array files
-        const fileIndex = index - dbImagesCount;
-
-        // Hapus dari array FILES (Data yang akan dikirim ke server)
-        if (galleryFiles.value[fileIndex]) {
-            galleryFiles.value.splice(fileIndex, 1);
-            form.gallery = galleryFiles.value; // Update data form
-        }
-
-        // 2. Hapus dari array PREVIEW (Tampilan layar)
-        galleryPreview.value.splice(index, 1);
-
-        return; // SELESAI. Jangan lanjut ke bawah.
-    }
-
-    // console.log(imagePathOrUrl, index)
-    if (props.product.product_id) {
-        if (confirm('Yakin ingin menghapus gambar ini secara permanen?')) {
-            let cleanPath = imagePathOrUrl;
-            if (typeof cleanPath === 'string') {
-                cleanPath = cleanPath.replace('/storage/', '').replace('storage/', '');
-                if (cleanPath.startsWith('http')) {
-                    // Jika URL lengkap, ambil path belakangnya saja (tergantung kasus)
-                    // Tapi biasanya replace storage di atas sudah cukup
-                }
-            }
-            // Panggil Route Delete yang kita buat di Laravel
-            router.delete(route('product.deleted.gallery.image', props.product.product_id), {
-                data: {
-                    image_path: imagePathOrUrl // Kirim path gambar yang mau dihapus
-                },
-                preserveScroll: true,
-                onSuccess: () => {
-                    // Hapus dari tampilan lokal agar kerasa responsif
-                    // (Sebenarnya Inertia akan reload props, tapi ini biar smooth)
-                    galleryPreview.value.splice(index, 1);
-                },
-                onError: (errors) => {
-                    alert('Gagal menghapus gambar. Silakan coba lagi.');
-                    console.error(errors);
-                }
-            });
-        }
-    }
-
-};
+// const isChecked = (id) => {
+//     return form.branch.includes(id)
+// }
+// console.log(props.product?.branch?.branches_id)
+// watch(
+//     () => props.product?.branch?.branches_id,
+//     (val) => {
+//         if (val) {
+//             form.branch = String(val)
+//         }
+//         console.log(val)
+//     },
+//     { immediate: true }
+// )
 </script>
 <template>
 
@@ -323,27 +265,83 @@ const removeGalleryImage = (imagePathOrUrl, index) => {
                                                 </transition>
                                             </div>
 
-                                            <div class="row g-4 position-relative z-1">
+                                            <div class="row g-3 position-relative z-1">
                                                 <div class="col-md-6">
-                                                    <input-label class="form-label-custom"
+                                                    <input-label class="form-label-custom" for="valid_from"
+                                                        value="Tanggal Berlaku" />
+                                                    <div class="input-group">
+                                                        <text-input type="date" v-model="form.valid_from"
+                                                            name="valid_from" />
+                                                    </div>
+                                                    <input-error :message="form.errors.valid_from" />
+
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center">
+                                                        <input-label class="form-label-custom" for="valid_until"
+                                                            value="Tanggal Berakhir" />
+                                                        <span
+                                                            class="badge bg-light text-muted border fw-normal mx-2 mb-2">Opsional</span>
+                                                    </div>
+                                                    <div class="input-group">
+                                                        <text-input type="date" v-model="form.valid_until"
+                                                            name="valid_until" />
+                                                    </div>
+                                                    <input-error :message="form.errors.valid_until" />
+                                                    <div class="form-text fst-italic small text-muted mt-1">Tentukan
+                                                        jika sedang
+                                                        promo.
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-12">
+                                                    <input-label class="form-label-custom" value="Harga Per-Cabang" />
+                                                    <div :class="[{ 'text-bg-light bg-opacity-10 ': form.branch.length > 0, 'text-bg-danger': form.branch.errors }]"
+                                                        class="border p-2 rounded-3 d-flex gap-2 flex-wrap ">
+                                                        <!-- <label
+                                                            class="form-check-label gap-1 d-flex border  rounded-2 p-1 small text-capitalize"
+                                                            v-for="item in branch" :key="item.branches_id">
+                                                            <input multiple class="form-check-input" type="checkbox"
+                                                                :value="item.branches_id" v-model="form.branch" />
+                                                            <check-box :value="item.branches_id"
+                                                                v-model:checked="form.branch" :label="item.name"
+                                                                :name="item.name" />
+                                                            <span class="fw-semibold">{{ item.name
+                                                                }}</span>
+                                                        </label> -->
+                                                        <check-box :value="form.branch" 
+                                                                v-model:checked="form.branch" :label="form.branch"
+                                                                :name="form.branch" />
+                                                    </div>
+                                                    <input-error :message="form.errors.branch" />
+
+                                                    <div class="form-text fst-italic small text-muted mt-1">Tentukan
+                                                        harga untuk setiap cabang
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <input-label class="form-label-custom" for="base_price"
                                                         value="HARGA JUAL (NORMAL)" />
                                                     <div class="input-group">
                                                         <currency-input input-class="text-bg-grey fw-bold" :decimals="0"
-                                                            v-model="form.price_original" name="price_original" />
+                                                            v-model="form.base_price" name="base_price" />
                                                     </div>
-                                                    <input-error :message="form.errors.price_original" />
+                                                    <input-error :message="form.errors.base_price" />
                                                 </div>
                                                 <div class="col-md-6">
                                                     <input-label class="form-label-custom text-danger"
                                                         value="HARGA CORET (DISKON)" />
                                                     <div class="input-group">
                                                         <currency-input input-class="text-bg-grey fw-bold" :decimals="0"
-                                                            v-model="form.price_discount" name="price_discount" />
+                                                            v-model="form.discount_price" name="discount_price" />
                                                     </div>
                                                     <div class="form-text fst-italic small text-muted mt-1">Isi hanya
                                                         jika sedang
-                                                        promo.</div>
+                                                        promo.
+                                                    </div>
                                                 </div>
+
                                             </div>
                                         </div>
 
@@ -353,7 +351,7 @@ const removeGalleryImage = (imagePathOrUrl, index) => {
                                             <div
                                                 class="d-flex align-items-center justify-content-between mb-4 position-relative z-1">
                                                 <h6 class="fw-bold text-dark mb-0 text-uppercase ls-1">
-                                                    <i class="fas fa-cog me-2 text-success"></i> Add Ons
+                                                    <i class="fas fa-cog me-2 text-success"></i> Add On
                                                 </h6>
                                             </div>
 
@@ -367,52 +365,11 @@ const removeGalleryImage = (imagePathOrUrl, index) => {
                                                             { value: 'published', label: 'Publish' }
                                                         ]" v-model="form.status" />
                                                     </div>
-                                                    <input-error :message="form.errors.price_original" />
+                                                    <input-error :message="form.errors.status" />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="mt-4 pt-4 border-top">
-                                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                                <h6 class="section-title text-primary mb-0 border-0 pb-0">
-                                                    <i class="fas fa-images me-2"></i>Galeri Produk
-                                                </h6>
-                                                <span class="badge bg-light text-muted border">{{ galleryPreview.length
-                                                    }} Foto</span>
-                                            </div>
-
-                                            <div class="upload-gallery-box text-center p-3 rounded-3 mb-3 cursor-pointer hover-bg-light"
-                                                @click="$refs.galleryInput.click()">
-                                                <input type="file" ref="galleryInput" class="d-none" multiple
-                                                    accept="image/png,image/jpeg,image/jpg"
-                                                    @change="handleGalleryUpload">
-                                                <i
-                                                    class="fas fa-cloud-upload-alt fs-3 text-primary mb-2 opacity-75"></i>
-                                                <h6 class="fw-bold text-dark fs-8 mb-0">Klik untuk Upload Galeri</h6>
-                                                <small class="text-muted fs-9">Bisa pilih banyak foto sekaligus</small>
-                                            </div>
-
-                                            <div class="row g-2" v-if="galleryPreview.length">
-                                                <div class="col-4 position-relative fade-in"
-                                                    v-for="(img, index) in galleryPreview" :key="index">
-                                                    <div
-                                                        class="ratio ratio-1x1 rounded-3 overflow-hidden border shadow-sm group-gallery">
-                                                        <img :src="img" class="object-fit-cover w-100 h-100">
-
-                                                        <button type="button"
-                                                            @click.prevent="removeGalleryImage(img, index)"
-                                                            class="btn position-absolute top-0 end-0 m-1 bg-danger text-white rounded-circle shadow d-flex align-items-center justify-content-center"
-                                                            style="width: 20px; height: 20px; padding: 0;">
-                                                            <i class="fas fa-times" style="font-size: 10px;"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div v-else class="text-center py-3 text-muted fst-italic fs-9">
-                                                Belum ada foto tambahan.
-                                            </div>
-                                        </div>
 
 
                                     </div>
@@ -421,26 +378,17 @@ const removeGalleryImage = (imagePathOrUrl, index) => {
                             <div class="col-lg-12">
                                 <div class="card overflow-hidden border-0 shadow-sm rounded-4">
                                     <div class="card-body p-3 mb-3">
-                                        <div class="mb-3">
-                                            <input-label class="form-label-custom mb-2" value="DESKRIPSI LENGKAP" />
-                                            <div class="quill-wrapper rounded-3 border overflow-hidden">
-                                                <quill-text :maxChar="3000" placeholder="Tuliskan spesifikasi produk..."
-                                                    v-model="form.description" height="1500px" />
-                                            </div>
-                                            <input-error :message="form.errors.description" />
-                                        </div>
 
-                                        <div class="d-flex justify-content-end pt-3 border-top">
-                                            <base-button :loading="form.processing"
-                                                button-class="btn-height-2 rounded-3 px-4 shadow btn-save-animate"
-                                                type="submit"
-                                                :icon="props.product?.product_id ? 'fas fa-edit' : 'fas fa-save'"
-                                                :label="props.product?.product_id ? 'Simpan Perubahan' : 'Simpan Produk'"
-                                                :variant="props.product?.product_id ? 'success' : 'primary'" />
-                                        </div>
                                     </div>
 
                                 </div>
+                            </div>
+                            <div class="d-flex justify-content-end pt-3 border-top">
+                                <base-button :loading="form.processing"
+                                    button-class="btn-height-2 rounded-3 px-4 shadow btn-save-animate" type="submit"
+                                    :icon="props.product?.product_price_id ? 'fas fa-edit' : 'fas fa-save'"
+                                    :label="props.product?.product_price_id ? 'Simpan Perubahan' : 'Simpan Produk'"
+                                    :variant="props.product?.product_price_id ? 'success' : 'primary'" />
                             </div>
                         </div>
                     </form-wrapper>
@@ -615,5 +563,75 @@ const removeGalleryImage = (imagePathOrUrl, index) => {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Container Card */
+.gallery-card {
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+
+/* Efek Hover pada Card */
+.gallery-card:hover {
+    transform: translateY(-3px);
+    /* Naik sedikit saat hover */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Animasi Gambar */
+.transition-transform {
+    transition: transform 0.5s ease;
+}
+
+.gallery-card:hover .transition-transform {
+    transform: scale(1.05);
+    /* Zoom in halus */
+}
+
+/* Tombol Hapus Custom */
+.btn-delete {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    opacity: 0.8;
+    /* Sedikit transparan */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+}
+
+.btn-delete i {
+    font-size: 12px;
+}
+
+/* Hover pada Tombol Hapus */
+.gallery-card:hover .btn-delete {
+    opacity: 1;
+    /* Jadi jelas saat card di-hover */
+}
+
+.btn-delete:hover {
+    transform: scale(1.15) rotate(90deg);
+    /* Efek membesar & putar saat mau diklik */
+    background-color: #dc3545 !important;
+}
+
+/* Overlay Gradient (Supaya icon putih tetap kebaca di gambar putih) */
+.overlay-gradient {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 30%);
+    pointer-events: none;
+    /* Agar klik tembus ke gambar */
+}
+
+/* Utilities Kecil */
+.fs-10 {
+    font-size: 10px;
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(2px);
+}
+
+.pointer-events-none {
+    pointer-events: none;
 }
 </style>

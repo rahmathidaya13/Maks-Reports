@@ -4,7 +4,7 @@ import { computed } from "vue";
 const emit = defineEmits(["update:checked"]);
 const props = defineProps({
     checked: {
-        type: [Array, Boolean],
+        type: [Array, Boolean, String, Number],
         required: true,
     },
     value: {
@@ -37,8 +37,8 @@ const proxyChecked = computed({
 <template>
     <div class="form-check">
         <input type="checkbox" :class="['form-check-input', inputClass]" v-model="proxyChecked" :value="value"
-            :name="name" :id="name" />
-        <label v-if="label" class="form-check-label fw-semibold" :for="name">
+            :name="props.name" :id="props.name" />
+        <label v-if="label" class="form-check-label fw-semibold" :for="props.name">
             <slot> {{ label }} </slot>
         </label>
     </div>

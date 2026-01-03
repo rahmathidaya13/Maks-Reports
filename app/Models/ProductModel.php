@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProductModel extends Model
 {
@@ -19,19 +20,14 @@ class ProductModel extends Model
         'status',
         'slug',
         'name',
-        'price_original',
-        'price_discount',
         'link',
         'image_link',
-        'image_url',
         'image_path',
         'category',
-        'description',
     ];
 
     protected $dates = ['deleted_at'];
     protected $casts = [
-        'image_url' => 'array',
         'price_original' => 'integer',
         'price_discount' => 'integer',
     ];
@@ -43,5 +39,29 @@ class ProductModel extends Model
     public function transactions()
     {
         return $this->hasMany(TransactionModel::class, 'product_id', 'product_id');
+    }
+    public function prices()
+    {
+        return $this->hasMany(ProductPriceModel::class, 'product_id', 'product_id');
+    }
+
+    // Harga AKTIF saat ini (normal / diskon)
+    public function activePrice(): HasOne
+    {
+        return $this->hasOne(ProductModel::class, 'product_id', 'product_id')
+            ->whereDate('valid_from', '<=', today())
+            ->where(function ($q) {
+                $q->whereNull('valid_until')
+                    ->orWhereDate('valid_until', '>=', today());
+            })
+            ->orderByDesc('price_type'); // diskon > normal
+    }
+
+    // Harga normal terakhir
+    public function normalPrice(): HasOne
+    {
+        return $this->hasOne(ProductModel::class, 'product_id', 'product_id')
+            ->where('price_type', 'normal')
+            ->latest('valid_from');
     }
 }

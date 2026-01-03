@@ -76,4 +76,9 @@ class BranchesModel extends Model
             }
         });
     }
+
+    public function product()
+    {
+        return $this->hasMany(ProductModel::class, 'branch_id', 'branches_id');
+    }
 }

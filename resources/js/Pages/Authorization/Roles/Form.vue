@@ -88,6 +88,7 @@ const isChecked = (id) => {
                             <text-input autofocus v-model="form.name" name="name" />
                             <input-error :message="form.errors.name" />
                         </div>
+
                         <div class="mb-3">
                             <input-label class="fw-bold" value="Permission" />
                             <div :class="[{ 'text-bg-light border-success': form.permissions.length > 0, 'text-bg-danger': form.permissions.errors }]"
@@ -102,6 +103,7 @@ const isChecked = (id) => {
                             </div>
                             <input-error :message="form.errors.permissions" />
                         </div>
+                        
                         <div class="d-grid d-xl-block">
                             <base-button :loading="form.processing" class="rounded-3 bg-gradient px-5"
                                 :icon="props.role?.id ? 'fas fa-edit' : 'fas fa-paper-plane'"

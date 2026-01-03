@@ -17,7 +17,7 @@ const props = defineProps({
     filters: Object,
     category: Array,
 })
-
+console.log(props.product.data);
 // cek permission
 const perm = page.props.auth.user.permissions
 
@@ -83,31 +83,22 @@ const edit = (id) => {
     });
 }
 
-
 const deleted = (data) => {
-    Swal.fire({
-        title: 'Hapus Produk?',
+    swalConfirmDelete({
+        title: 'Hapus',
         text: `Produk ${data.name} akan dihapus. Data tidak dapat dikembalikan!`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Tetap hapus!',
-        cancelButtonText: 'Batal',
-        customClass: {
-            confirmButton: "btn btn-danger",
-            cancelButton: "btn btn-outline-secondary",
-        },
-    }).then((result) => {
-        if (result.isConfirmed) {
+        confirmText: 'Ya, Hapus!',
+        onConfirm: () => {
             loaderActive.value?.show("Sedang memuat data...");
-            router.delete(route('product.deleted', data.product_id), {}, {
-                onFinish: () => loaderActive.value?.hide()
+            router.delete(route('product.deleted', data.product_price_id), {
+                onFinish: () => loaderActive.value?.hide(),
+                preserveScroll: false,
+                replace: true
             });
-        }
-
+        },
     })
 }
+
 // end CRUD OPERATION
 
 // MULTIPLE DELETE
@@ -142,7 +133,7 @@ const isSelected = (id) => {
 }
 const toggleAll = (evt) => {
     if (evt.target.checked) {
-        selectedRow.value = props.product?.data.map(r => r.product_id);
+        selectedRow.value = props.product?.data.map(r => r.product_price_id);
     } else {
         selectedRow.value = [];
     }
@@ -167,9 +158,8 @@ function daysTranslate(dayValue) {
         "Friday": "Jumat",
         "Saturday": "Sabtu",
     };
-    const dayName = moment(dayValue).format('dddd');
-    const dateFormat = moment(dayValue).format('DD-MM-YYYY, HH:mm:ss');
-    return dayConvert[dayName] + ", " + dateFormat ?? dayName;
+    const dateFormat = moment(dayValue).format('DD/MM/YYYY');
+    return dateFormat === 'Invalid date' ? '00/00/0000' : dateFormat;
 }
 function formatCurrency(value) {
     if (!value) return "Rp 0";
@@ -343,9 +333,16 @@ onMounted(() => {
                                             </th>
                                             <th class="text-secondary text-uppercase fw-bold ps-4">Produk</th>
                                             <th class="text-secondary text-uppercase fw-bold">Kategori</th>
+                                            <th class="text-secondary text-uppercase fw-bold">Cabang</th>
                                             <th class="text-secondary text-uppercase fw-bold">Harga</th>
                                             <th class="text-secondary text-uppercase fw-bold text-center">
-                                                Status</th>
+                                                Tgl.Berlaku</th>
+                                            <th class="text-secondary text-uppercase fw-bold text-center">
+                                                Tgl.Berakhir</th>
+                                            <th class="text-secondary text-uppercase fw-bold text-center">
+                                                Tipe Harga</th>
+                                            <th class="text-secondary text-uppercase fw-bold text-center">
+                                                Status Publish</th>
                                             <th class="text-secondary text-uppercase fw-bold text-center">
                                                 Aksi</th>
                                         </tr>
@@ -364,14 +361,14 @@ onMounted(() => {
                                         </tr>
 
                                         <tr v-for="(item, index) in product?.data" :key="index"
-                                            :class="{ 'row-selected': isSelected(item.product_id) }"
+                                            :class="{ 'row-selected': isSelected(item.product_price_id) }"
                                             class="transition-colors">
 
                                             <td class="text-center">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input type="checkbox"
                                                         class="form-check-input custom-checkbox pointer"
-                                                        :value="item.product_id" v-model="selectedRow" />
+                                                        :value="item.product_price_id" v-model="selectedRow" />
                                                 </div>
                                             </td>
 
@@ -379,20 +376,21 @@ onMounted(() => {
                                                 <div class="d-flex align-items-center">
                                                     <div
                                                         class="avatar-product me-3 shadow-sm rounded-3 overflow-hidden group-hover-img">
-                                                        <img :src="resolveImage(item.image_link)"
+                                                        <img :src="resolveImage(item.product.image_link)"
                                                             class="w-100 h-100 object-fit-cover" alt="Product">
                                                     </div>
 
                                                     <div style="max-width: 250px;">
                                                         <div class="fw-bold text-dark text-truncate mb-1"
-                                                            :title="item.name"
-                                                            v-html="highlight(item.name ?? '-', filters.keyword)">
+                                                            :title="item.product.name"
+                                                            v-html="highlight(item.product.name ?? '-', filters.keyword)">
                                                         </div>
                                                         <div class="small text-muted d-flex align-items-center gap-2">
                                                             <span
                                                                 class="badge bg-light text-secondary border fw-normal">ID:
-                                                                {{ item.product_id.substr(0, 8) }}</span>
-                                                            <a v-if="item.link" :href="item.link" target="_blank"
+                                                                {{ item.product_price_id.substr(0, 8) }}</span>
+                                                            <a v-if="item.product.link" :href="item.product.link"
+                                                                target="_blank"
                                                                 class="text-primary text-decoration-none hover-underline">
                                                                 <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
                                                             </a>
@@ -400,40 +398,56 @@ onMounted(() => {
                                                     </div>
                                                 </div>
                                             </td>
-
                                             <td>
                                                 <span
                                                     class="d-inline-flex bg-gradient align-items-center text-secondary fw-medium px-2 py-1 rounded-2 bg-light border small">
                                                     <i class="fas fa-tag me-2 fs-10"></i> {{
-                                                        formatCategory(item.category) }}
+                                                        formatCategory(item.product.category) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    class="d-inline-flex text-white align-items-center fw-medium px-2 py-1 bg-opacity-75 rounded-2 bg-success border small text-capitalize">
+                                                    <i class="fas fa-map-marker-alt me-2 fs-10"></i>
+                                                    {{ item.branch?.name ?? 'Jabodetabek' }}
                                                 </span>
                                             </td>
 
                                             <td>
                                                 <div class="d-flex flex-column">
-                                                    <template v-if="item.price_discount">
+                                                    <template v-if="item.discount_price">
                                                         <span class="fw-bold text-dark">{{
-                                                            formatCurrency(item.price_discount) }}</span>
-                                                        <small class="text-muted text-decoration-line-through fs-10">{{
-                                                            formatCurrency(item.price_original) }}</small>
+                                                            formatCurrency(item.discount_price) }}</span>
+                                                        <small class="text-decoration-line-through fs-10 text-danger">{{
+                                                            formatCurrency(item.base_price) }}</small>
                                                     </template>
                                                     <template v-else>
                                                         <span class="fw-bold text-dark">{{
-                                                            formatCurrency(item.price_original) }}</span>
+                                                            formatCurrency(item.base_price) }}</span>
                                                     </template>
                                                 </div>
+                                            </td>
+                                            <td class="text-center fw-semibold small">
+                                                {{ daysTranslate(item.valid_from) }}
+                                            </td>
+                                            <td class="text-center fw-semibold small">
+                                                {{ daysTranslate(item.valid_until) }}
+                                            </td>
+                                            <td class="text-center fw-semibold small text-muted">
+                                                {{ item.price_type == 'discount' ? 'Diskon' : 'Normal' }}
                                             </td>
 
                                             <td class="text-center">
                                                 <span class="badge rounded-pill px-3 py-2 fw-bold" :class="{
-                                                    'badge-soft-success': item.status === 'published',
-                                                    'badge-soft-secondary': item.status === 'draft'
+                                                    'badge-soft-success': item.product.status === 'published',
+                                                    'badge-soft-secondary': item.product.status === 'draft'
                                                 }">
                                                     <i class="me-1"
-                                                        :class="item.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
-                                                    {{ item.status === 'published' ? 'Publish' : 'Draft' }}
+                                                        :class="item.product.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
+                                                    {{ item.product.status === 'published' ? 'Publish' : 'Draft' }}
                                                 </span>
                                             </td>
+
 
                                             <td class="text-center ps-4">
                                                 <div class="dropdown dropstart">
@@ -445,7 +459,7 @@ onMounted(() => {
                                                     <ul
                                                         class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-3">
                                                         <li>
-                                                            <button @click.prevent="edit(item.product_id)"
+                                                            <button @click.prevent="edit(item.product_price_id)"
                                                                 class="dropdown-item rounded-2 py-2 d-flex align-items-center">
                                                                 <div
                                                                     class="icon-box-xs bg-primary bg-opacity-10 text-primary rounded-1 me-2">
