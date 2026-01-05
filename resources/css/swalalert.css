@@ -7,18 +7,17 @@
     max-width: 460px;
     align-content: center;
 }
-
 .swal2-title-minimal {
-    font-size: 2;
+    font-size: 0.95rem;
     font-weight: 600;
     color: #333;
 }
 
 .swal2-html-container {
     text-align: center;
-    padding: 1rem 0;
+    padding: 1rem 0.6rem;
     line-height: 1.5;
-    color: #535353;
+    color: #555555;
 }
 
 .swal2-content-minimal {

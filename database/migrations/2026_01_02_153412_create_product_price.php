@@ -18,7 +18,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
             $table->foreignUuid('created_by')->nullable()->constrained('users', 'id')->cascadeOnDelete();
             $table->foreignUuid('branch_id')->nullable()->constrained('branches', 'branches_id')->cascadeOnDelete();
-
+            $table->enum('status', ['draft', 'published'])->default('published')->index();
             $table->date('valid_from')->nullable()->index(); // tanggal berlaku
             $table->date('valid_until')->nullable()->index(); // tanggal berakhir opsional
 

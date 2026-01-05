@@ -5,6 +5,7 @@ use App\Models\CustomerModel;
 use App\Models\DailyReportModel;
 use App\Models\JobTitleModel;
 use App\Models\ProductModel;
+use App\Models\ProductPriceModel;
 use App\Models\SalesRecords;
 use App\Models\StoryStatusReportModel;
 use App\Models\TransactionModel;
@@ -18,4 +19,5 @@ return [
     ProductModel::class => 'product',
     CustomerModel::class => 'customers',
     TransactionModel::class => 'transaction',
+    ProductPriceModel::class => 'product.price',
 ];

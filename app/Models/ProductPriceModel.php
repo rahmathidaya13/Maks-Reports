@@ -17,6 +17,7 @@ class ProductPriceModel extends Model
         'product_id',
         'created_by',
         'branch_id',
+        'status',
         'valid_from',
         'valid_until',
         'base_price',
@@ -26,10 +27,9 @@ class ProductPriceModel extends Model
 
     protected $dates = ['deleted_at'];
     protected $casts = [
-        'valid_from'  => 'date',
-        'valid_until' => 'date',
         'base_price' => 'integer',
         'discount_price' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     public function product()

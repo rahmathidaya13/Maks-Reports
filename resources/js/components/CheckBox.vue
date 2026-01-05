@@ -4,7 +4,7 @@ import { computed } from "vue";
 const emit = defineEmits(["update:checked"]);
 const props = defineProps({
     checked: {
-        type: [Array, Boolean, String, Number],
+        type: [Array, Boolean, String, Number,Object],
         required: true,
     },
     value: {

@@ -139,7 +139,7 @@ class ScrapeProducts extends Command
                     // --- description ---
                     // $description = $this->scrapeDescription($client, $link);
                     // --- end description ---
-
+                    $categoryFormatted = strtolower(str_replace([' ', '/'], '-', $category));
                     // ✔ Gunakan updateOrCreate agar tidak ganda
                     try {
                         $existing = ProductModel::where('link', $link)->first();
@@ -150,7 +150,7 @@ class ScrapeProducts extends Command
                                 'link' => $link,
                                 'name' => $nama,
                                 'image_link' => $img,
-                                'category' => $category,
+                                'category' => $categoryFormatted,
                             ]);
 
                             $product->prices()->create([
@@ -172,7 +172,7 @@ class ScrapeProducts extends Command
                             'source' => 'scrape',
                             'name' => $nama,
                             'image_link' => $img,
-                            'category' => $category,
+                            'category' => $categoryFormatted,
                             'link' => $link,
                         ];
 
@@ -211,7 +211,7 @@ class ScrapeProducts extends Command
                         'source' => 'scrape',
                         'name' => $nama,
                         'image_link' => $img,
-                        'category' => $category,
+                        'category' => $categoryFormatted,
                         'link' => $link,
                     ];
                 });
@@ -226,7 +226,7 @@ class ScrapeProducts extends Command
 
     private function categoryProduct()
     {
-        $categories = [
+        return [
             'mesin-makanan',
             'mesin-minuman',
             'mesin-pengemas',
@@ -256,7 +256,6 @@ class ScrapeProducts extends Command
             'mesin-pertanian/mesin-sangrai-kopi',
             'mesin-pertanian/penetas-telur',
         ];
-        return $categories;
     }
 
     private function scrapeGallery($client, $url)

@@ -6,6 +6,7 @@ use App\Models\BranchesModel;
 use App\Models\CustomerModel;
 use App\Models\DailyReportModel;
 use App\Models\JobTitleModel;
+use App\Models\ProductPriceModel;
 use App\Models\SalesRecords;
 use App\Models\StoryStatusReportModel;
 use App\Models\TransactionModel;
@@ -14,6 +15,7 @@ use App\Policies\BranchPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\DailyReportLeadsPolicy;
 use App\Policies\JobTitlePolicy;
+use App\Policies\ProductPolicy;
 use App\Policies\SalesRecordPolicy;
 use App\Policies\StatusReportPolicy;
 use App\Policies\TransactionPolicy;
@@ -35,7 +37,8 @@ class AuthServiceProvider extends ServiceProvider
         StoryStatusReportModel::class => StatusReportPolicy::class,
         CustomerModel::class => CustomerPolicy::class,
         SalesRecords::class => SalesRecordPolicy::class,
-        TransactionModel::class => TransactionPolicy::class
+        TransactionModel::class => TransactionPolicy::class,
+        ProductPriceModel::class => ProductPolicy::class,
     ];
 
     /**

@@ -1,99 +1,99 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
+import moment from "moment";
+moment.locale("id");
 const props = defineProps({
     product: {
         type: Object,
-        default: () => ({})
+        default: () => ({}),
     },
-    branch: Array
-})
+    branch: Array,
+});
 const form = useForm({
-    name: props.product.product?.name ?? '',
-    link: props.product?.product?.link ?? '',
-    category: props.product?.product?.category ?? '',
-    status: props.product?.product?.status ?? null,
+    name: props.product.product?.name ?? "",
+    slug: props.product?.product?.slug ?? "",
+    link: props.product?.product?.link ?? "",
+    category: formatCategory(props.product?.product?.category) ?? "",
+    status: props.product?.status ?? null,
     image: null,
 
     base_price: props.product?.base_price ?? 0,
     discount_price: props.product?.discount_price ?? 0,
-    branch: props.product?.branch?.branches_id ?? [],
-    valid_from: props.product?.valid_from ?? '',
-    valid_until: props.product?.valid_until ?? '',
-
+    branch: props.product?.branch ? [props.product.branch.branches_id] : [],
+    valid_from: props.product?.valid_from ?? "",
+    valid_until: props.product?.valid_until ?? "",
 });
 
+console.log(props.product, props.branch);
+// Logika: Jika ada ID product, berarti ini mode EDIT. Jika tidak, mode CREATE.
+const isEditMode = computed(() => {
+    return !!props.product.product_price_id; // Tanda !! mengubah nilai menjadi Boolean (true/false)
+});
+const branchSelected = computed(() => {
+    const existingBranch = props.product?.branch_id;
+    if (existingBranch) {
+        return props.branch.filter(item => item.branches_id === existingBranch);
+    }
+    return props.branch;
+});
 const isSubmit = () => {
     if (props.product?.product_price_id) {
-        form.post(route('product.update', props.product.product_price_id), {
+        form.post(route("product.update", props.product.product_price_id), {
             forceFormData: true,
-            _method: 'put',
+            _method: "put",
             onSuccess: () => {
                 form.reset();
             },
-
-        })
+        });
     } else {
         // Create
-        form.post(route('product.store'), {
+        form.post(route("product.store"), {
             forceFormData: true,
             onSuccess: () => {
                 form.reset();
-            }
+            },
         });
     }
 };
 
 const title = ref("");
 const icon = ref("");
-const url = ref("")
+const url = ref("");
 onMounted(() => {
     if (props.product && props.product?.product_price_id) {
-        title.value = "Ubah Data Produk " + props.product?.product?.name
-        icon.value = "fas fa-edit"
-        url.value = route('product')
+        title.value = "Ubah Data Produk " + props.product?.product?.name;
+        icon.value = "fas fa-edit";
+        url.value = route("product");
     } else {
-        title.value = "Tambah Produk Baru"
-        icon.value = "fas fa-plus-square"
-        url.value = route('product')
+        title.value = "Tambah Produk Baru";
+        icon.value = "fas fa-plus-square";
+        url.value = route("product");
     }
-})
+});
 const breadcrumbItems = computed(() => {
     if (props.product && props.product?.product_price_id) {
         return [
             { text: "Daftar Produk", url: route("product") },
             { text: "Tambah Produk Baru", url: route("product.create") },
-            { text: title.value }
-        ]
+            { text: title.value },
+        ];
     }
-    return [
-        { text: "Daftar Produk", url: route("product") },
-        { text: title.value }
-    ]
-})
+    return [{ text: "Daftar Produk", url: route("product") }, { text: title.value }];
+});
 
 const loaderActive = ref(null);
 
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
-    router.get(url.value, {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-
-// branch option
-const branchOptions = computed(() => {
-    return [{
-        value: '',
-        label: '-- Pilih Cabang --'
-    },
-    ...(props.branch?.map((branch) => ({
-        value: branch.branches_id,
-        label: branch.name
-    })))
-    ];
-})
-
+    router.get(
+        url.value,
+        {},
+        {
+            onFinish: () => loaderActive.value?.hide(),
+        }
+    );
+};
 // State untuk Mode Gambar (Default 'upload' agar user manual mudah)
 const previewImage = ref(null);
 const handleFileUpload = (event) => {
@@ -108,7 +108,11 @@ const handleFileUpload = (event) => {
 
 // Hitung Diskon Otomatis
 const discountPercentage = computed(() => {
-    if (form.base_price > 0 && form.discount_price > 0 && form.base_price > form.discount_price) {
+    if (
+        form.base_price > 0 &&
+        form.discount_price > 0 &&
+        form.base_price > form.discount_price
+    ) {
         const discount = form.base_price - form.discount_price;
         return Math.round((discount / form.base_price) * 100);
     }
@@ -117,9 +121,9 @@ const discountPercentage = computed(() => {
 
 // Fungsi ini penting agar gambar dari storage lokal dan link luar bisa tampil
 const resolveImage = (path) => {
-    if (!path) return 'https://ui-avatars.com/api/?name=??';
+    if (!path) return "https://ui-avatars.com/api/?name=??";
     // Jika link eksternal (http/https)
-    if (path.startsWith('http')) return path;
+    if (path.startsWith("http")) return path;
 
     // Jika file lokal, tambahkan '/' agar root terbaca
     // Pastikan path di DB kamu 'storage/...' atau sesuaikan disini
@@ -129,24 +133,27 @@ const resolveImage = (path) => {
 // ON MOUNTED (LOGIKA UTAMA EDIT)
 onMounted(() => {
     // A. SET PREVIEW GAMBAR UTAMA (COVER)
-    if (props.product.image_path) {
-        previewImage.value = resolveImage(props.product.image_path);
+
+    if (props.product?.product?.image_path) {
+        previewImage.value = resolveImage(props.product?.product?.image_path);
+    }
+    if (props.product?.product?.image_link) {
+        previewImage.value = resolveImage(props.product?.product?.image_link);
     }
 });
-// const isChecked = (id) => {
-//     return form.branch.includes(id)
-// }
-// console.log(props.product?.branch?.branches_id)
-// watch(
-//     () => props.product?.branch?.branches_id,
-//     (val) => {
-//         if (val) {
-//             form.branch = String(val)
-//         }
-//         console.log(val)
-//     },
-//     { immediate: true }
-// )
+const inputProduct = ref(null);
+onMounted(() => {
+    // Fokus ke input nama produk saat halaman dimuat
+    inputProduct.value?.focus();
+});
+
+function formatCategory(cat = '') {
+    return cat
+        .split('/')                      // pecah sub kategori
+        .map(part => part.replace(/-/g, ' '))  // ganti - dengan spasi
+        .map(part => part.replace(/\b\w/g, char => char.toUpperCase())) // kapital
+        .join(' - ');                    // gabungkan dengan pemisah cantik
+}
 </script>
 <template>
 
@@ -158,14 +165,15 @@ onMounted(() => {
 
             <div class="row pb-3">
                 <div class="col-12">
-
                     <div class="d-flex align-items-center mb-4">
                         <div class="icon-square-lg bg-primary bg-opacity-10 text-primary rounded-circle shadow-sm me-3">
                             <i class="fas fa-boxes fs-3"></i>
                         </div>
                         <div>
                             <h4 class="fw-bold text-dark mb-0">Kelola Produk</h4>
-                            <p class="text-muted small mb-0">Tambah atau ubah produk untuk katalog yang ditampilkan.</p>
+                            <p class="text-muted small mb-0">
+                                Manajemen katalog produk dan penetapan harga.
+                            </p>
                         </div>
                         <Link @click.prevent="goBack" :href="route('product')"
                             class="btn btn-danger ms-auto border hover-scale px-3 fw-bold">
@@ -183,10 +191,10 @@ onMounted(() => {
                                         </h6>
 
                                         <div
-                                            class="image-preview-box mb-3 rounded-3 overflow-hidden border bg-light position-relative group ">
+                                            class="image-preview-box mb-3 rounded-3 overflow-hidden border bg-light position-relative group">
                                             <img v-if="previewImage" :src="previewImage"
                                                 class="img-fluid w-100 h-100 object-fit-cover transition-transform hover-zoom cursor-pointer"
-                                                alt="Preview">
+                                                alt="Preview" />
 
                                             <div v-else class="text-center text-muted opacity-50 p-4 absolute-center">
                                                 <i class="bi bi-image fs-1 mb-2"></i>
@@ -196,19 +204,25 @@ onMounted(() => {
                                         <div class="animate-fade">
                                             <input-label class="form-label-custom" value="PILIH FILE DARI PERANGKAT" />
                                             <input type="file" class="form-control form-control-sm"
-                                                @change="handleFileUpload" accept="image/png,image/jpeg,image/jpg">
+                                                @change="handleFileUpload" accept="image/png,image/jpeg,image/jpg" />
                                             <div class="form-text small text-muted mt-2">
-                                                <i class="fas fa-info-circle me-1"></i>Format JPG/PNG, Max 2MB.
+                                                <i class="fas fa-info-circle me-1"></i>Format JPG,PNG,JPEG,WEBP,SVG, Max
+                                                2MB.
                                             </div>
                                         </div>
                                         <input-error :message="form.errors.image" />
+                                        <span v-if="props.product.product?.image_link"
+                                            class="form-text text-muted mt-2 fst-italic">
+                                            <i class="fas fa-info-circle"></i>
+                                            Gambar berasal dari
+                                            <a target="_blank" :href="props.product.product?.link">Link berikut</a>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-lg-8">
                                 <div class="card border-0 shadow-sm rounded-4 h-100">
                                     <div class="card-body p-4">
-
                                         <div class="mb-5">
                                             <h6 class="section-title text-primary mb-4">
                                                 <i class="fas fa-tag me-2"></i>Detail Produk
@@ -217,8 +231,8 @@ onMounted(() => {
                                                 <div class="col-12">
                                                     <input-label class="form-label-custom" for="name"
                                                         value="NAMA PRODUK" />
-                                                    <text-input placeholder="Masukan nama produk..." name="name"
-                                                        v-model="form.name" input-class="fw-bold" />
+                                                    <text-input ref="inputProduct" placeholder="Masukan nama produk..."
+                                                        name="name" v-model="form.name" input-class="fw-bold" />
                                                     <input-error :message="form.errors.name" />
                                                 </div>
                                                 <div class="col-md-6">
@@ -249,7 +263,11 @@ onMounted(() => {
                                         <div
                                             class="mb-3 p-4 bg-light rounded-4 border border-dashed position-relative overflow-hidden">
                                             <i class="fas fa-coins position-absolute bottom-0 end-0 text-secondary opacity-10"
-                                                style="font-size: 6rem; transform: rotate(-20deg) translate(20px, 20px);"></i>
+                                                style="
+                          font-size: 6rem;
+                          transform: rotate(-20deg) translate(20px, 20px);
+                        ">
+                                            </i>
                                             <div
                                                 class="d-flex align-items-center justify-content-between mb-4 position-relative z-1">
                                                 <h6 class="fw-bold text-dark mb-0 text-uppercase ls-1">
@@ -259,8 +277,9 @@ onMounted(() => {
                                                 <transition name="fade">
                                                     <span v-if="discountPercentage > 0"
                                                         class="badge bg-danger shadow-sm px-3 py-2 rounded-pill">
-                                                        <i class="fas fa-fire me-1"></i> Diskon {{ discountPercentage
-                                                        }}%
+                                                        <i class="fas fa-fire me-1"></i>
+                                                        Diskon
+                                                        {{ discountPercentage }}%
                                                     </span>
                                                 </transition>
                                             </div>
@@ -274,7 +293,6 @@ onMounted(() => {
                                                             name="valid_from" />
                                                     </div>
                                                     <input-error :message="form.errors.valid_from" />
-
                                                 </div>
 
                                                 <div class="col-md-6">
@@ -289,106 +307,129 @@ onMounted(() => {
                                                             name="valid_until" />
                                                     </div>
                                                     <input-error :message="form.errors.valid_until" />
-                                                    <div class="form-text fst-italic small text-muted mt-1">Tentukan
-                                                        jika sedang
-                                                        promo.
+                                                    <div class="form-text small text-muted mt-1">
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        Tentukan jika sedang promo.
                                                     </div>
                                                 </div>
 
                                                 <div class="col-md-12">
-                                                    <input-label class="form-label-custom" value="Harga Per-Cabang" />
-                                                    <div :class="[{ 'text-bg-light bg-opacity-10 ': form.branch.length > 0, 'text-bg-danger': form.branch.errors }]"
-                                                        class="border p-2 rounded-3 d-flex gap-2 flex-wrap ">
-                                                        <!-- <label
-                                                            class="form-check-label gap-1 d-flex border  rounded-2 p-1 small text-capitalize"
-                                                            v-for="item in branch" :key="item.branches_id">
-                                                            <input multiple class="form-check-input" type="checkbox"
-                                                                :value="item.branches_id" v-model="form.branch" />
-                                                            <check-box :value="item.branches_id"
-                                                                v-model:checked="form.branch" :label="item.name"
-                                                                :name="item.name" />
-                                                            <span class="fw-semibold">{{ item.name
-                                                                }}</span>
-                                                        </label> -->
-                                                        <check-box :value="form.branch" 
-                                                                v-model:checked="form.branch" :label="form.branch"
-                                                                :name="form.branch" />
+                                                    <input-label class="form-label-custom"
+                                                        value="Ketersediaan Cabang" />
+                                                    <div class="row g-3">
+                                                        <div class="col-4 col-md-4 col-xl-2"
+                                                            v-for="item in branchSelected" :key="item.branches_id">
+
+                                                            <label class=" cursor-pointer w-100 h-100 position-relative
+                                                                text-capitalize">
+                                                                <input name="branch" id="branch" type="checkbox"
+                                                                    class="btn-check" :value="item.branches_id"
+                                                                    v-model="form.branch" />
+                                                                <div class="card h-100 transition-all border-2 text-center py-3 px-2 rounded-3 select-card"
+                                                                    :class="[
+                                                                        form.branch.includes(item.branches_id)
+                                                                            ? 'border-primary bg-primary bg-opacity-10'
+                                                                            : 'border-light bg-light',
+                                                                    ]">
+                                                                    <i class="fas fa-store mb-2" :class="form.branch.includes(item.branches_id)
+                                                                        ? 'text-primary'
+                                                                        : 'text-muted'
+                                                                        "></i>
+                                                                    <span class="d-block fw-bold small text-truncate"
+                                                                        :class="form.branch.includes(item.branches_id)
+                                                                            ? 'text-primary'
+                                                                            : 'text-dark'
+                                                                            ">
+                                                                        {{ item.name }}
+                                                                    </span>
+
+                                                                    <div v-if="form.branch.includes(item.branches_id)"
+                                                                        class="position-absolute top-0 end-0 mt-2 me-2 text-primary">
+                                                                        <i class="fas fa-check-circle"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+
+                                                        </div>
                                                     </div>
                                                     <input-error :message="form.errors.branch" />
-
-                                                    <div class="form-text fst-italic small text-muted mt-1">Tentukan
-                                                        harga untuk setiap cabang
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <input-label class="form-label-custom" for="base_price"
-                                                        value="HARGA JUAL (NORMAL)" />
-                                                    <div class="input-group">
-                                                        <currency-input input-class="text-bg-grey fw-bold" :decimals="0"
-                                                            v-model="form.base_price" name="base_price" />
-                                                    </div>
-                                                    <input-error :message="form.errors.base_price" />
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <input-label class="form-label-custom text-danger"
-                                                        value="HARGA CORET (DISKON)" />
-                                                    <div class="input-group">
-                                                        <currency-input input-class="text-bg-grey fw-bold" :decimals="0"
-                                                            v-model="form.discount_price" name="discount_price" />
-                                                    </div>
-                                                    <div class="form-text fst-italic small text-muted mt-1">Isi hanya
-                                                        jika sedang
-                                                        promo.
+                                                    <div class="form-text small text-muted mt-2">
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        {{
+                                                            branchSelected.length > 0
+                                                                ? "Cabang yang tersedia: " + branchSelected.length + " cabang."
+                                                                : "Pilih cabang di mana produk ini akan ditetapkan."
+                                                        }}
                                                     </div>
                                                 </div>
 
+                                                <div class="col-md-6">
+                                                    <div class="p-3 bg-light rounded-4 border border-dashed h-100">
+                                                        <div class="p-3 bg-light rounded-4 border border-dashed h-100">
+                                                            <input-label for="base_price"
+                                                                class="small text-muted text-uppercase mb-1"
+                                                                value="Harga Normal" />
+                                                            <currency-input
+                                                                input-class="bg-transparent border-0 fs-4 fw-bold text-dark p-0 shadow-none"
+                                                                :decimals="0" v-model="form.base_price"
+                                                                name="base_price" placeholder="0" />
+                                                            <input-error :message="form.errors.base_price" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div
+                                                        class="p-3 bg-danger bg-opacity-10 rounded-4 border border-danger border-opacity-25 h-100">
+                                                        <input-label for="discount_price"
+                                                            class="small text-danger text-uppercase mb-1"
+                                                            value="Harga Promo (Diskon)" />
+                                                        <currency-input
+                                                            input-class="bg-transparent border-0 fs-4 fw-bold text-danger p-0 shadow-none"
+                                                            :decimals="0" v-model="form.discount_price"
+                                                            name="discount_price" placeholder="0" />
+                                                        <div class="small text-danger opacity-75 mt-1 fst-italic"
+                                                            v-if="!form.discount_price">
+                                                            Kosongkan jika tidak promo
+                                                        </div>
+                                                        <input-error :message="form.errors.discount_price" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div
                                             class="mb-3 p-4 bg-light rounded-4 border border-dashed position-relative overflow-hidden">
-
                                             <div
                                                 class="d-flex align-items-center justify-content-between mb-4 position-relative z-1">
                                                 <h6 class="fw-bold text-dark mb-0 text-uppercase ls-1">
-                                                    <i class="fas fa-cog me-2 text-success"></i> Add On
+                                                    <i class="fas fa-cog me-2 text-success"></i>
+                                                    Add On
                                                 </h6>
                                             </div>
 
                                             <div class="row g-4 position-relative z-1">
                                                 <div class="col-md-12">
-                                                    <input-label class="form-label-custom" value="Status Publisher" />
+                                                    <input-label class="form-label-custom" value="Status Publikasi" />
                                                     <div class="input-group">
                                                         <select-input :options="[
-                                                            { value: null, label: '--Pilih Status--' },
-                                                            { value: 'draft', label: 'Draft' },
-                                                            { value: 'published', label: 'Publish' }
-                                                        ]" v-model="form.status" />
+                                                            { value: null, label: '-- Pilih Status --' },
+                                                            { value: 'draft', label: 'Simpan sebagai Draft' },
+                                                            { value: 'published', label: 'Terbitkan Sekarang' }
+                                                        ]" v-model="form.status" name="status" />
                                                     </div>
                                                     <input-error :message="form.errors.status" />
                                                 </div>
                                             </div>
                                         </div>
-
-
-
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-12">
-                                <div class="card overflow-hidden border-0 shadow-sm rounded-4">
-                                    <div class="card-body p-3 mb-3">
-
-                                    </div>
-
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end pt-3 border-top">
                                 <base-button :loading="form.processing"
                                     button-class="btn-height-2 rounded-3 px-4 shadow btn-save-animate" type="submit"
-                                    :icon="props.product?.product_price_id ? 'fas fa-edit' : 'fas fa-save'"
-                                    :label="props.product?.product_price_id ? 'Simpan Perubahan' : 'Simpan Produk'"
-                                    :variant="props.product?.product_price_id ? 'success' : 'primary'" />
+                                    :icon="props.product?.product_price_id ? 'fas fa-edit' : 'fas fa-save'" :label="props.product?.product_price_id ? 'Simpan Perubahan' : 'Simpan Produk'
+                                        " :variant="props.product?.product_price_id ? 'success' : 'primary'" />
                             </div>
                         </div>
                     </form-wrapper>
@@ -396,7 +437,6 @@ onMounted(() => {
             </div>
         </template>
     </app-layout>
-
 </template>
 <style scoped>
 .blur-area {
@@ -633,5 +673,20 @@ onMounted(() => {
 
 .pointer-events-none {
     pointer-events: none;
+}
+
+/* Branch Selection Card Logic */
+.select-card {
+    cursor: pointer;
+}
+
+.select-card:hover {
+    border-color: var(--bs-primary) !important;
+}
+
+/* Disabled State (Greyscale) */
+.grayscale {
+    filter: grayscale(100%);
+    cursor: not-allowed;
 }
 </style>

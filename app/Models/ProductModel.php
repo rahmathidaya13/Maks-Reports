@@ -17,7 +17,6 @@ class ProductModel extends Model
     protected $fillable = [
         'created_by',
         'source',
-        'status',
         'slug',
         'name',
         'link',

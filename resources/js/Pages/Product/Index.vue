@@ -16,10 +16,11 @@ const props = defineProps({
     product: Object,
     filters: Object,
     category: Array,
+    branch: Array,
 })
-console.log(props.product.data);
 // cek permission
 const perm = page.props.auth.user.permissions
+const roles = page.props.auth.user.roles
 
 const filters = reactive({
     keyword: props.filters.keyword ?? "",
@@ -27,6 +28,9 @@ const filters = reactive({
     limit: props.filters.limit ?? null,
     order_by: props.filters.order_by ?? null,
     page: props.filters?.page ?? 1,
+    branch: props.filters?.branch ?? null,
+    status: props.filters?.status ?? null,
+    discount_only: props.filters?.discount_only ?? null,
 })
 
 const isLoading = ref(false)
@@ -40,7 +44,21 @@ const liveSearch = debounce(() => {
         onFinish: () => isLoading.value = false
     });
 }, 500);
-
+const reset = () => {
+    isLoading.value = true
+    router.get(route("product.reset"), {}, {
+        preserveScroll: false,
+        replace: true,
+        onFinish: () => isLoading.value = false
+    });
+}
+const branchOptions = computed(() => [
+    { label: "Semua Cabang", value: null },
+    ...props.branch.map(br => ({
+        label: br.name,
+        value: br.name,
+    }))
+]);
 
 const header = [
     { label: "No", key: "__index" },
@@ -56,7 +74,10 @@ watch(
         filters.keyword,
         filters.limit,
         filters.order_by,
-        filters.category
+        filters.category,
+        filters.branch,
+        filters.status,
+        filters.discount_only,
     ],
     () => {
         filters.page = 1;
@@ -86,7 +107,7 @@ const edit = (id) => {
 const deleted = (data) => {
     swalConfirmDelete({
         title: 'Hapus',
-        text: `Produk ${data.name} akan dihapus. Data tidak dapat dikembalikan!`,
+        text: `Produk ${data.product.name} akan dihapus. Data tidak dapat dikembalikan!`,
         confirmText: 'Ya, Hapus!',
         onConfirm: () => {
             loaderActive.value?.show("Sedang memuat data...");
@@ -120,7 +141,7 @@ function deleteSelected() {
         confirmText: 'Ya, Hapus Semua!',
         onConfirm: () => {
             loaderActive.value?.show("Sedang memuat data...");
-            router.post(route('product.destroy_all'), { all_id: selectedRow.value }, {
+            router.post(route('product.destroy_all'), { ids: selectedRow.value }, {
                 onFinish: () => loaderActive.value?.hide(),
                 preserveScroll: true,
                 preserveState: false,
@@ -158,8 +179,8 @@ function daysTranslate(dayValue) {
         "Friday": "Jumat",
         "Saturday": "Sabtu",
     };
-    const dateFormat = moment(dayValue).format('DD/MM/YYYY');
-    return dateFormat === 'Invalid date' ? '00/00/0000' : dateFormat;
+    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
+    return dateFormat === 'Invalid date' ? '00-00-0000' : dateFormat;
 }
 function formatCurrency(value) {
     if (!value) return "Rp 0";
@@ -226,11 +247,11 @@ onMounted(() => {
                                 <div class="col-xl-5 col-md-12">
                                     <input-label class="form-label-custom mb-1" for="keyword" value="KATA KUNCI" />
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                                        <span class="input-group-text border-end-0 text-muted ps-3">
                                             <i class="fas fa-search"></i>
                                         </span>
                                         <text-input ref="inputRef" placeholder="Cari produk..." name="keyword"
-                                            v-model="filters.keyword" type="text" :is-valid="false"
+                                            v-model="filters.keyword" type="search" :is-valid="false"
                                             input-class="border-start-0 ps-2 shadow-none" />
                                     </div>
                                 </div>
@@ -274,6 +295,45 @@ onMounted(() => {
                                             ]" select-class="border-start-0 ps-2 shadow-none" />
                                     </div>
                                 </div>
+                                <div class="col-xl-4 col-md-4 col-4"
+                                    v-if="roles.includes('admin') || roles.includes('developer')">
+                                    <input-label class="form-label-custom mb-1" for="branch" value="Cabang" />
+                                    <div class="input-group">
+                                        <span class="input-group-text border-end-0 text-muted ps-3">
+                                            <i class="fas fa-dot-circle"></i>
+                                        </span>
+                                        <select-input :is-valid="false" v-model="filters.branch" name="branch"
+                                            :options="branchOptions" select-class="border-start-0 ps-2 shadow-none" />
+                                    </div>
+                                </div>
+                                <div class="col-xl-4 col-md-4 col-4"
+                                    v-if="roles.includes('admin') || roles.includes('developer')">
+                                    <input-label class="form-label-custom mb-1" for="status" value="Status" />
+                                    <div class="input-group">
+                                        <span class="input-group-text border-end-0 text-muted ps-3">
+                                            <i class="fas fa-dot-circle"></i>
+                                        </span>
+                                        <select-input :is-valid="false" v-model="filters.status" name="status" :options="[
+                                            { value: null, label: 'Pilih Status Publikasi' },
+                                            { value: 'published', label: 'Published' },
+                                            { value: 'draft', label: 'Draft' },
+                                        ]" select-class="border-start-0 ps-2 shadow-none" />
+                                    </div>
+                                </div>
+                                <div class="col-xl-4 col-md-4 col-4">
+                                    <input-label class="form-label-custom mb-1" for="price_type" value="Tipe Harga" />
+                                    <div class="input-group">
+                                        <span class="input-group-text border-end-0 text-muted ps-3">
+                                            <i class="fas fa-dot-circle"></i>
+                                        </span>
+                                        <select-input text="Pilih Tipe Harga" :is-valid="false"
+                                            v-model="filters.discount_only" name="price_type" :options="[
+                                                { value: null, label: 'Semua Harga' },
+                                                { value: 'discount', label: 'Diskon' },
+                                                { value: 'normal', label: 'Normal' },
+                                            ]" select-class="border-start-0 ps-2 shadow-none" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -296,16 +356,22 @@ onMounted(() => {
                             </div>
 
                             <div class="d-flex gap-2">
-                                <transition name="pop">
+                                <transition name="pop" v-if="roles.includes('admin') || roles.includes('developer')">
                                     <button v-if="selectedRow.length > 0" @click="deleteSelected" type="button"
-                                        class="btn btn-danger px-3 shadow-sm d-flex align-items-center">
+                                        class="btn btn-danger px-3 shadow-sm d-flex align-items-center hover-scale">
                                         <i class="fas fa-trash-alt me-2"></i> Hapus ({{ selectedRow.length }})
                                     </button>
                                 </transition>
 
                                 <button type="button" @click.prevent="create"
-                                    class="btn btn-primary px-4 shadow-sm d-flex align-items-center fw-bold hover-lift">
+                                    v-if="roles.includes('admin') || roles.includes('developer')"
+                                    class="btn btn-primary px-4 shadow-sm d-flex align-items-center fw-bold hover-scale">
                                     <i class="fas fa-plus me-2"></i> Produk Baru
+                                </button>
+
+                                <button type="button" @click.prevent="reset"
+                                    class="btn btn-outline-success px-4 shadow-sm d-flex align-items-center fw-bold hover-scale">
+                                    <i class="fas fa-sync me-2"></i> Segarkan
                                 </button>
                             </div>
                         </div>
@@ -324,7 +390,8 @@ onMounted(() => {
                                 <table class="table table-hover align-middle mb-0 custom-table text-nowrap ">
                                     <thead class="bg-light border-bottom">
                                         <tr>
-                                            <th width="50" class="text-center">
+                                            <th v-if="roles.includes('admin') || roles.includes('developer')" width="50"
+                                                class="text-center">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input :disabled="!product?.data.length" type="checkbox"
                                                         class="form-check-input custom-checkbox pointer"
@@ -343,16 +410,17 @@ onMounted(() => {
                                                 Tipe Harga</th>
                                             <th class="text-secondary text-uppercase fw-bold text-center">
                                                 Status Publish</th>
-                                            <th class="text-secondary text-uppercase fw-bold text-center">
+                                            <th v-if="roles.includes('admin') || roles.includes('developer')"
+                                                class="text-secondary text-uppercase fw-bold text-center">
                                                 Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-if="!product?.data.length">
-                                            <td colspan="6" class="text-center py-5">
+                                            <td colspan="10" class="text-center py-5">
                                                 <div class="empty-state">
                                                     <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
-                                                        <i class="fas fa-box-open text-muted opacity-50"></i>
+                                                        <i class="fas fa-box-open text-muted opacity-50 fs-1"></i>
                                                     </div>
                                                     <h6 class="fw-bold text-dark">Tidak ada produk ditemukan</h6>
                                                     <p class="text-muted small">Coba ubah filter pencarian Anda.</p>
@@ -364,7 +432,8 @@ onMounted(() => {
                                             :class="{ 'row-selected': isSelected(item.product_price_id) }"
                                             class="transition-colors">
 
-                                            <td class="text-center">
+                                            <td v-if="roles.includes('admin') || roles.includes('developer')"
+                                                class="text-center">
                                                 <div class="form-check d-flex justify-content-center">
                                                     <input type="checkbox"
                                                         class="form-check-input custom-checkbox pointer"
@@ -376,20 +445,20 @@ onMounted(() => {
                                                 <div class="d-flex align-items-center">
                                                     <div
                                                         class="avatar-product me-3 shadow-sm rounded-3 overflow-hidden group-hover-img">
-                                                        <img :src="resolveImage(item.product.image_link)"
+                                                        <img :src="resolveImage(item.product?.image_link || item.product?.image_path)"
                                                             class="w-100 h-100 object-fit-cover" alt="Product">
                                                     </div>
 
                                                     <div style="max-width: 250px;">
                                                         <div class="fw-bold text-dark text-truncate mb-1"
-                                                            :title="item.product.name"
-                                                            v-html="highlight(item.product.name ?? '-', filters.keyword)">
+                                                            :title="item.product?.name"
+                                                            v-html="highlight(item.product?.name ?? '-', filters.keyword)">
                                                         </div>
-                                                        <div class="small text-muted d-flex align-items-center gap-2">
+                                                        <div class="small text-muted align-items-center">
                                                             <span
-                                                                class="badge bg-light text-secondary border fw-normal">ID:
+                                                                class="badge bg-light text-secondary border fw-normal rounded-0 me-2">ID:
                                                                 {{ item.product_price_id.substr(0, 8) }}</span>
-                                                            <a v-if="item.product.link" :href="item.product.link"
+                                                            <a v-if="item.product?.link" :href="item.product?.link"
                                                                 target="_blank"
                                                                 class="text-primary text-decoration-none hover-underline">
                                                                 <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
@@ -402,7 +471,7 @@ onMounted(() => {
                                                 <span
                                                     class="d-inline-flex bg-gradient align-items-center text-secondary fw-medium px-2 py-1 rounded-2 bg-light border small">
                                                     <i class="fas fa-tag me-2 fs-10"></i> {{
-                                                        formatCategory(item.product.category) }}
+                                                        formatCategory(item.product?.category) }}
                                                 </span>
                                             </td>
                                             <td>
@@ -427,10 +496,10 @@ onMounted(() => {
                                                     </template>
                                                 </div>
                                             </td>
-                                            <td class="text-center fw-semibold small">
+                                            <td class="text-center fw-semibold">
                                                 {{ daysTranslate(item.valid_from) }}
                                             </td>
-                                            <td class="text-center fw-semibold small">
+                                            <td class="text-center fw-semibold">
                                                 {{ daysTranslate(item.valid_until) }}
                                             </td>
                                             <td class="text-center fw-semibold small text-muted">
@@ -439,17 +508,18 @@ onMounted(() => {
 
                                             <td class="text-center">
                                                 <span class="badge rounded-pill px-3 py-2 fw-bold" :class="{
-                                                    'badge-soft-success': item.product.status === 'published',
-                                                    'badge-soft-secondary': item.product.status === 'draft'
+                                                    'badge-soft-success': item.status === 'published',
+                                                    'badge-soft-secondary': item.status === 'draft'
                                                 }">
                                                     <i class="me-1"
-                                                        :class="item.product.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
-                                                    {{ item.product.status === 'published' ? 'Publish' : 'Draft' }}
+                                                        :class="item.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
+                                                    {{ item.status === 'published' ? 'Publish' : 'Draft' }}
                                                 </span>
                                             </td>
 
 
-                                            <td class="text-center ps-4">
+                                            <td class="text-center ps-4"
+                                                v-if="roles.includes('admin') || roles.includes('developer')">
                                                 <div class="dropdown dropstart">
                                                     <button
                                                         class="btn btn-icon btn-lg btn-light rounded-circle shadow-sm"
@@ -503,7 +573,10 @@ onMounted(() => {
                                     limit: filters.limit,
                                     order_by: filters.order_by,
                                     keyword: filters.keyword,
-                                    category: filters.category
+                                    category: filters.category,
+                                    branch: filters.branch,
+                                    status: filters.status,
+                                    discount_only: filters.discount_only
                                 }" />
                             </div>
                         </div>
@@ -524,6 +597,14 @@ onMounted(() => {
     pointer-events: none;
     user-select: none;
     opacity: 0.6;
+}
+
+.hover-scale {
+    transition: transform 0.2s;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
 }
 
 /* Card Modern */
