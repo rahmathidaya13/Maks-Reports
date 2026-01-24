@@ -92,8 +92,7 @@ const goBack = () => {
                                     <p class="text-muted small mb-0">Kelola informasi Jabatan.</p>
                                 </div>
                             </div>
-                            <Link @click.prevent="goBack" :href="url"
-                                class="btn btn-danger fw-bold border hover-scale px-3">
+                            <Link @click.prevent="goBack" :href="url" class="btn btn-danger fw-bold border px-3">
                                 <i class="fas fa-arrow-left me-2"></i> Kembali
                             </Link>
                         </div>
@@ -152,10 +151,10 @@ const goBack = () => {
                                 </div>
 
                                 <div class="d-flex justify-content-end mt-4 pt-3 gap-2 border-top">
-                                    <button @click.prevent="goBack"
-                                        class="btn btn-outline-secondary px-4">Batal</button>
+                                    <button @click.prevent="goBack" class="btn btn-outline-secondary px-4">Batal &
+                                        Kembali</button>
                                     <base-button :loading="form.processing"
-                                        class="btn btn-height-1 rounded-3 px-4 shadow-sm btn-save-animate"
+                                        class="btn btn-height-1 rounded-3 px-4 shadow-sm"
                                         :icon="props.jobTitle?.job_title_id ? 'fas fa-check-circle' : 'fas fa-paper-plane'"
                                         :variant="props.jobTitle?.job_title_id ? 'success' : 'primary'" type="submit"
                                         :name="props.jobTitle?.job_title_id ? 'ubah' : 'simpan'"

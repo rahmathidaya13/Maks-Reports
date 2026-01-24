@@ -22,13 +22,13 @@ class VerificationController extends Controller
             'first_login' => now(),
         ]);
         $request->fulfill();
-        return redirect('/home')->with('message', 'Email Anda berhasil diverifikasi. Selamat datang!');
+        return redirect('/dashboard/analitics')->with('message', 'Email Anda berhasil diverifikasi. Selamat datang!');
     }
 
     public function resend(Request $request)
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect('/home')->with('message', 'Email Anda sudah diverifikasi.');
+            return redirect('/dashboard/analitics')->with('message', 'Email Anda sudah diverifikasi.');
         }
 
         $request->user()->sendEmailVerificationNotification();

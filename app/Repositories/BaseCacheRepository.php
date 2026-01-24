@@ -28,8 +28,9 @@ abstract class BaseCacheRepository
      */
     protected function buildCacheKey($userId, array $filters = []): string
     {
-        return "{$this->cachePrefix}_{$userId}_" . md5(json_encode($filters));
+        $cacheKey = "{$this->cachePrefix}_{$userId}_" . md5(json_encode($filters));
         Log::info('Cache key built: ' . $cacheKey);
+        return $cacheKey;
     }
 
     /**

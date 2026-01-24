@@ -144,4 +144,10 @@ class DailyReportController extends Controller
         $dailyReportModel::whereIn('daily_report_id', $all_id)->delete();
         return redirect()->route('daily_report')->with('message', count($all_id) . ' Data Leads berhasil Terhapus.');
     }
+
+    public function reset()
+    {
+        $this->dailyReports->clearCache(auth()->id());
+        return redirect()->route('daily_report')->with('message', 'Data Laporan Leads harian kamu berhasil dperbarui');
+    }
 }

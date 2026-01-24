@@ -35,7 +35,11 @@ const props = defineProps({
     inputClass: {
         type: [String, Array, Object],
         default: '',
-    }
+    },
+    maxChar: {
+        type: Number,
+        default: 50,
+    },
 });
 
 const inputRef = ref(null);
@@ -102,6 +106,9 @@ watch(modelValue, (newValue) => {
     if (modelValue.value !== strValue) {
         modelValue.value = strValue;
     }
+    if (newValue.length > props.maxChar) {
+        modelValue.value = newValue.slice(0, props.maxChar);
+    }
 }, { immediate: true });
 
 
@@ -109,7 +116,7 @@ defineExpose({ focus: () => inputRef.value?.focus() });
 </script>
 
 <template>
-    <input type="text" :name="props.name" :id="props.name" :placeholder="props.placeholder" :class="['form-control text-bg-grey', props.inputClass, {
+    <input type="text" :name="props.name" :id="props.name" :placeholder="props.placeholder" :class="['form-control', props.inputClass, {
         'is-invalid': isInvalid && $page.props.errors[props.name],
         'is-valid': isValid && modelValue && !$page.props.errors[props.name]
     }]" @input="handleInput" :value="modelValue" ref="inputRef" />

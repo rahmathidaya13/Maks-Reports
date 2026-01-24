@@ -123,4 +123,10 @@ class JobTitleController extends Controller
         $this->jobTitle->clearCache(auth()->id());
         return redirect()->route('job_title')->with('message', count($all_id) . ' Data berhasil Terhapus.');
     }
+
+    public function reset()
+    {
+        $this->jobTitle->clearCache(auth()->id());
+        return redirect()->route('job_title')->with('message', 'Data Jabatan berhasil diperbarui.');
+    }
 }

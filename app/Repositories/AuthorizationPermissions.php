@@ -13,11 +13,8 @@ class AuthorizationPermissions extends BaseCacheRepository
      */
     protected function getData(array $filters = []): LengthAwarePaginator
     {
-        $query = Permission::when(!empty($filters['keyword']), function ($q) use ($filters) {
-            $search = $filters['keyword'];
-            $q->where(function ($sub) use ($search) {
-                $sub->where('name', 'like', "%{$search}%");
-            });
+        $query = Permission::when(filled($filters['keyword'] ?? null), function ($q) use ($filters) {
+            $q->where('name', 'like', '%' . trim($filters['keyword']) . '%');
         });
 
         return $query->orderBy('created_at', $filters['order_by'] ?? 'desc')

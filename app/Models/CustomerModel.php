@@ -27,6 +27,7 @@ class CustomerModel extends Model
         'city',
         'province',
         'address',
+        'type_bussiness'
     ];
     public function creator()
     {

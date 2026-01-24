@@ -34,7 +34,7 @@ defineExpose({ show, hide })
 .loader-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.788);
+    background: rgba(0, 0, 0, 0.836);
     z-index: 9999;
     opacity: 0;
     transition: opacity .25s ease-in-out;

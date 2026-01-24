@@ -102,15 +102,16 @@ watch(() => props.form.errors, (errors) => {
     <div class="row justify-content-center">
         <div class="col-xl-12 col-lg-12 col-md-12">
 
-            <div class="position-relative mb-4 mx-3 mx-md-4">
+            <div class="position-relative mb-4">
                 <div class="position-absolute top-50 start-0 translate-middle-y w-100 bg-light rounded-pill"
-                    style="height: 5px; z-index: 0;"></div>
+                    style="height: 4px; z-index: 0;">
+                </div>
 
                 <div class="position-absolute top-50 start-0 translate-middle-y bg-primary rounded-pill transition-all"
                     style="height: 4px; z-index: 0;" :style="{ width: ((step - 1) / (props.step - 1)) * 100 + '%' }">
                 </div>
 
-                <div class="d-flex justify-content-between position-relative" style="z-index: 1;">
+                <div class="d-flex justify-content-between position-relative pt-4" style="z-index: 4;">
                     <div v-for="indicator in props.step" :key="indicator"
                         class="d-flex flex-column align-items-center step-item cursor-default" :class="{
                             'active': step === indicator,
@@ -192,10 +193,8 @@ watch(() => props.form.errors, (errors) => {
 <style scoped>
 .step-item {
     flex: 1;
-    /* Penting: Membuat setiap item mengambil ruang yang sama */
     position: relative;
     z-index: 2;
-    /* Agar berada di atas garis */
 }
 
 .cursor-default {

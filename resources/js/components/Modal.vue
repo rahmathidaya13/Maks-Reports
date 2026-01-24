@@ -19,6 +19,10 @@ const props = defineProps({
     footer: {
         type: Boolean,
         default: true
+    },
+    classModalTitle: {
+        type: String,
+        default: ''
     }
 })
 
@@ -71,17 +75,18 @@ watch(() => props.show, async (v) => {
 
 <template>
     <div class="modal custom-modal fade" tabindex="-1" ref="modalEl">
-        <div :class="['modal-dialog ', position, size]">
-            <div class="modal-content smooth-content ">
+        <div :class="['modal-dialog modal-dialog-scrollable ', position, size]">
+            <div class="modal-content smooth-content border-0 shadow-lg rounded-4 overflow-hidden">
 
-                <div class="modal-header text-bg-grey">
-                    <h5 class="modal-title fw-bold"> <i v-if="icon" :class="icon"></i> {{ title }}</h5>
+                <div class="modal-header bg-transparent border-0">
+                    <h5 :class="`modal-title fw-bold ${classModalTitle}`"> <i v-if="icon" :class="icon"></i> {{ title }}
+                    </h5>
                     <button @click="closeModal" type="button" class="close">
                         <span class="fs-1">&times;</span>
                     </button>
                 </div>
 
-                <div class="modal-body p-0 px-3 pb-3 overflow-hidden">
+                <div class="modal-body p-0 px-3 pb-3 bg-transparent">
                     <slot name="body" />
                 </div>
 
@@ -113,5 +118,14 @@ watch(() => props.show, async (v) => {
 .custom-modal.show .smooth-content {
     transform: translateY(0);
     opacity: 1;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
 }
 </style>

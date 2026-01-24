@@ -57,18 +57,14 @@ const handleButtonClick = (field) => {
 
 <template>
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 custom-filter-card">
-        <div class="card-header bg-white border-bottom py-3 px-4">
-            <h5 class="card-title fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <span
-                    class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 d-flex align-items-center justify-content-center"
-                    style="width: 32px; height: 32px;">
-                    <i class="fas fa-filter fa-sm"></i>
-                </span>
-                {{ title }}
-            </h5>
-        </div>
-
-        <div class="card-body px-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+                <div style="width: 40px; height: 40px"
+                    class="text-center bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-2">
+                    <i class="fas fa-sliders-h fs-6"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-0 text-uppercase ls-1"> {{ title }}</h5>
+            </div>
             <div class="row g-2 row-cols-1">
                 <div v-for="field in inputField" :key="field.key" :class="field.col">
 
@@ -77,6 +73,10 @@ const handleButtonClick = (field) => {
                         style="letter-spacing: 0.5px; font-size: 0.8rem;" />
 
                     <div v-if="field.type === 'text'" class="input-group">
+                        <text-input :type="field.type" v-model="filters[field.key]" v-bind="field.props"
+                            :name="field.key" />
+                    </div>
+                    <div v-else-if="field.type === 'search'" class="input-group">
                         <text-input :type="field.type" v-model="filters[field.key]" v-bind="field.props"
                             :name="field.key" />
                     </div>

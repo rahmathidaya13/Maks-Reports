@@ -13,31 +13,53 @@ class StoryStatusReportRepository extends BaseCacheRepository
      */
     protected function getData(array $filters = []): LengthAwarePaginator
     {
-        $query = StoryStatusReportModel::with('creator')
-            ->where('created_by', auth()->user()->id)
-            ->whereNull('deleted_at')
-            ->when(empty($filters['start_date']) && empty($filters['end_date']), function ($q) {
-                // Jika user TIDAK memberikan filter → ambil data hari ini
-                $q->whereDate('report_date', now()->toDateString());
-            })
-            ->when(!empty($filters['keyword']), function ($q) use ($filters) {
-                $search = $filters['keyword'];
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('report_code', 'like', "%{$search}%");
-                });
-            })
-            ->when(!empty($filters['start_date']) && !empty($filters['end_date']), function ($q) use ($filters) {
-                // filter rentang tanggal
-                $q->whereBetween('report_date', [
-                    $filters['start_date'],
-                    $filters['end_date']
-                ]);
-            });
+        $query = StoryStatusReportModel::query()
+            ->with('creator')
+            ->where('created_by', auth()->id())
+            ->whereNull('deleted_at');
 
-        // Ambil data paginasi
-        $storyReport = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
+        /*
+    |--------------------------------------------------------------------------
+    | DEFAULT DATE (Vue kirim null)
+    |--------------------------------------------------------------------------
+    */
+        if (
+            (!isset($filters['start_date']) || $filters['start_date'] === null) &&
+            (!isset($filters['end_date']) || $filters['end_date'] === null)
+        ) {
+            // Jika user tidak memberi filter → ambil data hari ini
+            $query->whereDate('report_date', now()->toDateString());
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | FILTER RANGE DATE
+    |--------------------------------------------------------------------------
+    */
+        if (
+            isset($filters['start_date'], $filters['end_date']) &&
+            $filters['start_date'] !== null &&
+            $filters['end_date'] !== null
+        ) {
+            $query->whereBetween('report_date', [
+                $filters['start_date'],
+                $filters['end_date'],
+            ]);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | FILTER KEYWORD (Vue kirim '')
+    |--------------------------------------------------------------------------
+    */
+        if (isset($filters['keyword']) && $filters['keyword'] !== '' && $filters['keyword'] !== null) {
+            $search = $filters['keyword'];
+
+            $query->where('report_code', 'like', "%{$search}%");
+        }
+
+        return $query
+            ->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 10);
-
-        return $storyReport;
     }
 }

@@ -79,6 +79,24 @@ const transaction = () => {
         onFinish: () => loaderActive.value?.hide()
     });
 }
+const goRoles = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('roles'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+const goPermissions = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('permissions'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
+const userHandle = () => {
+    loaderActive.value?.show("Sedang membuka...");
+    router.get(route('users'), {}, {
+        onFinish: () => loaderActive.value?.hide()
+    });
+}
 
 
 const imageSource = computed(() => {
@@ -115,8 +133,8 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         </div>
                     </div>
                     <div class="sb-sidenav-menu-heading">Home</div>
-                    <Link @click.prevent="dashboard" class="nav-link" :class="{ 'active active-link': is('home*') }"
-                        :href="route('home')">
+                    <Link @click.prevent="dashboard" class="nav-link"
+                        :class="{ 'active active-link': is('dashboard*') }" :href="route('home')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-tachometer-alt"></i>
                         </div>
@@ -174,12 +192,6 @@ const permissions = page.props.auth.user?.permissions ?? [];
                     </Link>
 
 
-
-
-
-
-
-
                     <div v-if="roles === 'developer' || roles === 'admin'" class="sb-sidenav-menu-heading">Manajemen
                     </div>
 
@@ -188,7 +200,7 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-briefcase"></i>
                         </div>
-                        Jabatan
+                        Daftar Jabatan
                     </Link>
 
                     <Link @click.prevent="branches" v-if="roles && permissions.includes('branches.view')"
@@ -202,7 +214,7 @@ const permissions = page.props.auth.user?.permissions ?? [];
                     <div v-if="roles === 'developer'" class="sb-sidenav-menu-heading">Otorisasi
                     </div>
 
-                    <Link v-if="roles === 'developer'" class="nav-link"
+                    <Link @click.prevent="goRoles" v-if="roles === 'developer'" class="nav-link"
                         :class="{ 'active active-link': is('authorization/roles*') }" :href="route('roles')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-briefcase"></i>
@@ -210,7 +222,7 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         Peran
                     </Link>
 
-                    <Link v-if="roles === 'developer'" class="nav-link"
+                    <Link @click.prevent="goPermissions" v-if="roles === 'developer'" class="nav-link"
                         :class="{ 'active active-link': is('authorization/permissions*') }"
                         :href="route('permissions')">
                         <div class="sb-nav-link-icon">
@@ -218,7 +230,8 @@ const permissions = page.props.auth.user?.permissions ?? [];
                         </div>
                         Izin Akses
                     </Link>
-                    <Link v-if="roles === 'developer'" class="nav-link"
+
+                    <Link @click.prevent="userHandle" v-if="roles === 'developer'" class="nav-link"
                         :class="{ 'active active-link': is('authorization/users*') }" :href="route('users')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-user-cog"></i>

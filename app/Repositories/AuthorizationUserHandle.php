@@ -15,22 +15,46 @@ class AuthorizationUserHandle extends BaseCacheRepository
     protected function getData(array $filters = []): LengthAwarePaginator
     {
         $query = User::query()
-            ->with(['profile', 'roles', 'permissions'])
-            ->when(!empty($filters['keyword']), function ($q) use ($filters) {
-                $search = $filters['keyword'];
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('name', 'like', "%{$search}%");
-                });
-            })
-            ->when(!empty($filters['active_emp']), function ($q) use ($filters) {
-                $status = $filters['active_emp'] ?? 'active';
-                $q->where('status', $status);
-            }, function ($q) {
-                $q->where('status', 'active');
-            });
-        $users = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
+            ->with(['profile', 'roles', 'permissions']);
+
+        /*
+|--------------------------------------------------------------------------
+| FILTER KEYWORD (Vue kirim '')
+|--------------------------------------------------------------------------
+*/
+        if (isset($filters['keyword']) && $filters['keyword'] !== ''  && $filters['keyword'] !== null) {
+            $search = $filters['keyword'];
+
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        /*
+|--------------------------------------------------------------------------
+| FILTER STATUS USER (Vue kirim null)
+|--------------------------------------------------------------------------
+*/
+        if (array_key_exists('active_emp', $filters) && $filters['active_emp'] !== null) {
+            // Jika filter dikirim → pakai nilai tersebut
+            $query->where('status', $filters['active_emp']);
+        } else {
+            // Default: hanya user active
+            $query->where('status', 'active');
+        }
+
+        /*
+|--------------------------------------------------------------------------
+| PAGINATION
+|--------------------------------------------------------------------------
+*/
+        $users = $query
+            ->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 5);
 
+        /*
+|--------------------------------------------------------------------------
+| TRANSFORM RESPONSE
+|--------------------------------------------------------------------------
+*/
         $users->getCollection()->transform(function ($user) {
             return [
                 'id' => $user->id,

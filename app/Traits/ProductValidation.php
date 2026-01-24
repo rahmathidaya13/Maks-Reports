@@ -16,7 +16,9 @@ trait ProductValidation
             'status' => 'required|in:draft,published|string',
             'image' => [$id ? 'nullable' : 'required', 'image', 'max:2048', 'mimetypes:image/jpeg,image/jpg,image/png,image/webp,image/svg'],
 
-            'valid_from' => 'required|date|before_or_equal:valid_until|date_format:Y-m-d|after_or_equal:today',
+            'item_condition' => 'required|in:new,used,refurbished,damaged,discontinued|string',
+
+            'valid_from' => 'required|date|before_or_equal:valid_until|date_format:Y-m-d',
             'valid_until' => 'nullable|date|after_or_equal:valid_from|date_format:Y-m-d',
 
             'base_price' => 'required|numeric|min:0',
@@ -29,6 +31,10 @@ trait ProductValidation
             'name.string' => 'Nama harus berupa teks.',
             'name.max' => 'Nama maksimal 100 karakter.',
             'name.unique' => 'Nama sudah ada dalam sistem.',
+
+            'item_condition.required' => 'Kondisi produk wajib dipilih.',
+            'item_condition.in' => 'Kondisi produk tidak sesuai dengan pilihan.',
+            'item_condition.string' => 'Kondisi produk harus berupa teks yang jelas.',
 
             'link.url' => 'Link harus berupa URL yang valid.',
             'link.max' => 'Link maksimal 500 karakter.',

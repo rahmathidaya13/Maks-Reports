@@ -51,8 +51,7 @@ function daysTranslate(dayValue) {
                 { text: 'Detail Profil' },
             ]" />
 
-            <callout :type="$page.props.flash.message ? 'success' : 'danger'" :duration="10"
-                :message="$page.props.flash.message || $page.props.flash.error" />
+            <callout />
 
             <div class="row g-4 pb-4">
 
@@ -90,7 +89,7 @@ function daysTranslate(dayValue) {
                             </div>
 
                             <button @click="goToEditProfile(props.detail?.users_id)"
-                                class="btn btn-primary w-100 rounded-3 shadow-sm btn-hover-effect">
+                                class="btn btn-primary w-100 rounded-3 shadow-sm">
                                 <i class="fas fa-user-edit me-2"></i> Perbarui Profil
                             </button>
                         </div>

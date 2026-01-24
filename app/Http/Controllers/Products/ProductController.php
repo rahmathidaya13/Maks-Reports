@@ -31,6 +31,19 @@ class ProductController extends Controller
 
         $this->authorize('view', ProductPriceModel::class);
 
+        $request->validate([
+            'keyword' => 'nullable|string|max:100',
+            'limit' => 'nullable|integer|in:10,20,50,100',
+            'page' => 'nullable|integer|min:1',
+            'order_by' => 'nullable|in:asc,desc',
+            'category' => 'nullable|string|max:100',
+
+            'status' => 'nullable|in:draft,published|string',
+            'branch' => 'nullable|string|max:100',
+            'discount_only' => 'nullable|in:normal,discount|string',
+            'condition' => 'nullable|in:new,used,refurbished,damaged,discontinued|string',
+        ]);
+
         $filters = $request->only([
             'keyword',
             'limit',
@@ -41,6 +54,7 @@ class ProductController extends Controller
             'status',
             'branch',
             'discount_only',
+            'condition',
         ]);
         $products = $this->productRepository->getCached(auth()->id(), $filters);
 
@@ -86,6 +100,7 @@ class ProductController extends Controller
             'created_by'     => auth()->id(),
             'source'         => 'manual',
             'name'           => $request['name'],
+            'item_condition' => $request['item_condition'],
             'link'           => $request['link'],
             'slug'           => Str::slug($request['name']),
             'category'       => Str::slug($request['category']),
@@ -166,6 +181,7 @@ class ProductController extends Controller
             'created_by'     => auth()->id(),
             'source'         => 'manual',
             'name'           => $request['name'],
+            'item_condition' => $request['item_condition'],
             'link'           => $request['link'],
             'slug'           => Str::slug($request['name']),
             'category'       => Str::slug($request['category']),
@@ -314,6 +330,6 @@ class ProductController extends Controller
     public function reset()
     {
         $this->productRepository->clearCache(auth()->id());
-        return redirect()->route('product');
+        return redirect()->route('product')->with('message', 'Data tabel Produk berhasil diperbarui.');
     }
 }

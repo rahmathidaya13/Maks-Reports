@@ -3,23 +3,19 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
-import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
+import { hasRole, hasPermission } from "@/composables/useAuth";
 import { highlight } from "@/helpers/highlight";
 import axios from "axios";
+import ModalExport from "./ModalExport.vue";
 moment.locale('id');
 
-const page = usePage();
-const message = computed(() => page.props.flash.message || "");
-
-const highlightId = page.props.flash.highlight_by_id ?? [];
-const highlightType = page.props.flash.highlight_type ?? null
-
+import { useConfirm } from "@/helpers/useConfirm.js"
+const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
 
 const props = defineProps({
     storyReport: Object,
     filters: Object,
     totalToday: Number,
-    summary: Object
 });
 
 const filters = reactive({
@@ -31,22 +27,25 @@ const filters = reactive({
     page: props.filters?.page ?? 1,
 })
 
-const deleted = (nameRoute, data) => {
-    swalConfirmDelete({
+const deleted = async (nameRoute, data) => {
+    const setConfirm = await confirm.ask({
         title: 'Hapus',
-        text: `Kamu yakin ingin menghapus laporan ID ${data.report_code} ? Tindakan ini tidak dapat kembalikan data yang terhapus!`,
-        confirmText: 'Ya, Hapus!',
-        onConfirm: () => {
-            router.delete(route(nameRoute, data.story_status_id), { preserveScroll: false, replace: true });
-        },
-    })
+        message: `Kamu ingin menghapus laporan ID ${data.report_code} ?`,
+        confirmText: 'Ya, Hapus',
+        variant: 'danger' // Memberikan warna merah pada tombol konfirmasi
+    });
+
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.delete(route(nameRoute, data.story_status_id), {
+            onFinish: () => loaderActive.value?.hide(),
+            preserveScroll: false,
+            replace: true
+        });
+    }
 }
 
 
-// trigger button bila tanggal diisi
-const isDisableBtnDatePicker = computed(() => {
-    return !(filters.start_date && filters.end_date);
-})
 function daysTranslate(dayValue) {
     const dayConvert = {
         "Sunday": "Minggu",
@@ -69,13 +68,13 @@ const searchByDate = debounce((e) => {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["storyReport", "filters"], // lebih hemat bandwidth jika pakai Inertia partial reload
+        only: ["storyReport", "filters", "totalToday"], // lebih hemat bandwidth jika pakai Inertia partial reload
         onFinish: () => {
             // Selesai apapun hasilnya → loader hilang
             isLoading.value = false
         }
     });
-}, 1000);
+}, 500);
 
 // trigger button untuk melakukan pencarian berdasarkan tanggal
 const applyDateRange = () => {
@@ -129,36 +128,41 @@ watch([
 //hapus semua
 const selected = ref([]);
 const isVisibleButton = ref(false)
-const isAllSelected = computed(() => {
-    const rows = props.storyReport?.data ?? [];
-    return rows.length > 0 && selected.value.length === rows.length;
-
-})
-const isSelected = (id) => {
-    return selected.value.includes(id);
-}
-const toggleAll = (evt) => {
-    if (evt.target.checked) {
-        selected.value = props.storyReport?.data.map(r => r.story_status_id);
-    } else {
-        selected.value = [];
-    }
-}
-const deletedAll = () => {
+const deletedAll = async () => {
+    // 1. Kondisi Tidak Ada Data (Berfungsi sebagai Alert)
     if (!selected.value.length) {
-        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk dihapus.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
     }
-    swalConfirmDelete({
-        title: 'Hapus Data Terpilih',
-        text: `Yakin ingin menghapus ${selected.value.length} data terpilih?`,
-        confirmText: 'Ya, Hapus Semua!',
-        onConfirm: () => {
-            router.post(route('story_report.destroy_all'), { ids: selected.value }, {
-                preserveScroll: true,
-                preserveState: false,
-            })
-        },
-    })
+
+    // 2. Kondisi Konfirmasi Hapus
+    const setConfirm = await confirm.ask({
+        title: 'Konfirmasi Hapus',
+        message: `Apakah Anda yakin ingin menghapus ${selected.value.length} data terpilih?`,
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batal',
+        variant: 'danger'
+    });
+
+    // 3. Eksekusi
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.post(route('story_report.destroy_all'), {
+            ids: selected.value
+        }, {
+            onFinish: () => {
+                loaderActive.value?.hide();
+                selected.value = []; // Bersihkan pilihan setelah sukses
+            },
+            preserveScroll: true,
+            preserveState: false,
+        });
+    }
 }
 watch(selected, (val) => {
     if (val.length > 0) {
@@ -187,20 +191,8 @@ const goEdit = (id) => {
 
 // =========Tampilkan Modal========== //
 const showModal = ref(false);
-const start_dateRef = ref(null)
 function openModal() {
     showModal.value = true
-    nextTick(() => {
-        start_dateRef.value?.$el?.focus?.(); // untuk custom component
-        start_dateRef.value?.focus?.();      // fallback jika native input
-    });
-}
-
-// tutup modal SETELAH Bootstrap selesai animasi
-function closeModal() {
-    showModal.value = false
-    form.start_date_dw = '';
-    form.end_date_dw = '';
 }
 
 // form untuk kirim berdasarkan tanggal
@@ -208,28 +200,7 @@ const form = reactive({
     start_date_dw: '',
     end_date_dw: '',
 })
-function downloadPdf() {
-    window.open(
-        route('story_report.print_to_pdf', {
-            start_date: form.start_date_dw,
-            end_date: form.end_date_dw
-        }),
-        '_blank'
-    )
-}
-function downloadExcel() {
-    window.open(
-        route('story_report.print_to_excel', {
-            start_date: form.start_date_dw,
-            end_date: form.end_date_dw
-        }),
-        '_self'
-    )
-}
 
-const isDisableBtnDownload = computed(() => {
-    return !(form.start_date_dw && form.end_date_dw);
-})
 const information = ref(null);
 watch(() => [form.start_date_dw, form.end_date_dw],
     async ([start_date, end_date]) => {
@@ -247,14 +218,8 @@ watch(() => [form.start_date_dw, form.end_date_dw],
             information.value = data;
         }
     })
-
-const resetField = () => {
-    form.start_date_dw = '';
-    form.end_date_dw = '';
-}
 // =========Batas Fungsi untuk Tampilkan Modal========== //
 
-const perm = page.props.auth.user
 
 const hasActiveFilter = computed(() => {
     return (
@@ -266,17 +231,19 @@ const hasActiveFilter = computed(() => {
     )
 })
 
-const fileterFields = computed(() => [
+const filterFields = computed(() => [
     {
         key: 'keyword',
         label: 'Pencarian',
         type: 'text',
         col: 'col-xl-8 col-12',
+        type: 'search',
+        icon: 'fas fa-search',
+        autofocus: true,
         props: {
             placeholder: 'Masukan ID Report',
-            inputClass: ' input-height-1',
+            inputClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
-            autofocus: true
         }
     },
     {
@@ -284,17 +251,18 @@ const fileterFields = computed(() => [
         label: 'Batas',
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
+        icon: 'fas fa-list-ul',
         props: {
-            selectClass: ' input-height-1',
+            selectClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         },
         options: [
             { value: null, label: 'Pilih Batas Data' },
-            { value: 10, label: '10' },
-            { value: 20, label: '20' },
-            { value: 30, label: '30' },
-            { value: 50, label: '50' },
-            { value: 100, label: '100' },
+            { value: 10, label: '10 Baris' },
+            { value: 20, label: '20 Baris' },
+            { value: 30, label: '30 Baris' },
+            { value: 50, label: '50 Baris' },
+            { value: 100, label: '100 Baris' },
         ]
     },
     {
@@ -302,8 +270,9 @@ const fileterFields = computed(() => [
         label: 'Urutan',
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
+        icon: 'fas fa-sort',
         props: {
-            selectClass: 'input-height-1',
+            selectClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         },
         options: [
@@ -317,8 +286,9 @@ const fileterFields = computed(() => [
         label: 'Tanggal Awal',
         type: 'date',
         col: 'col-xl-6 col-md-6 col-6',
+        icon: 'fas fa-calendar-alt',
         props: {
-            inputClass: ' input-height-1',
+            inputClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         }
     },
@@ -327,8 +297,9 @@ const fileterFields = computed(() => [
         label: 'Tanggal Akhir',
         type: 'date',
         col: 'col-xl-6 col-md-6 col-6',
+        icon: 'fas fa-calendar-alt',
         props: {
-            inputClass: ' input-height-1',
+            inputClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         }
     },
@@ -339,7 +310,6 @@ const fileterFields = computed(() => [
         label: 'Bersihkan',
         type: 'button',
         name: 'reset',
-        class: 'btn-secondary',
         icon: 'fas fa-undo',
         class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-outline-danger',
         disabled: !hasActiveFilter.value,
@@ -351,12 +321,115 @@ const fileterFields = computed(() => [
         label: 'Terapkan',
         type: 'button',
         name: 'apply',
-        class: 'btn-secondary',
         icon: 'fas fa-filter',
         class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-primary',
         disabled: !hasActiveFilter.value,
         handler: () => applyDateRange()
     },
+
+]);
+
+const reset = () => {
+    isLoading.value = true
+    router.get(route("story_report.reset"), {}, {
+        preserveScroll: true,
+        replace: true,
+        onFinish: () => isLoading.value = false
+    });
+}
+
+const header = [
+    {
+        label: "No",
+        key: "__index",
+        attrs: {
+            class: "text-center",
+            style: "width:50px"
+        }
+    },
+    {
+        label: "ID Report",
+        key: "status_report_id",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Tanggal & Info",
+        key: "report_date",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Jam",
+        key: "report_time",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Jumlah Status",
+        key: "count_status",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Dibuat",
+        key: "created_at",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Diperbarui",
+        key: "updated_at",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Aksi",
+        key: "action",
+        attrs: {
+            class: "text-center",
+        }
+    },
+];
+
+const toolbarActions = computed(() => [
+
+    {
+        label: `Hapus (${selected.value.length})`,
+        icon: 'fas fa-trash-alt',
+        iconColor: 'text-danger',
+        labelColor: 'text-danger',
+        disabled: !isVisibleButton.value,
+        show: hasPermission('status.report.delete'),
+        click: deletedAll
+    },
+    {
+        label: 'Unduh',
+        icon: 'fas fa-download',
+        iconColor: 'text-success',
+        show: hasPermission('status.report.export'),
+        click: openModal
+    },
+    {
+        label: 'Buat Laporan',
+        icon: 'fas fa-plus-circle',
+        isPrimary: true, // Prioritas Utama
+        show: hasPermission('status.report.create'),
+        click: createReport
+    },
+    {
+        label: 'Segarkan',
+        icon: 'fas fa-redo-alt',
+        iconColor: 'text-primary',
+        loading: isLoading.value,
+        click: reset
+    }
 ]);
 </script>
 <template>
@@ -367,204 +440,141 @@ const fileterFields = computed(() => [
             <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-sticky-note" title="Laporan Update Status"
                 :items="[{ text: 'Laporan Update Status' }]" />
-            <callout type="success" :duration="10" :message="message" />
+            <callout />
 
             <div class="row pb-3">
                 <div class="col-xl-12 col-12 mb-3">
-                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
+                    <base-filters title="Filter" v-model="filters" :fields="filterFields" />
                 </div>
                 <div class="col-12 col-xl-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
 
                         <div
-                            class="card-header bg-white py-3 px-4 border-bottom-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <h5 class="fw-bold mb-0 text-dark">Laporan Status</h5>
-                                <p class="text-muted small mb-0">Rekapitulasi update status harian.</p>
-                            </div>
-
-                            <div class="d-flex gap-2">
-                                <transition name="fade">
-                                    <button
-                                        v-if="perm.permissions.includes('status.report.delete') && selected.length > 0"
-                                        @click="deletedAll" :disabled="!isVisibleButton" type="button"
-                                        class="btn btn-danger rounded-3 shadow-sm px-3 d-flex align-items-center animate__animated animate__fadeIn">
-                                        <i class="fas fa-trash-alt me-2"></i>
-                                        Hapus ({{ selected.length }})
-                                    </button>
-                                </transition>
-
-                                <base-button v-if="perm.permissions.includes('status.report.export')"
-                                    class="btn-success rounded-3 shadow-sm text-white" icon="fas fa-download"
-                                    @click="openModal" name="unduh" label="Unduh" />
-
-                                <div v-if="perm.permissions.includes('status.report.create')">
-                                    <base-button @click="createReport" class="btn-primary rounded-3 shadow-sm fw-bold"
-                                        name="create" label="Buat Laporan" icon="fas fa-plus" />
+                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                                    <i class="fas fa-sticky-note fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">Data Laporan Status</h5>
+                                    <p class="text-muted small mb-0">
+                                        Rekapitulasi update status harian.
+                                    </p>
                                 </div>
                             </div>
+
+                            <action-toolbar :actions="toolbarActions" />
+
+                        </div>
+                        <div class="card-body p-0 position-relative">
+                            <base-table :markAll="hasPermission('status.report.delete')" :loader="isLoading"
+                                loaderText="Sedang memuat data..." :headers="header" :items="storyReport?.data"
+                                row-key="story_status_id" @update:selected="(val) => selected = val">
+
+                                <template #empty>
+                                    <div class="py-4">
+                                        <i class="fas fa-folder-open fa-3x text-muted opacity-25 mb-3"></i>
+                                        <p class="text-muted">Tidak ada data laporan ditemukan.
+                                        </p>
+                                    </div>
+                                </template>
+
+                                <template #row="{ item, index }">
+
+                                    <td class="text-center text-muted fw-bold">
+                                        {{ index + 1 + (storyReport?.current_page - 1) *
+                                            storyReport?.per_page }}
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="font-monospace bg-light border px-2 py-1 rounded text-dark"
+                                            v-html="highlight(item.report_code, filters.keyword)">
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-semibold text-dark">
+                                                <i class="far fa-calendar-alt me-1 text-primary small"></i>
+                                                {{ daysTranslate(item.report_date) }}
+                                            </span>
+                                            <small class="text-muted fst-italic mt-1" style="font-size: 0.75rem;">
+                                                {{ item.informasi }}
+                                            </small>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border fw-normal"
+                                            style="font-size: 0.9rem;">
+                                            <i class="far fa-clock me-1"></i> {{ item.report_time.slice(0, 5) }}
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="fw-bold fs-6 text-primary">
+                                            {{ item.count_status }}
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center text-muted">
+                                        {{ moment(item.created_at).format('H:mm A') }}
+                                    </td>
+                                    <td class="text-center text-muted">
+                                        {{ item.updated_at === item.created_at ? '-' :
+                                            moment(item.updated_at).format('H:mm A') }}
+                                    </td>
+
+                                    <td class="text-center">
+                                        <dropdown-action :item="item" :actions="[
+                                            {
+                                                label: 'Ubah',
+                                                icon: 'bi bi-pencil-square fs-6',
+                                                color_icon: 'success',
+                                                action: 'edit',
+                                                permission: 'status.report.edit'
+                                            },
+                                            {
+                                                label: 'Bagikan',
+                                                icon: 'bi bi-share-fill fs-6',
+                                                color_icon: 'info',
+                                                action: 'share',
+                                                permission: 'status.report.share'
+                                            },
+                                            {
+                                                type: 'divider'
+                                            },
+                                            {
+                                                label: 'Hapus',
+                                                icon: 'bi bi-trash-fill fs-6',
+                                                color: 'danger',
+                                                action: 'delete',
+                                                permission: 'status.report.delete'
+                                            }
+                                        ]" @edit="goEdit(item.story_status_id)"
+                                            @delete="deleted('story_report.deleted', item)" />
+                                    </td>
+                                </template>
+                                <template #footer="{ headers }">
+                                    <tr>
+                                        <td :colspan="headers - 4"
+                                            class="text-end fw-bold text-uppercase text-secondary py-3 pe-3">
+                                            Total Keseluruhan :
+                                        </td>
+
+                                        <td
+                                            class="text-center fw-bolder text-dark py-3 fs-6 bg-secondary bg-opacity-10 border-start border-end">
+                                            {{ props.totalToday ?? props.totalWithFilter ?? '0' }}
+                                        </td>
+                                        <td :colspan="headers - 2"></td>
+                                    </tr>
+                                </template>
+                            </base-table>
                         </div>
 
-                        <div v-if="isLoading"
-                            class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center z-3">
-                            <loader-horizontal message="Memuat..." />
-                        </div>
-
-                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="bg-light text-uppercase text-secondary fw-bold"
-                                        style="letter-spacing: 0.5px;">
-                                        <tr>
-                                            <th class="text-center" width="50"
-                                                v-if="perm.permissions.includes('status.report.delete')">
-                                                <div class="form-check d-flex justify-content-center">
-                                                    <input :disabled="!storyReport?.data.length" type="checkbox"
-                                                        class="form-check-input shadow-none cursor-pointer"
-                                                        :checked="isAllSelected" @change="toggleAll($event)" />
-                                                </div>
-                                            </th>
-
-                                            <th class="text-center">No</th>
-                                            <th class="text-center">ID Report</th>
-                                            <th class="text-start">Tanggal & Info</th>
-                                            <th class="text-center">Jam</th>
-                                            <th class="text-center">Jumlah Status</th>
-                                            <th class="text-center">Dibuat</th>
-                                            <th class="text-center">Diperbarui</th>
-                                            <th class="text-center">Aksi</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody class="border-top-0">
-
-                                        <tr v-if="!storyReport?.data.length">
-                                            <td :colspan="(perm.permissions.includes('status.report.delete') ? 9 : 8)"
-                                                class="text-center py-5">
-                                                <div class="py-4">
-                                                    <i class="fas fa-folder-open fa-3x text-muted opacity-25 mb-3"></i>
-                                                    <p class="text-muted fw-semibold">Tidak ada data laporan ditemukan.
-                                                    </p>
-                                                </div>
-                                            </td>
-                                        </tr>
-
-                                        <tr v-for="(row, rowIndex) in storyReport?.data" :key="rowIndex"
-                                            :id="row.story_status_id" :class="[
-                                                { 'bg-primary bg-opacity-10': isSelected(row.story_status_id) },
-                                                highlightId.includes(row.story_status_id) ? (highlightType === 'create' ? 'blink-green' : 'blink-blue') : ''
-                                            ]">
-
-                                            <td class="text-center"
-                                                v-if="perm.permissions.includes('status.report.delete')">
-                                                <div class="form-check d-flex justify-content-center">
-                                                    <input type="checkbox"
-                                                        class="form-check-input shadow-none cursor-pointer"
-                                                        :value="row.story_status_id" v-model="selected" />
-                                                </div>
-                                            </td>
-
-                                            <td class="text-center text-muted fw-bold">
-                                                {{ rowIndex + 1 + (storyReport?.current_page - 1) *
-                                                    storyReport?.per_page }}
-                                            </td>
-
-                                            <td class="text-center">
-                                                <span class="font-monospace bg-light border px-2 py-1 rounded text-dark"
-                                                    v-html="highlight(row.report_code, filters.keyword)">
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <div class="d-flex flex-column">
-                                                    <span class="fw-semibold text-dark">
-                                                        <i class="far fa-calendar-alt me-1 text-primary small"></i>
-                                                        {{ daysTranslate(row.report_date) }}
-                                                    </span>
-                                                    <small class="text-muted fst-italic mt-1"
-                                                        style="font-size: 0.75rem;">
-                                                        {{ row.informasi }}
-                                                    </small>
-                                                </div>
-                                            </td>
-
-                                            <td class="text-center">
-                                                <span class="badge bg-light text-dark border fw-normal"
-                                                    style="font-size: 0.9rem;">
-                                                    <i class="far fa-clock me-1"></i> {{ row.report_time.slice(0, 5) }}
-                                                </span>
-                                            </td>
-
-                                            <td class="text-center">
-                                                <span class="fw-bold fs-6 text-primary">
-                                                    {{ row.count_status }}
-                                                </span>
-                                            </td>
-
-                                            <td class="text-center text-muted">
-                                                {{ moment(row.created_at).format('H:mm A') }}
-                                            </td>
-                                            <td class="text-center text-muted">
-                                                {{ row.updated_at === row.created_at ? '-' :
-                                                    moment(row.updated_at).format('H:mm A') }}
-                                            </td>
-
-                                            <td class="text-center">
-                                                <div class="dropdown dropstart">
-                                                    <button class="btn btn-light bg-gradient border text-secondary"
-                                                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="fas fa-cog"></i>
-                                                    </button>
-                                                    <ul
-                                                        class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
-                                                        <li v-if="perm.permissions.includes('status.report.edit')">
-                                                            <button @click.prevent="goEdit(row.story_status_id)"
-                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold">
-                                                                <i class="fas fa-pencil-alt text-info"></i> Ubah
-                                                            </button>
-                                                        </li>
-                                                        <li v-if="perm.permissions.includes('status.report.share')">
-                                                            <button
-                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold">
-                                                                <i class="fas fa-share-alt text-primary"></i> Bagikan
-                                                            </button>
-                                                        </li>
-                                                        <li v-if="perm.permissions.includes('status.report.delete')">
-                                                            <div class="dropdown-divider"></div>
-                                                            <button
-                                                                @click.prevent="deleted('story_report.deleted', row)"
-                                                                class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger fw-semibold">
-                                                                <i class="fas fa-trash-alt"></i> Hapus
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-
-                                    <tfoot class="bg-light" v-if="storyReport?.data.length">
-                                        <tr>
-                                            <td :colspan="(perm.permissions.includes('status.report.delete') ? 5 : 4)"
-                                                class="text-end fw-bold text-uppercase text-secondary py-3 pe-3">
-                                                Total Keseluruhan :
-                                            </td>
-
-                                            <td
-                                                class="text-center fw-bolder text-dark py-3 fs-6 bg-warning bg-opacity-10 border-start border-end border-warning border-opacity-25">
-                                                {{ props.totalToday ?? props.totalWithFilter ?? '0' }}
-                                            </td>
-
-                                            <td colspan="3"></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="card-footer bg-white border-top py-3" v-if="storyReport?.data.length">
+                        <div class="card-footer bg-white border-top py-3">
                             <div class="d-flex flex-wrap justify-content-between align-items-center">
-                                <div class="text-muted mb-2 mb-md-0">
+                                <div class="text-muted mb-2 mb-md-0 small">
                                     Menampilkan <strong>{{ props.storyReport?.from ?? 0 }}</strong> -
                                     <strong>{{ props.storyReport?.to ?? 0 }}</strong> dari
                                     <strong>{{ props.storyReport?.total ?? 0 }}</strong> data
@@ -582,81 +592,9 @@ const fileterFields = computed(() => [
                 </div>
             </div>
 
+            <!-- <ModalExport :form="form" :information="information" :show="showModal" @update:show="showModal = $event" /> -->
+            <ModalExport :information="information" :form="form" :show="showModal" @update:show="showModal = $event" />
 
-            <div class="row" v-if="showModal">
-                <div class="col-xl-12 col-sm-12">
-                    <modal @opened="openModal" size="modal-lg" :footer="false" icon="fas fa-download" v-if="showModal"
-                        :show="showModal" title="Unduh Laporan" @update:show="showModal = $event" @closed="closeModal">
-                        <template #body>
-
-                            <div class="callout callout-info shadow-sm">
-                                <h5><i class="fas fa-bullhorn"></i> Informasi</h5>
-                                <ul class="small ps-3 mb-0">
-                                    <li>Pastikan rentang tanggal valid untuk mengunduh laporan.</li>
-                                    <li>Data laporan akan difilter sesuai <b>Tanggal Awal</b> dan <b>Tanggal Akhir</b>
-                                        yang
-                                        pilih.</li>
-                                    <li>Sistem akan menghitung otomatis <b>Total Baris Data</b> dan <b>Total Jumlah
-                                            Status</b>.
-                                    </li>
-                                    <li>Jika tidak ada data pada periode tersebut, laporan tetap dapat diunduh namun
-                                        berisi
-                                        informasi kosong.</li>
-                                    <li>Laporan dapat diunduh dalam format <b>PDF</b> atau <b>Excel</b>.</li>
-                                </ul>
-                            </div>
-                            <div class="card text-bg-grey">
-                                <div class="card-body">
-                                    <div class="row g-2">
-                                        <div class="col-xl-6 col-sm-6 col-md-6">
-                                            <input-label ref="start_dateRef" class="fw-semibold" for="start_date_dw"
-                                                value="Tanggal Awal" />
-                                            <text-input type="date" name="start_date_dw" v-model="form.start_date_dw" />
-                                        </div>
-                                        <div class="col-xl-6 col-md-6 col-sm-6">
-                                            <input-label class="fw-semibold" for="end_date_dw" value="Tanggal Akhir" />
-                                            <text-input type="date" name="end_date_dw" v-model="form.end_date_dw" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr />
-                            <div v-if="information" class="text-bg-grey border rounded-3 p-3 mb-4 shadow-sm">
-                                <ul class="list-unstyled small mb-0">
-                                    <li><b>Periode:</b>
-                                        {{ information.first_date }} s/d {{ information.last_date }}
-                                    </li>
-                                    <li><b>Total Baris Data:</b> {{ information.total_rows }}</li>
-                                    <li><b>Total Jumlah Status:</b> {{ information.total_status }}</li>
-                                    <li>
-                                        <b>Minggu Ke:</b>
-                                        {{ information.week_start }}
-                                        <template v-if="information.week_start !== information.week_end">
-                                            s/d {{ information.week_end }}
-                                        </template>
-                                    </li>
-                                </ul>
-
-                            </div>
-
-                            <div class="d-flex justify-content-between ">
-                                <base-button class="mb-2" @click="resetField" type="button" name="cancel" label="Batal"
-                                    variant="outline-danger" />
-                                <div class="d-flex gap-2">
-                                    <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
-                                        icon="fas fa-file-pdf" :variant="!isDisableBtnDownload ? 'danger' : 'secondary'"
-                                        class="bg-gradient" name="print_pdf" label="Unduh PDF" />
-                                    <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
-                                        icon="fas fa-file-excel"
-                                        :variant="!isDisableBtnDownload ? 'success' : 'secondary'" class="bg-gradient"
-                                        name="print_excel" label="Unduh Excel" />
-                                </div>
-                            </div>
-
-                        </template>
-                    </modal>
-                </div>
-            </div>
 
 
         </template>
@@ -797,5 +735,77 @@ const fileterFields = computed(() => [
     font-size: 26px;
     font-weight: 700;
     margin-top: -4px;
+}
+
+
+/* Toolbar Container */
+.action-toolbar {
+    width: fit-content;
+}
+
+/* Base Button Style */
+.btn-action-soft,
+.btn-action-primary {
+    border: none;
+    padding: 6px 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+/* Soft Button (Info, Unduh, Segarkan) */
+.btn-action-soft {
+    background-color: transparent;
+    color: #475569;
+}
+
+.btn-action-soft:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.btn-action-soft i {
+    font-size: 1rem;
+}
+
+.btn-action-danger {
+    background-color: #f87171;
+    color: white;
+    border-radius: 10px !important;
+    /* Membuatnya sedikit menonjol */
+    box-shadow: 0 4px 6px -1px rgba(13, 110, 253, 0.2);
+}
+
+/* Primary Button (Buat Laporan) */
+.btn-action-primary {
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 10px !important;
+    /* Membuatnya sedikit menonjol */
+    box-shadow: 0 4px 6px -1px rgba(13, 110, 253, 0.2);
+}
+
+.btn-action-primary:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px -1px rgba(13, 110, 253, 0.3);
+}
+
+/* Styling Khusus untuk btn-group agar tidak kaku */
+.btn-group .btn:not(:last-child) {
+    border-right: 1px solid #f1f5f9;
+}
+
+.btn-group {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 2px;
+}
+
+/* Animasi Spinner */
+.fa-spin {
+    animation: fa-spin 1s infinite linear;
 }
 </style>

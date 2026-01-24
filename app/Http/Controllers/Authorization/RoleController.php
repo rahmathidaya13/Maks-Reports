@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Cache;
 use App\Repositories\AuthorizationRoles;
 use Spatie\Permission\Models\Permission;
 
@@ -50,13 +49,13 @@ class RoleController extends Controller
                 'permissions.*' => 'string|exists:permissions,name',
             ],
             [
-                'name.required' => 'Role wajib diisi.',
-                'name.unique' => 'Role sudah ada.',
-                'name.string' => 'Role wajib tidak sesuai.',
-                'permissions.array' => 'Permission wajib dipilih',
-                'permissions.required' => 'Permission salah satu wajib dipilih',
-                'permissions.*.exists' => 'Permission tidak ditemukan.',
-                'permissions.*.string' => 'Permission invalid.',
+                'name.required' => 'Peran wajib diisi.',
+                'name.unique' => 'Peran sudah ada.',
+                'name.string' => 'Peran wajib tidak sesuai.',
+                'permissions.array' => 'Izin permission wajib dipilih',
+                'permissions.required' => 'Izin permission salah satu wajib dipilih',
+                'permissions.*.exists' => 'Izin permission tidak ditemukan.',
+                'permissions.*.string' => 'Izin permission invalid.',
             ]
         );
 
@@ -69,7 +68,7 @@ class RoleController extends Controller
             $checkRole->syncPermissions($validated['permissions']);
         }
         $this->roleRepository->clearCache(auth()->id());
-        return redirect()->route('roles')->with('message', 'Role ' . $validated['name'] . ' Berhasil ditambahkan.');
+        return redirect()->route('roles')->with('message', 'Peran ' . $validated['name'] . ' Berhasil ditambahkan.');
     }
     public function show(Role $roles, string $id)
     {
@@ -97,13 +96,13 @@ class RoleController extends Controller
                 'permissions.*' => 'string|exists:permissions,name',
             ],
             [
-                'name.required' => 'Role wajib diisi.',
-                'name.unique' => 'Role sudah ada.',
-                'name.string' => 'Role wajib tidak sesuai.',
-                'permissions.array' => 'Permission wajib dipilih',
-                'permissions.required' => 'Permission salah satu wajib dipilih',
-                'permissions.*.exists' => 'Permission tidak ditemukan.',
-                'permissions.*.string' => 'Permission invalid.',
+                'name.required' => 'Peran wajib diisi.',
+                'name.unique' => 'Peran sudah ada.',
+                'name.string' => 'Peran wajib tidak sesuai.',
+                'permissions.array' => 'Izin permission wajib dipilih',
+                'permissions.required' => 'Izin permission salah satu wajib dipilih',
+                'permissions.*.exists' => 'Izin permission tidak ditemukan.',
+                'permissions.*.string' => 'Izin permission invalid.',
             ]
         );
 
@@ -117,7 +116,7 @@ class RoleController extends Controller
         }
         $this->roleRepository->clearCache(auth()->id());
 
-        return redirect()->route('roles')->with('message', 'Role ' . $validated['name'] . ' Berhasil diperbarui.');
+        return redirect()->route('roles')->with('message', 'Peran ' . $validated['name'] . ' Berhasil diperbarui.');
     }
 
     public function destroy(Role $role, string $id)
@@ -136,5 +135,11 @@ class RoleController extends Controller
 
         $role::whereIn('id', $all_id)->delete();
         return redirect()->route('roles')->with('message', count($all_id) . ' Data berhasil Terhapus.');
+    }
+
+    public function reset()
+    {
+        $this->roleRepository->clearCache(auth()->id());
+        return redirect()->route('roles')->with('message', 'Data tabel Peran berhasil diperbarui.');
     }
 }

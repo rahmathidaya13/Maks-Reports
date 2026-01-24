@@ -83,7 +83,7 @@ const goToBack = (id) => {
                     { text: 'Ubah Profil' },
                 ]" />
             <loader-page ref="loaderActive" />
-            <callout :type="$page.props.flash.message ? 'success' : 'danger'" :duration="10" :message="message" />
+            <callout />
 
             <div class="row pb-4">
                 <div class="col-12">

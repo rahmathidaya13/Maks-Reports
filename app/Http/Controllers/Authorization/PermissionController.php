@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
 use App\Repositories\AuthorizationPermissions;
-use Illuminate\Validation\ValidationException;
 
 class PermissionController extends Controller
 {
@@ -46,7 +45,7 @@ class PermissionController extends Controller
         $validated = $request->validate(
             [
                 'name'   => 'required|array|min:1',
-                'name.*' => 'required|string|min:1|distinct|unique:permissions,name',
+                'name.*' => 'required|array|min:1|distinct|unique:permissions,name',
             ],
             [
                 // Untuk array utama
@@ -100,15 +99,20 @@ class PermissionController extends Controller
     {
         $validated = $request->validate(
             [
-                'name' => 'required|string|unique:permissions,name,' . $id . ',.id',
-                'guard_name' => 'required|string',
+                'name' => 'required|array|min:1|unique:permissions,name,' . $id . ',.id',
+                'name.*' => 'required|array|min:1|distinct|unique:permissions,name,' . $id . ',.id',
             ],
             [
-                'name.required' => 'Permission wajib dibuat',
-                'name.string' => 'Permission wajib tidak sesuai',
-                'name.unique' => 'Permission sudah ada',
-                'guard_name.required' => 'Guard name wajib dibuat',
-                'guard_name.string' => 'Guard name wajib tidak sesuai',
+                 'name.required' => 'Minimal harus mengisi daftar izin.',
+                'name.array'    => 'Format izin tidak valid.',
+                'name.min'      => 'Minimal harus ada 1 izin yang diinputkan.',
+
+                // Untuk setiap item dalam array
+                'name.*.required' => 'Izin wajib diisi.',
+                'name.*.array'   => 'Salah satu izin akses harus dipilih.',
+                'name.*.min'      => 'Nama izin minimal harus 1 karakter.',
+                'name.*.distinct' => 'Nama izin tidak boleh duplikat dengan izin lain.',
+                'name.*.unique'   => 'Nama izin ini sudah ada di database.',
             ]
         );
         $nameOrigin = Str::snake($validated['name']);
@@ -232,5 +236,11 @@ class PermissionController extends Controller
         $message = count($permissionNames) . " izin akses berhasil diproses: " . implode(', ', $permissionNames);
 
         return redirect()->route('permissions')->with('message', $message);
+    }
+
+    public function reset()
+    {
+        $this->permissions->clearCache(auth()->id());
+        return redirect()->route('permissions')->with('message', 'Data izin akses berhasil diperbarui.');
     }
 }

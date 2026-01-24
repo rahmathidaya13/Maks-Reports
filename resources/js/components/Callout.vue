@@ -1,14 +1,7 @@
 <script setup>
-import { ref, watch } from "vue";
+import { usePage } from "@inertiajs/vue3";
+import { ref, watch, computed } from "vue";
 const props = defineProps({
-    message: {
-        type: String,
-        default: "",
-    },
-    type: {
-        type: [String, Object, Array],
-        default: 'info', // info | success | warning | danger
-    },
     icon: {
         type: Object,
         default: {
@@ -20,9 +13,29 @@ const props = defineProps({
     },
     duration: {
         type: Number,
-        default: 5,
+        default: 10,
     },
 })
+const page = usePage();
+//  Logika Deteksi Flash Message
+const flashContent = computed(() => {
+    const flash = page.props.flash || {};
+    const errors = page.props.errors || {};
+
+    if (flash.success) return { msg: flash.success, type: 'success' };
+    if (flash.error) return { msg: flash.error, type: 'danger' };
+    if (flash.warning) return { msg: flash.warning, type: 'warning' };
+    if (flash.info) return { msg: flash.info, type: 'info' };
+    if (flash.message) return { msg: flash.message, type: 'success' };
+
+    if (errors.error) return { msg: errors.error, type: 'danger' };
+    if (errors.message) return { msg: errors.message, type: 'danger' };
+    if (errors.warning) return { msg: errors.warning, type: 'warning' };
+    if (errors.info) return { msg: errors.info, type: 'info' };
+
+
+    return null;
+});
 
 // Mengontrol visibilitas alert
 const visible = ref(false);
@@ -30,20 +43,23 @@ const countdown = ref(props.duration);
 let timer;
 // Mengubah nilai visible jika message berubah
 watch(
-    () => props.message,
+    () => flashContent.value,
     (newValue) => {
+        if (timer) clearInterval(timer);
         if (newValue) {
             visible.value = true;
             countdown.value = props.duration;
 
-            clearInterval(timer)
             timer = setInterval(() => {
                 countdown.value--
                 if (countdown.value <= 0) {
                     visible.value = false
                     clearInterval(timer)
+                    page.props.flash = {};
                 }
             }, 1000);
+        } else {
+            visible.value = false
         }
     },
     { immediate: true }
@@ -52,49 +68,69 @@ watch(
 
 <template>
     <transition name="fade-alert" appear>
-        <div :class="['callout rounded-0 align-items-center d-flex justify-content-between', `callout-${type}`]"
-            v-if="visible">
+        <div :class="['callout rounded-3 align-items-center d-flex justify-content-between', `callout-${flashContent.type}`]"
+            v-if="flashContent && visible">
             <div class="d-flex align-items-center gap-2 fw-semibold">
-                <i v-if="type" :class="icon[type]"></i>
-                {{ message }}
+                <i v-if="flashContent.type" :class="icon[flashContent.type]"></i>
+                {{ flashContent.msg }}
             </div>
             <span class="small fw-bold">{{ countdown }}</span>
         </div>
-
-        <!-- <div :class="['alert rounded-1', `alert-${variant}`, 'fw-bold', 'd-flex', 'justify-content-between', 'align-items-center']"
-            role="alert" v-if="visible">
-            <div class="d-flex align-items-center gap-2">
-                <i v-if="variant" :class="icon[variant]"></i>
-                {{ message }}
-            </div>
-            <span class="small fw-bold">{{ countdown }}</span>
-        </div> -->
     </transition>
 </template>
 <style scoped>
-/* Transisi dengan class bawaan Vue */
 .fade-alert-enter-active,
 .fade-alert-leave-active {
-    transition: all 0.5s ease-in-out;
+    transition: all 0.4s ease-in-out;
 }
 
-.fade-alert-enter-from {
+.fade-alert-enter-from,
+.fade-alert-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-20px);
 }
 
-.fade-alert-enter-to {
-    opacity: 1;
-    transform: translateY(0);
-}
-
+.fade-alert-enter-to,
 .fade-alert-leave-from {
     opacity: 1;
     transform: translateY(0);
 }
 
-.fade-alert-leave-to {
-    opacity: 0;
-    transform: translateY(-10px);
+.callout {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-left-width: 0.25rem;
+    /* Pastikan z-index tinggi agar melayang di atas konten lain jika perlu */
+    position: relative;
+    z-index: 999;
+}
+
+.callout-success {
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+    border-left-color: #0f5132;
+    color: #0f5132;
+}
+
+.callout-danger {
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+    border-left-color: #842029;
+    color: #842029;
+}
+
+.callout-warning {
+    background-color: #fff3cd;
+    border-color: #ffecb5;
+    border-left-color: #664d03;
+    color: #664d03;
+}
+
+.callout-info {
+    background-color: #cff4fc;
+    border-color: #b6effb;
+    border-left-color: #055160;
+    color: #055160;
 }
 </style>

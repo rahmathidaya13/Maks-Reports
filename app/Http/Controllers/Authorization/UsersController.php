@@ -10,17 +10,14 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
 use App\Repositories\AuthorizationUserHandle;
-use App\Repositories\PermissionHelper;
 
 class UsersController extends Controller
 {
     protected $userRepository;
-    protected $userServices;
 
-    public function __construct(AuthorizationUserHandle $userRepository, UserService $userServices)
+    public function __construct(AuthorizationUserHandle $userRepository)
     {
         $this->userRepository = $userRepository;
-        $this->userServices = $userServices;
     }
 
     public function index(Request $request)
@@ -51,6 +48,11 @@ class UsersController extends Controller
 
     public function edit(string $id)
     {
+        $userForDeveloper = auth()->user()->hasRole('developer');
+        if (!$userForDeveloper) {
+            return back()->with('warning', 'Anda tidak memiliki izin untuk mengakses halaman ini.');
+        }
+        // dd($userForDeveloper);
         // Gunakan variable singular '$user' karena findOrFail mengembalikan 1 objek
         $user = User::with(['profile', 'permissions', 'roles', 'profile.branch', 'profile.jobTitle'])
             ->findOrFail($id);
@@ -155,20 +157,12 @@ class UsersController extends Controller
 
         // Clear cache jika diperlukan (sesuai logic Anda)
         $this->userRepository->clearCache(auth()->id());
-
-        // Kirim data yang sudah diformat ke Vue
-        return Inertia::render('Authorization/UsersHandle/InfoDetail', [
-            'users' => $formattedUser
-        ]);
-    }
-
-    public function checkUser()
-    {
         return response()->json([
-            'message' => 'Status checked and broadcasted successfully.',
+            'status' => true,
+            'message' => 'Success',
+            'users' => $formattedUser,
         ]);
     }
-
     public function refresh()
     {
         $this->userRepository->clearCache(auth()->id());

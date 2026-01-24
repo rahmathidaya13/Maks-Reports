@@ -24,18 +24,11 @@ const inputId = computed(() => `${props.name}-${props.value}`);
 </script>
 
 <template>
-  <div class="form-check">
-    <input
-      class="form-check-input"
-      type="radio"
-      :name="name"
-      :id="inputId"
-      :value="value"
-      v-model="proxyChecked"
-      :class="inputClass"
-    />
-    <label class="form-check-label fw-bold" :for="inputId">
-      <slot>{{ label }}</slot>
-    </label>
-  </div>
+    <div class="form-check">
+        <input :class="['form-check-input', inputClass]" type="radio" :name="props.name" :id="inputId" :value="value"
+            v-model="proxyChecked" />
+        <label class="form-check-label fw-bold" :for="inputId">
+            <slot>{{ label }}</slot>
+        </label>
+    </div>
 </template>

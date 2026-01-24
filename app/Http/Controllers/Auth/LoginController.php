@@ -48,7 +48,7 @@ class LoginController extends Controller
         $this->authenticate($request);
         $request->session()->regenerate();
         // (new \App\Services\UserService())->checkAndBroadcastStatus();
-        return redirect()->intended('/home');
+        return redirect()->intended('/dashboard/analitics');
     }
 
     public function authenticate(Request $request): void

@@ -38,7 +38,7 @@ onMounted(() => {
         <div class="row justify-content-center min-vh-100 align-items-center">
             <div class="col-xl-8">
 
-                <alert class="rounded-3 fw-bold" variant="danger" :message="message" />
+                <callout />
 
                 <div class="card overflow-auto shadow-sm rounded rounded-4 p-xl-4 p-0">
                     <div class="card-title text-center mb-0 py-3">
@@ -59,8 +59,9 @@ onMounted(() => {
                                         <input-label for="name" value="Nama" class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-user input-icon-left"></i>
-                                            <text-input placeholder="Nama Pengguna" ref="inputName" :class="['input-fixed-height']" type="text"
-                                                name="name" v-model="form.name" />
+                                            <text-input placeholder="Nama Pengguna" ref="inputName"
+                                                :class="['input-fixed-height']" type="text" name="name"
+                                                v-model="form.name" />
                                         </div>
                                         <input-error :message="form.errors.name" />
                                     </div>
@@ -70,8 +71,8 @@ onMounted(() => {
                                         <input-label for="email" value="Email" class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-envelope input-icon-left"></i>
-                                            <text-input placeholder="Email Pengguna" :class="['input-fixed-height']" type="email" name="email"
-                                                v-model="form.email" />
+                                            <text-input placeholder="Email Pengguna" :class="['input-fixed-height']"
+                                                type="email" name="email" v-model="form.email" />
                                         </div>
                                         <input-error :message="form.errors.email" />
                                     </div>
@@ -81,7 +82,8 @@ onMounted(() => {
                                         <input-label for="password" value="Kata sandi" class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-lock input-icon-left"></i>
-                                            <text-input placeholder="Kata Sandi" :type="showPassword ? 'text' : 'password'"
+                                            <text-input placeholder="Kata Sandi"
+                                                :type="showPassword ? 'text' : 'password'"
                                                 :class="['input-fixed-height', 'has-icon-right']" autocomplete="off"
                                                 v-model="form.password" name="password" />
                                             <i @click="togglePasswordVisibilty"
@@ -97,7 +99,8 @@ onMounted(() => {
                                             class="fw-semibold" />
                                         <div class="position-relative">
                                             <i class="fas fa-lock input-icon-left"></i>
-                                            <text-input placeholder="Ulangi Kata Sandi" :type="showPasswordConfirm ? 'text' : 'password'"
+                                            <text-input placeholder="Ulangi Kata Sandi"
+                                                :type="showPasswordConfirm ? 'text' : 'password'"
                                                 :class="['input-fixed-height', 'has-icon-right']" autocomplete="off"
                                                 v-model="form.password_confirmation" name="password_confirmation" />
                                             <i @click="togglePasswordConfirm"

@@ -13,25 +13,37 @@ class DailyReportsRepository extends BaseCacheRepository
      */
     protected function getData(array $filters = []): LengthAwarePaginator
     {
-        $query = DailyReportModel::with('creator')
+        // Ambil data
+        $query = DailyReportModel::query()
+            ->with('creator')
             ->where('created_by', auth()->user()->id)
-            ->whereNull('deleted_at')
-            ->when(empty($filters['start_date']) && empty($filters['end_date']), function ($q) {
-                // Jika user TIDAK memberikan filter → ambil data hari ini
-                $q->whereDate('date', now()->toDateString());
-            })
-            ->when(!empty($filters['start_date']) && !empty($filters['end_date']), function ($q) use ($filters) {
-                // filter rentang tanggal
-                $q->whereBetween('date', [
-                    $filters['start_date'],
-                    $filters['end_date']
-                ]);
-            });
+            ->whereNull('deleted_at');
 
-        // Ambil data paginasi
-        $dailyReport = $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
+        /*
+    |--------------------------------------------------------------------------
+    | FILTER TANGGAL
+    | Vue mengirim null jika tidak dipilih
+    |--------------------------------------------------------------------------
+    */
+        $startDate = $filters['start_date'] ?? null;
+        $endDate   = $filters['end_date'] ?? null;
+
+        if ($startDate === null && $endDate === null) {
+            // Default: hari ini
+            $query->whereDate('date', now()->toDateString());
+        } elseif ($startDate !== null && $endDate !== null) {
+            // Rentang tanggal
+            $query->whereBetween('date', [$startDate, $endDate]);
+        } elseif ($startDate !== null) {
+            // Hanya start_date
+            $query->whereDate('date', '>=', $startDate);
+        } elseif ($endDate !== null) {
+            // Hanya end_date
+            $query->whereDate('date', '<=', $endDate);
+        }
+
+        return $query
+            ->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 1);
-
-        return $dailyReport;
     }
 }

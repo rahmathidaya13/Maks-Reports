@@ -3,12 +3,18 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import moment from "moment";
-import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
+import { reportDailyLeads } from "@/helpers/reportDailyLeads";
+import { formatDate } from "@/helpers/formatDate";
+import { formatText } from "@/helpers/formatText";
+import { hasRole, hasPermission } from "@/composables/useAuth";
 import axios from "axios";
+import ModalExport from "./ModalExport.vue";
+import ShareModal from "./ShareModal.vue";
 moment.locale('id');
 
-const page = usePage();
-const message = computed(() => page.props.flash.message || "");
+import { useConfirm } from "@/helpers/useConfirm.js"
+const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
+
 const props = defineProps({
     dailyReport: Object,
     filters: Object,
@@ -16,7 +22,7 @@ const props = defineProps({
 
 const filters = reactive({
     limit: props.filters.limit ?? 1,
-    order_by: props.filters.order_by ?? "desc",
+    order_by: props.filters.order_by ?? null,
     page: props.filters?.page ?? 1,
     start_date: props.filters.start_date ?? '',
     end_date: props.filters.end_date ?? '',
@@ -25,22 +31,41 @@ const filters = reactive({
 
 const selectedRow = ref([]);
 const isVisible = ref(false);
-function deleteSelected() {
+const deleteSelected = async () => {
+    // 1. Kondisi Tidak Ada Data (Berfungsi sebagai Alert)
     if (!selectedRow.value.length) {
-        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk dihapus.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
     }
-    swalConfirmDelete({
-        title: 'Hapus Data Terpilih',
-        text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
-        confirmText: 'Ya, Hapus Semua!',
-        onConfirm: () => {
-            router.post(route('daily_report.destroy_all'), { all_id: selectedRow.value }, {
-                preserveScroll: true,
-                preserveState: false,
-                replace: true
-            })
-        },
-    })
+
+    // 2. Kondisi Konfirmasi Hapus
+    const setConfirm = await confirm.ask({
+        title: 'Konfirmasi Hapus',
+        message: `Apakah Anda yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batal',
+        variant: 'danger'
+    });
+
+    // 3. Eksekusi
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.post(route('daily_report.destroy_all'), {
+            all_id: selectedRow.value
+        }, {
+            onFinish: () => {
+                loaderActive.value?.hide();
+                selectedRow.value = []; // Bersihkan pilihan setelah sukses
+            },
+            preserveScroll: true,
+            preserveState: false,
+        });
+    }
 }
 
 watch(selectedRow, (val) => {
@@ -52,26 +77,23 @@ watch(selectedRow, (val) => {
 })
 // atur warna badge sesuai jenis permission
 
-const deleted = (nameRoute, data) => {
-    swalConfirmDelete({
+const deleted = async (nameRoute, data) => {
+    const setConfirm = await confirm.ask({
         title: 'Hapus',
-        text: `Kamu yakin ingin menghapus laporan leads ini?`,
-        confirmText: 'Ya, Hapus!',
-        onConfirm: () => {
-            router.delete(route(nameRoute, data.daily_report_id), { preserveScroll: false, replace: true });
-        },
-    })
-}
+        message: `Kamu ingin menghapus laporan leads tanggal ${moment(data.daily_report_date).format("DD-MM-YYYY")} ?`,
+        confirmText: 'Ya, Hapus',
+        variant: 'danger' // Memberikan warna merah pada tombol konfirmasi
+    });
 
-
-const handleDownload = (type) => {
-    if (type === "pdf") {
-        router.get(route("users", { format: "pdf" }));
-    } else if (type === "excel") {
-        router.get(route("users", { format: "excel" }));
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.delete(route(nameRoute, data.daily_report_id), {
+            onFinish: () => loaderActive.value?.hide(),
+            preserveScroll: false,
+            replace: true
+        });
     }
-};
-
+}
 
 function daysOnlyConvert(dayValue) {
     const dayConvert = {
@@ -169,40 +191,12 @@ function openModal() {
     });
 }
 
-// tutup modal SETELAH Bootstrap selesai animasi
-function closeModal() {
-    showModal.value = false
-    form.start_date_dw = '';
-    form.end_date_dw = '';
-}
-
 // form untuk kirim berdasarkan tanggal
 const form = reactive({
     start_date_dw: '',
     end_date_dw: '',
 })
-function downloadPdf() {
-    window.open(
-        route('daily_report.print_to_pdf', {
-            start_date: form.start_date_dw,
-            end_date: form.end_date_dw
-        }),
-        '_blank'
-    )
-}
-function downloadExcel() {
-    window.open(
-        route('daily_report.print_to_excel', {
-            start_date: form.start_date_dw,
-            end_date: form.end_date_dw
-        }),
-        '_self'
-    )
-}
 
-const isDisableBtnDownload = computed(() => {
-    return !(form.start_date_dw && form.end_date_dw);
-})
 const information = ref(null);
 watch(() => [form.start_date_dw, form.end_date_dw],
     async ([start_date, end_date]) => {
@@ -220,20 +214,166 @@ watch(() => [form.start_date_dw, form.end_date_dw],
             information.value = data;
         }
     })
-const resetField = () => {
-    form.start_date_dw = '';
-    form.end_date_dw = '';
-}
 // =========Batas Fungsi untuk Tampilkan Modal========== //
 
-// permissions
-const perm = page.props.auth.user;
 
-// autofocus
-const inputRef = ref(null);
-onMounted(() => {
-    inputRef.value.focus();
-});
+const handleReset = () => {
+    filters.limit = 1
+    filters.order_by = null
+    filters.start_date = ''
+    filters.end_date = ''
+
+    // Langsung cari data bersih
+    searchByDate()
+}
+
+const filterFields = computed(() => [
+    {
+        key: 'start_date',
+        label: 'Tanggal Awal',
+        type: 'date',
+        col: 'col-xl-4 col-md-6',
+        autofocus: true,
+        icon: 'fas fa-calendar-alt',
+        props: {
+            inputClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        }
+    },
+    {
+        key: 'end_date',
+        label: 'Tanggal Akhir',
+        type: 'date',
+        col: 'col-xl-4 col-md-6',
+        autofocus: true,
+        icon: 'fas fa-calendar-alt',
+        props: {
+            inputClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        }
+    },
+    {
+        key: 'limit',
+        label: 'Batas',
+        type: 'select',
+        col: 'col-xl-2 col-md-6',
+        icon: 'fas fa-list-ul',
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: [
+            { value: 1, label: 'Default' },
+            { value: 5, label: '5 Baris' },
+            { value: 10, label: '10 Baris' },
+            { value: 20, label: '20 Baris' },
+            { value: 50, label: '50 Baris' },
+            { value: 100, label: '100 Baris' },
+        ]
+    },
+    {
+        key: 'order_by',
+        label: 'Urutan',
+        type: 'select',
+        col: 'col-xl-2 col-md-6 col-6',
+        icon: 'fas fa-sort',
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Urutan' },
+            { value: 'desc', label: 'Terbaru' },
+            { value: 'asc', label: 'Terlama' },
+        ]
+    },
+    {
+        key: 'reset',
+        label: 'Bersihkan',
+        type: 'button',
+        name: 'reset',
+        class: isDisableBtnDatePicker.value ? 'btn-secondary' : 'btn-outline-danger',
+        icon: 'fas fa-sync-alt',
+        disabled: isDisableBtnDatePicker.value,
+        handler: () => handleReset()
+    },
+    {
+        key: 'apply',
+        label: 'Terapkan',
+        type: 'button',
+        name: 'apply',
+        class: isDisableBtnDatePicker.value ? 'btn-secondary' : 'btn-primary',
+        icon: 'fas fa-check',
+        disabled: isDisableBtnDatePicker.value,
+        handler: () => applyDateRange()
+    },
+
+]);
+
+// collapse action
+const showInfo = ref(false);
+const previewText = ref('');
+const showShareModal = ref(false);
+const selectedReport = ref(null);
+const shareTo = (report) => {
+    selectedReport.value = {
+        name: report.creator.name,
+        branch: formatText(usePage().props.auth.user.profile.branch.name),
+        date: formatDate(report.date),
+        leads: report.leads,
+        closing: report.closing,
+        fu_yesterday: report.fu_yesterday,
+        fu_yesterday_closing: report.fu_yesterday_closing,
+        fu_before_yesterday: report.fu_before_yesterday,
+        fu_before_yesterday_closing: report.fu_before_yesterday_closing,
+        fu_last_week: report.fu_last_week,
+        fu_last_week_closing: report.fu_last_week_closing,
+        engage_old_customer: report.engage_old_customer,
+        engage_closing: report.engage_closing,
+    }
+    showShareModal.value = true;
+    previewText.value = reportDailyLeads(selectedReport.value)
+
+}
+
+const reset = () => {
+    isLoading.value = true
+    router.get(route("daily_report.reset"), {}, {
+        preserveScroll: true,
+        replace: true,
+        onFinish: () => isLoading.value = false
+    });
+}
+
+const toolbarActions = computed((e) => [
+    {
+        label: 'Info',
+        icon: 'fas fa-info-circle',
+        iconColor: 'text-info',
+        click: () => showInfo.value = !showInfo.value
+    },
+    {
+        label: 'Unduh',
+        icon: 'fas fa-download',
+        iconColor: 'text-success',
+        show: hasPermission('daily.report.leads.export'),
+        click: openModal
+    },
+    {
+        label: 'Buat Laporan',
+        icon: 'fas fa-plus-circle',
+        isPrimary: true, // Prioritas Utama
+        show: hasPermission('daily.report.leads.create'),
+        click: goToCreate
+    },
+    {
+        label: 'Segarkan',
+        icon: 'fas fa-redo-alt',
+        iconColor: 'text-primary',
+        loading: isLoading.value,
+        click: reset
+    },
+]);
 </script>
 <template>
 
@@ -241,82 +381,13 @@ onMounted(() => {
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :home="false" icon="fas fa-clipboard" title="Rekap Laporan Leads Harian"
+            <bread-crumbs :home="false" icon="fas fa-calendar-check" title="Rekap Laporan Leads Harian"
                 :items="[{ text: 'Laporan Harian' }]" />
-            <callout type="success" :duration="10" :message="message" />
-            <div class="row justify-content-center pb-3">
+            <callout />
+            <div class="row pb-3">
 
-                <!-- filter -->
-                <div class="col-12">
-                    <div class="card mb-4 border-0 custom-filter-card">
-
-                        <div class="card-header py-3 px-4 border-bottom ">
-                            <h5 class="card-title fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                                <span
-                                    class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 d-flex align-items-center justify-content-center"
-                                    style="width: 32px; height: 32px;">
-                                    <i class="fas fa-filter fa-sm"></i>
-                                </span>
-                                Filter
-                            </h5>
-                        </div>
-
-                        <div class="card-body p-4">
-                            <div class="row g-3 align-items-end">
-
-                                <div class="col-xl-4 col-md-6">
-                                    <input-label class="custom-label mb-2" for="start_date" value="TANGGAL AWAL" />
-                                    <div class="position-relative">
-                                        <i class="bi bi-calendar3 input-icon-left"></i>
-                                        <text-input ref="inputRef" name="start_date" v-model="filters.start_date"
-                                            type="date" :is-valid="false"
-                                            input-class="input-fixed-height pe-3 border-0 input-height-1" />
-                                    </div>
-                                </div>
-
-                                <div class="col-xl-4 col-md-6">
-                                    <input-label class="custom-label mb-2" for="end_date" value="TANGGAL AKHIR" />
-                                    <div class="input-group">
-                                        <i class="bi bi-calendar3 input-icon-left"></i>
-                                        <text-input name="end_date" v-model="filters.end_date" type="date"
-                                            :is-valid="false"
-                                            input-class="input-fixed-height pe-3 rounded-0 rounded-start border-0 input-height-1" />
-                                        <base-button :disabled="isDisableBtnDatePicker" @click="applyDateRange"
-                                            button-class="btn-filter-action"
-                                            :variant="isDisableBtnDatePicker ? 'secondary' : 'primary'" name="set"
-                                            label="Terapkan" />
-                                    </div>
-                                </div>
-
-                                <div class="col-xl-2 col-md-6">
-                                    <input-label class="custom-label mb-2" for="limit" value="BATAS DATA" />
-                                    <div class="input-group">
-                                        <select-input :is-valid="false" v-model="filters.limit" name="limit"
-                                            select-class="border-0 border input-height-1" :options="[
-                                                { value: 1, label: 'Default' },
-                                                { value: 5, label: '5 Baris' },
-                                                { value: 10, label: '10 Baris' },
-                                                { value: 20, label: '20 Baris' },
-                                                { value: 50, label: '50 Baris' },
-                                                { value: 100, label: '100 Baris' },
-                                            ]" />
-                                    </div>
-                                </div>
-
-                                <div class="col-xl-2 col-md-6">
-                                    <input-label class="custom-label mb-2" for="order_by" value="URUTKAN" />
-                                    <div class="input-group">
-                                        <select-input :is-valid="false" v-model="filters.order_by" name="order_by"
-                                            select-class="border-0 border input-height-1" :options="[
-                                                { value: 'desc', label: 'Terbaru' },
-                                                { value: 'asc', label: 'Terlama' },
-                                            ]" />
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-xl-12 col-12 mb-3">
+                    <base-filters title="Filter" v-model="filters" :fields="filterFields" />
                 </div>
 
 
@@ -324,10 +395,11 @@ onMounted(() => {
 
                     <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
                         <div
-                            class="card-header bg-white py-3 px-4 border-bottom-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3">
-                                    <i class="fas fa-calendar-day fs-4"></i>
+                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                                    <i class="fas fa-calendar-check fs-5"></i>
                                 </div>
                                 <div>
                                     <h5 class="fw-bold mb-0 text-dark">Laporan Leads Harian</h5>
@@ -335,28 +407,11 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-light text-secondary border shadow-sm" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#infoCollapse" aria-expanded="false">
-                                    <i class="fas fa-info-circle me-1"></i> Info Istilah
-                                </button>
-
-                                <button-delete-all v-if="perm.permissions.includes('daily.report.leads.delete')"
-                                    text="Hapus Data" class="shadow-sm" :isVisible="isVisible"
-                                    :deleted="deleteSelected" />
-
-                                <base-button v-if="perm.permissions.includes('daily.report.leads.export')"
-                                    variant="success" button-class="shadow-sm" icon="fas fa-download" @click="openModal"
-                                    name="unduh" label="Unduh" />
-
-                                <base-button v-if="perm.permissions.includes('daily.report.leads.create')"
-                                    @click="goToCreate" button-class="shadow-sm" name="create" label="Buat Laporan"
-                                    icon="fas fa-plus" />
-                            </div>
+                            <action-toolbar :actions="toolbarActions" />
                         </div>
 
-                        <div class="collapse" id="infoCollapse">
-                            <div class="card-body bg-info bg-opacity-10 border-top border-info border-opacity-25">
+                        <div class="collapse" id="infoCollapse" :class="{ show: showInfo }">
+                            <div class=" card-body bg-info bg-opacity-10 border-top border-info border-opacity-25">
                                 <div class="row">
                                     <div class="col-12">
                                         <h6 class="fw-bold text-info mb-2"><i class="fas fa-book me-2"></i>Kamus Laporan
@@ -390,11 +445,9 @@ onMounted(() => {
                     </div>
 
                     <div v-if="!dailyReport.data.length"
-                        class="card border-0 shadow-sm rounded-4 py-5 text-center mb-4">
-                        <div v-if="isLoading">
-                            <loader-horizontal message="Memuat data..." />
-                        </div>
-                        <div class="card-body" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                        class="card border-0 shadow-sm rounded-4 py-5 text-center mb-4 overflow-hidden">
+                        <loading-overlay :show="isLoading" />
+                        <div class="card-body">
                             <div class="opacity-25 mb-3">
                                 <i class="fas fa-clipboard-list fa-4x text-muted"></i>
                             </div>
@@ -403,7 +456,7 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <div v-else class="row g-4">
+                    <div class="row g-2">
 
                         <div class="col-12" :id="row.daily_report_id" v-for="(row, rowIndex) in dailyReport.data"
                             :key="rowIndex">
@@ -419,31 +472,38 @@ onMounted(() => {
                                         </span>
                                     </div>
 
-                                    <div class="dropdown">
-                                        <button class="btn btn-light border shadow-sm px-3 fs-6" type="button"
-                                            data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v text-muted"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
-                                            <li>
-                                                <button v-if="perm.permissions.includes('daily.report.leads.edit')"
-                                                    @click="goToEdit(row.daily_report_id)"
-                                                    class="dropdown-item py-2 d-flex align-items-center gap-2">
-                                                    <i class="fas fa-pencil-alt text-info"></i> Ubah Data
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button v-if="perm.permissions.includes('daily.report.leads.delete')"
-                                                    @click="deleted('daily_report.deleted', row)"
-                                                    class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger">
-                                                    <i class="fas fa-trash-alt"></i> Hapus
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <dropdown-action :item="row" :actions="[
+                                        {
+                                            label: 'Ubah Data',
+                                            icon: 'fas fa-pen',
+                                            color_icon: 'success',
+                                            action: 'edit',
+                                            permission: 'daily.report.leads.edit'
+                                        },
+                                        {
+                                            label: 'Bagikan',
+                                            icon: 'fab fa-whatsapp',
+                                            color: 'success',
+                                            action: 'share',
+                                            permission: 'daily.report.leads.share'
+                                        },
+                                        {
+                                            type: 'divider'
+                                        },
+                                        {
+                                            label: 'Hapus',
+                                            icon: 'fas fa-trash',
+                                            color: 'danger',
+                                            action: 'delete',
+                                            permission: 'daily.report.leads.delete'
+
+                                        },
+                                    ]" @edit="goToEdit(row.daily_report_id)"
+                                        @delete="deleted('daily_report.deleted', row)" @share="shareTo(row)" />
                                 </div>
 
-                                <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
+                                <div class="card-body p-0 position-relative">
+                                    <loading-overlay :show="isLoading" />
                                     <div class="table-responsive">
                                         <table class="table table-hover align-middle mb-0">
                                             <thead class="bg-light text-secondary small text-uppercase">
@@ -539,7 +599,9 @@ onMounted(() => {
                                                 <tr>
                                                     <td class="ps-4"
                                                         :class="row.engage_old_customer > 0 || row.engage_closing > 0 ? 'fw-semibold text-dark' : 'text-muted'">
-                                                        <i class="fas fa-handshake text-info me-2"></i> Engage Pelanggan
+                                                        <i class="fas fa-handshake me-2"
+                                                            :class="row.engage_old_customer > 0 || row.engage_closing > 0 ? 'text-info' : 'text-secondary'"></i>
+                                                        Engage Pelanggan
                                                         Lama
                                                     </td>
                                                     <td class="text-center bg-light bg-opacity-50 fw-bold"
@@ -553,7 +615,7 @@ onMounted(() => {
                                                 </tr>
 
                                             </tbody>
-                                            <tfoot class="bg-light border-top">
+                                            <tfoot class="bg-light border-top border">
                                                 <tr class="fw-bold">
                                                     <td class="ps-4 text-end text-uppercase small py-3">Total Harian :
                                                     </td>
@@ -563,7 +625,7 @@ onMounted(() => {
                                                             (row.engage_old_customer ?? 0) }}
                                                     </td>
                                                     <td
-                                                        class="text-center py-3 fs-6 bg-success bg-opacity-25 text-success-emphasis border-start border-success border-opacity-25">
+                                                        class="text-center py-3 fs-6 bg-success bg-opacity-25 text-success-emphasis">
                                                         {{ (row.closing ?? 0) + (row.fu_yesterday_closing ?? 0) +
                                                             (row.fu_before_yesterday_closing ?? 0) +
                                                             (row.fu_last_week_closing ?? 0) + (row.engage_closing ?? 0) }}
@@ -576,7 +638,7 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div class="col-12" v-if="props.dailyReport?.data.length > 0">
+                        <div class="col-12">
                             <div class="card border-0 shadow-sm rounded-4 overflow-hidden p-3 pb-0">
                                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                                     <div class="text-muted pb-3">
@@ -598,113 +660,13 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
-
-            <!-- modal open -->
-            <div class="row" v-if="showModal">
-                <div class="col-xl-12 col-sm-12">
-                    <modal @opened="openModal" size="modal-lg" :footer="false" icon="fas fa-download" v-if="showModal"
-                        :show="showModal" title="Unduh Laporan" @update:show="showModal = $event" @closed="closeModal">
-                        <template #body>
-
-                            <div class="callout callout-info shadow-sm">
-                                <h5><i class="fas fa-bullhorn"></i> Informasi</h5>
-                                <ul class="small ps-3 mb-0">
-                                    <li>Pastikan rentang tanggal valid untuk mengunduh laporan.</li>
-                                    <li>Data laporan akan difilter sesuai <b>Tanggal Awal</b> dan <b>Tanggal Akhir</b>
-                                        yang
-                                        pilih.</li>
-                                    <li>Jika tidak ada data pada periode tersebut, laporan tetap dapat diunduh namun
-                                        berisi
-                                        informasi kosong.</li>
-                                    <li>Laporan dapat diunduh dalam format <b>PDF</b> atau <b>Excel</b>.</li>
-
-                                    <li>Untuk mencetak laporan pada hari ini masukan <b>Tanggal Awal</b> dan
-                                        <b>Tanggal Akhir</b> sesuai dengan Tanggal hari ini.
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="card text-bg-grey">
-                                <div class="card-body">
-                                    <div class="row g-2">
-                                        <div class="col-xl-6 col-sm-6 col-md-6">
-                                            <input-label ref="start_dateRef" class="fw-semibold" for="start_date_dw"
-                                                value="Tanggal Awal" />
-                                            <text-input type="date" name="start_date_dw" v-model="form.start_date_dw" />
-                                        </div>
-                                        <div class="col-xl-6 col-md-6 col-sm-6">
-                                            <input-label class="fw-semibold" for="end_date_dw" value="Tanggal Akhir" />
-                                            <text-input type="date" name="end_date_dw" v-model="form.end_date_dw" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr />
-                            <div v-if="information" class="text-bg-grey border rounded-3 p-3 mb-4 shadow-sm">
-                                <ul class="list-unstyled small mb-0">
-                                    <li><b>Periode:</b>
-                                        {{ information.first_date }} s/d {{ information.last_date }}
-                                    </li>
-                                    <li>
-                                        <b>Minggu Ke:</b>
-                                        {{ information.week_start }}
-                                        <template v-if="information.week_start !== information.week_end">
-                                            s/d {{ information.week_end }}
-                                        </template>
-                                    </li>
-                                    <li><b>Total Baris Data:</b> {{ information.total_rows }}</li>
-                                    <li><b>Total Leads:</b> {{ information.total_leads ?? '-' }}</li>
-                                    <li><b>Total Closing:</b> {{ information.total_closing ?? '-' }}</li>
-                                    <li><b>Total Followup:</b> {{ information.total_fu ?? '-' }}</li>
-                                    <li><b>Total Followup Closing:</b> {{ information.total_fu_closing ?? '-' }}</li>
-                                    <li><b>Total Engage Old Customer:</b> {{ information.total_engage_old_customer ??
-                                        '-' }}</li>
-                                    <li><b>Total Engage Closing:</b> {{ information.total_engage_closing ?? '-' }}</li>
-                                </ul>
-
-                            </div>
-
-                            <div class="d-flex justify-content-between ">
-                                <base-button class="mb-2" @click="resetField" type="button" name="cancel" label="Batal"
-                                    variant="outline-danger" />
-                                <div class="d-flex gap-2">
-                                    <base-button :disabled="isDisableBtnDownload" @click="downloadPdf" type="button"
-                                        icon="fas fa-file-pdf" :variant="!isDisableBtnDownload ? 'danger' : 'secondary'"
-                                        class="bg-gradient" name="print_pdf" label="Unduh PDF" />
-                                    <base-button :disabled="isDisableBtnDownload" @click="downloadExcel" type="button"
-                                        icon="fas fa-file-excel"
-                                        :variant="!isDisableBtnDownload ? 'success' : 'secondary'" class="bg-gradient"
-                                        name="print_excel" label="Unduh Excel" />
-                                </div>
-                            </div>
-
-                        </template>
-                    </modal>
-                </div>
-            </div>
-
+            <ShareModal :previewText="previewText" :show="showShareModal" @update:show="showShareModal = $event"
+                :report="selectedReport" />
+            <ModalExport :form="form" :information="information" :show="showModal" @update:show="showModal = $event" />
         </template>
     </app-layout>
 </template>
 <style scoped>
-.table-overlay {
-    max-height: 70vh;
-    overflow-y: auto;
-    padding-right: 6px;
-    position: relative;
-}
-
-
-.blur-area {
-    transition: all 0.3s ease;
-}
-
-.blur-area.is-blurred {
-    filter: blur(3px);
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.6;
-}
-
 .table.table-striped tbody tr:nth-of-type(odd) {
     background-color: #c2dff731;
 }
@@ -718,84 +680,66 @@ onMounted(() => {
     transition: all 0.15s ease-in-out;
 }
 
-.line-table {
-    height: 1px;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.205);
-    margin: 10px 0;
+/* Toolbar Container */
+.action-toolbar {
+    width: fit-content;
 }
 
-.notes {
-    width: 100%;
-    /* Sesuaikan nilai ini sesuai kebutuhan Anda */
-    text-align: left;
-    /* 2. Pastikan konten yang panjang dipaksa untuk melipat */
-    white-space: normal;
-    /* 3. Gunakan properti untuk memecah kata panjang */
-    overflow-wrap: break-word;
-    word-break: break-word;
-    /* Tambahan: Opsional jika ingin menghilangkan scrollbar horizontal */
-    overflow-x: hidden;
-    vertical-align: top;
-    max-height: 300px;
-}
-
-
-
-/* Container Kartu Filter */
-.custom-filter-card {
-    background: #ffffff;
-    border-radius: 12px;
-    /* Sudut lebih bulat */
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-    /* Shadow sangat halus */
-    transition: all 0.3s ease;
-}
-
-.custom-filter-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    /* Efek naik saat hover */
-}
-
-/* Label yang lebih rapi */
-.custom-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    /* Warna abu-abu profesional */
-    text-transform: uppercase;
-}
-
-/* Styling Input & Select agar seragam */
-/* Note: CSS ini menargetkan elemen input yang dirender oleh komponen Vue kamu */
-.custom-filter-card input,
-.custom-filter-card select,
-.custom-filter-card .input-group-text {
-    border-color: #e9ecef;
-    padding-top: 0.6rem;
-    padding-bottom: 0.6rem;
-    font-size: 0.9rem;
-}
-
-/* Efek saat input diklik (Fokus) */
-.custom-filter-card input:focus,
-.custom-filter-card select:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 4px rgba(13, 109, 253, 0.185);
-    /* Ring fokus yang lembut */
-    background-color: #fff;
-}
-
-/* Tombol Terapkan (Filter Action) */
-.btn-filter-action {
-    border-top-right-radius: 6px !important;
-    border-bottom-right-radius: 6px !important;
+/* Base Button Style */
+.btn-action-soft,
+.btn-action-primary {
+    border: none;
+    padding: 6px 10px;
+    font-size: 0.875rem;
     font-weight: 600;
-    font-size: 0.85rem;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-    z-index: 5;
-    /* Pastikan tombol di atas border input */
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+/* Soft Button (Info, Unduh, Segarkan) */
+.btn-action-soft {
+    background-color: transparent;
+    color: #475569;
+}
+
+.btn-action-soft:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.btn-action-soft i {
+    font-size: 1rem;
+}
+
+/* Primary Button (Buat Laporan) */
+.btn-action-primary {
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 10px !important;
+    /* Membuatnya sedikit menonjol */
+    box-shadow: 0 4px 6px -1px rgba(13, 110, 253, 0.2);
+}
+
+.btn-action-primary:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px -1px rgba(13, 110, 253, 0.3);
+}
+
+/* Styling Khusus untuk btn-group agar tidak kaku */
+.btn-group .btn:not(:last-child) {
+    border-right: 1px solid #f1f5f9;
+}
+
+.btn-group {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 2px;
+}
+
+/* Animasi Spinner */
+.fa-spin {
+    animation: fa-spin 1s infinite linear;
 }
 </style>

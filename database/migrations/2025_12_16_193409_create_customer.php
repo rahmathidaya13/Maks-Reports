@@ -23,6 +23,7 @@ return new class extends Migration
 
             $table->string('customer_name', 50)->index();
             $table->string('number_phone_customer', 13)->unique()->index();
+            $table->string('type_bussiness', 255);
             $table->string('city', 50);
             $table->string('province', 50);
             $table->text('address');

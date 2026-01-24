@@ -20,10 +20,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
-
-
-
         $user = User::firstOrCreate(
             ['email' => 'rahmadlawrent6@gmail.com'],
             [

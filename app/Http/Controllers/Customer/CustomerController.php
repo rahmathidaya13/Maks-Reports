@@ -62,6 +62,7 @@ class CustomerController extends Controller
         $customers->city = Str::upper($request->input('city'));
         $customers->province = Str::upper($request->input('province'));
         $customers->address = $request->input('address');
+        $customers->type_bussiness = $request->input('type_bussiness');
         $customers->save();
         $this->customerRepository->clearCache(auth()->id());
         return redirect()->route('customers')->with('message', 'Data pelanggan Baru ' . $customers->customer_name . ' berhasil ditambahkan.');
@@ -103,6 +104,7 @@ class CustomerController extends Controller
         $customers->city = Str::upper($request->input('city'));
         $customers->province = Str::upper($request->input('province'));
         $customers->address = $request->input('address');
+        $customers->type_bussiness = $request->input('type_bussiness');
         $customers->update();
         $this->customerRepository->clearCache(auth()->id());
         return redirect()->route('customers')->with('message', 'Data pelanggan ' . $customers->customer_name . ' berhasil diperbarui.');
@@ -129,5 +131,11 @@ class CustomerController extends Controller
         CustomerModel::whereIn('customer_id', $ids)->delete();
         $this->customerRepository->clearCache(auth()->id());
         return redirect()->route('customers')->with('message', count($ids) . ' Data berhasil Terhapus.');
+    }
+
+    public function reset()
+    {
+        $this->customerRepository->clearCache(auth()->id());
+        return redirect()->route('customers')->with('message', 'Data berhasil disegarkan.');
     }
 }

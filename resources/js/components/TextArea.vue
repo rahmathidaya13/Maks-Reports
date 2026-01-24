@@ -1,6 +1,6 @@
 <script setup>
-import { onMounted, ref } from "vue";
-defineProps({
+import { computed, onMounted, ref, watch } from "vue";
+const props = defineProps({
     name: {
         type: String,
         default: ""
@@ -16,11 +16,31 @@ defineProps({
     inputClass: {
         type: [Array, Object, String],
         default: ""
+    },
+    placeholder: {
+        type: String,
+        default: ""
+    },
+    maxChar: {
+        type: Number,
+        default: 250
     }
 })
 const model = defineModel({
     type: String,
     required: true,
+});
+
+/* Hitung jumlah karakter */
+const charCount = computed(() => {
+    return model.value ? model.value.length : 0;
+})
+/* Batasi maksimal karakter */
+watch(model, (newVal) => {
+    if (!newVal) return;
+    if (newVal.length > props.maxChar) {
+        model.value = newVal.slice(0, props.maxChar);
+    }
 });
 const textarea = ref(null);
 onMounted(() => {
@@ -35,8 +55,33 @@ defineExpose({ focus: () => textarea.value.focus() });
 </script>
 
 <template>
-    <textarea v-model="model" :class="['form-control text-bg-grey', inputClass, {
-        'is-invalid': $page.props.errors[name],
-        'is-valid': model && !$page.props.errors[name]
-    }]" ref="textarea" :rows="rows" :cols="cols" :name="name" :id="name"></textarea>
+    <div class="textarea-wrapper text-bg-grey border rounded-3 p-2 transition" :class="{
+        'border-danger': $page.props.errors[props.name],
+        'border-success': model && !$page.props.errors[props.name],
+    }">
+        <textarea ref="textarea" v-model="model" :rows="rows" :cols="cols" :name="props.name" :id="props.name"
+            :placeholder="props.placeholder || 'Masukkan deskripsi...'"
+            class="form-control border-0 bg-transparent shadow-none resize-none" :class="inputClass"></textarea>
+
+        <div class="d-flex justify-content-end align-items-center mt-1 px-1">
+            <small class="fw-semibold" :class="charCount === props.maxChar ? 'text-danger' : 'text-secondary'">
+                {{ charCount }}/{{ props.maxChar }}
+            </small>
+        </div>
+    </div>
+
 </template>
+<style scoped>
+.textarea-wrapper {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.textarea-wrapper:focus-within {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.15);
+}
+
+.resize-none {
+    resize: none;
+}
+</style>

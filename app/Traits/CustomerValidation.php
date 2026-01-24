@@ -15,10 +15,11 @@ trait CustomerValidation
             'city' => ['required', 'string', 'max:50'],
             'province' => ['required', 'string', 'max:50'],
             'address' => ['required', 'string', 'max:250'],
+            'type_bussiness' => ['required', 'string', 'max:255'],
 
         ], [
             'national_id.string' => 'Nomor KTP harus berupa teks.',
-            'national_id.max' => 'Nomor KTP maksimal 16 karakter.',
+            'national_id.max' => 'Nomor KTP maksimal 20 karakter.',
             'national_id.unique' => 'Nomor KTP sudah terdaftar.',
 
 
@@ -43,6 +44,10 @@ trait CustomerValidation
             'address.required' => 'Alamat wajib diisi.',
             'address.string' => 'Alamat harus berupa teks.',
             'address.max' => 'Alamat maksimal 250 karakter.',
+
+            'type_bussiness.required' => 'Jenis Usaha wajib diisi.',
+            'type_bussiness.string' => 'Jenis Usaha harus berupa teks.',
+            'type_bussiness.max' => 'Jenis Usaha maksimal 255 karakter.',
         ])->validate();
     }
 }

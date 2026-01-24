@@ -1,6 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
+
+import { useConfirm } from "@/helpers/useConfirm.js"
+const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert
+
 const props = defineProps({
     transaction: Object,
 })
@@ -23,14 +27,27 @@ const canSubmit = computed(() => {
     return remaining.value > 0 && form.payment_method
 })
 
-const isSubmit = () => {
-    if (!canSubmit.value) return
-    form.post(route('transaction.settle', props.transaction?.transaction_id), {
-        preserveScroll: true,
-        onSuccess: () => form.reset(),
-    })
+const isSubmit = async () => {
+    if (!canSubmit.value) return;
+    const settConfirm = await confirm.ask({
+        title: 'Konfirmasi Pelunasan',
+        message: `Anda akan melunasi sisa tagihan sebesar ${formatCurrency(remaining.value)}. Proses ini tidak dapat dibatalkan.`,
+        confirmText: 'Ya, Lunasi',
+        icon: "fas fa-check-circle",
+        variantIcon: 'success',
+        variantButton: 'success',
+        requireCheckbox: true,
+        checkboxText: 'Saya telah menerima pembayaran dari pelanggan.'
+    });
+    if (settConfirm) {
+        form.post(route('transaction.settle', props.transaction?.transaction_id), {
+            preserveScroll: true,
+            onSuccess: () => form.reset(),
+        })
+    }
 };
 // end form fields
+
 // breandcrumb fields
 const title = ref("")
 const icon = ref("fas fa-money-bill-wave")
@@ -112,7 +129,8 @@ function formatCurrency(value) {
                             </div>
                         </div>
 
-                        <div class="card-body p-4">
+                        <div class="card-body p-4 position-relative">
+                            <loading-overlay :show="form.processing" text="Sedang memproses pelunasan..." />
 
                             <div
                                 class="bg-primary bg-opacity-10 rounded-4 p-4 mb-4 text-center border border-primary border-opacity-25 position-relative overflow-hidden">
@@ -185,7 +203,8 @@ function formatCurrency(value) {
                                             { value: null, label: '— Pilih Metode —' },
                                             { value: 'cash', label: '💵 Tunai (Cash)' },
                                             { value: 'transfer', label: '🏦 Transfer Bank' },
-                                            { value: 'debit', label: '💳 Kartu Debit' }
+                                            { value: 'debit', label: '💳 Kartu Debit' },
+                                            { value: 'qris', label: '𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃 QRIS' },
                                         ]" v-model="form.payment_method" />
                                     <input-error :message="form.errors.payment_method" class="mt-2" />
                                 </div>
@@ -216,6 +235,8 @@ function formatCurrency(value) {
 
                             </form-wrapper>
                         </div>
+
+
                     </div>
                 </div>
             </div>

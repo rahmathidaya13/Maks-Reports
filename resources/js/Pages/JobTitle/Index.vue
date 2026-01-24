@@ -2,21 +2,18 @@
 import { computed, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
-import { swalAlert, swalConfirmDelete } from "../../helpers/swalHelpers";
 import { highlight } from "@/helpers/highlight";
+import { hasRole, hasPermission } from "@/composables/useAuth";
 import moment from "moment";
 moment.locale('id');
 
+import { useConfirm } from "@/helpers/useConfirm.js"
+const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
 
-const page = usePage();
-const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
     jobTitle: Object,
     filters: Object,
 });
-
-// cek permission
-const perm = page.props.auth.user.permissions;
 
 const filters = reactive({
     keyword: props.filters.keyword ?? '',
@@ -39,21 +36,77 @@ const liveSearch = debounce((e) => {
 
 
 const header = [
-    { label: "No", key: "__index" },
-    { label: "Kode Jabatan", key: "job_title_code" },
-    { label: "Nama Jabatan", key: "title" },
-    { label: "Jabatan Alias", key: "title_alias" },
-    { label: "Deskripsi", key: "description" },
-    { label: "Dibuat Oleh", key: "created_by" },
-    { label: "Dibuat", key: "created_at" },
-    { label: "Diperbarui", key: "updated_at" },
-    { label: "Aksi", key: "-" },
+    {
+        label: "No",
+        key: "__index",
+        attrs: {
+            class: "text-center",
+            style: "width:50px"
+        }
+    },
+    {
+        label: "Kode Jabatan",
+        key: "job_title_code",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Nama Jabatan",
+        key: "title",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Jabatan Alias",
+        key: "title_alias",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Deskripsi",
+        key: "description",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Dibuat Oleh",
+        key: "created_by",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Dibuat",
+        key: "created_at",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Diperbarui",
+        key: "updated_at",
+        attrs: {
+            class: "text-center",
+        }
+    },
+    {
+        label: "Aksi",
+        key: "-",
+        attrs: {
+            class: "text-center",
+        }
+    },
 ];
 watch(
     () => [
         filters.keyword,
         filters.limit,
-        filters.order_by,],
+        filters.order_by,
+    ],
     () => {
         liveSearch();
     }
@@ -78,61 +131,74 @@ const edit = (id) => {
     });
 }
 
-const deleted = (nameRoute, data) => {
-    swalConfirmDelete({
+const deleted = async (nameRoute, data) => {
+    const setConfirm = await confirm.ask({
         title: 'Hapus',
-        text: `Kamu ingin menghapus Jabatan ${data.title} ? Tindakan ini tidak dapat kembalikan data yang terhapus!`,
-        confirmText: 'Ya, Hapus!',
-        onConfirm: () => {
-            loaderActive.value?.show("Sedang memuat data...");
-            router.delete(route(nameRoute, data.job_title_id), {
-                onFinish: () => loaderActive.value?.hide(),
-                preserveScroll: false,
-                replace: true
-            });
-        },
-    })
+        message: `Kamu ingin menghapus Jabatan ${data.title} ?`,
+        confirmText: 'Ya, Hapus',
+        variant: 'danger' // Memberikan warna merah pada tombol konfirmasi
+    });
+
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.delete(route(nameRoute, data.job_title_id), {
+            onFinish: () => loaderActive.value?.hide(),
+            preserveScroll: false,
+            replace: true
+        });
+    }
+}
+
+const reset = () => {
+    isLoading.value = true
+    router.get(route("job_title.reset"), {}, {
+        preserveScroll: true,
+        replace: true,
+        onFinish: () => isLoading.value = false
+    });
 }
 // end CRUD OPERATION
 
 // MULTIPLE DELETE
 const selectedRow = ref([]);
 const isVisible = ref(false);
-
-const isAllSelected = computed(() => {
-    const rows = props.jobTitle?.data ?? [];
-    return rows.length > 0 && selectedRow.value.length === rows.length;
-})
-
-function deleteSelected() {
+const deleteSelected = async () => {
+    // 1. Kondisi Tidak Ada Data (Berfungsi sebagai Alert)
     if (!selectedRow.value.length) {
-        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk dihapus.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
     }
-    console.log(selectedRow.value);
-    swalConfirmDelete({
-        title: 'Hapus Data Terpilih',
-        text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
-        confirmText: 'Ya, Hapus Semua!',
-        onConfirm: () => {
-            loaderActive.value?.show("Sedang memuat data...");
-            router.post(route('job_title.destroy_all'), { all_id: selectedRow.value }, {
-                onFinish: () => loaderActive.value?.hide(),
-                preserveScroll: true,
-                preserveState: false,
-            })
-        },
-    })
-}
-const isSelected = (id) => {
-    return selectedRow.value.includes(id);
-}
-const toggleAll = (evt) => {
-    if (evt.target.checked) {
-        selectedRow.value = props.jobTitle?.data.map(r => r.job_title_id);
-    } else {
-        selectedRow.value = [];
+
+    // 2. Kondisi Konfirmasi Hapus
+    const setConfirm = await confirm.ask({
+        title: 'Konfirmasi Hapus',
+        message: `Apakah Anda yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batal',
+        variant: 'danger'
+    });
+
+    // 3. Eksekusi
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.post(route('job_title.destroy_all'), {
+            all_id: selectedRow.value
+        }, {
+            onFinish: () => {
+                loaderActive.value?.hide();
+                selectedRow.value = []; // Bersihkan pilihan setelah sukses
+            },
+            preserveScroll: true,
+            preserveState: false,
+        });
     }
 }
+
 watch(selectedRow, (val) => {
     if (val.length > 0) {
         isVisible.value = true
@@ -165,11 +231,13 @@ const fileterFields = computed(() => [
         label: 'Pencarian',
         type: 'text',
         col: 'col-xl-8 col-12',
+        type: 'search',
+        icon: 'fas fa-search',
+        autofocus: true,
         props: {
             placeholder: 'Masukan Pencarian...',
-            inputClass: ' input-height-1',
+            inputClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
-            autofocus: true
         }
     },
     {
@@ -177,17 +245,18 @@ const fileterFields = computed(() => [
         label: 'Batas',
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
+        icon: 'fas fa-list-ul',
         props: {
-            selectClass: ' input-height-1',
+            selectClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         },
         options: [
             { value: null, label: 'Pilih Batas Data' },
-            { value: 10, label: '10' },
-            { value: 20, label: '20' },
-            { value: 30, label: '30' },
-            { value: 50, label: '50' },
-            { value: 100, label: '100' },
+            { value: 10, label: '10 Baris' },
+            { value: 20, label: '20 Baris' },
+            { value: 30, label: '30 Baris' },
+            { value: 50, label: '50 Baris' },
+            { value: 100, label: '100 Baris' },
         ]
     },
     {
@@ -195,8 +264,9 @@ const fileterFields = computed(() => [
         label: 'Urutan',
         type: 'select',
         col: 'col-xl-2 col-md-6 col-6',
+        icon: 'fas fa-sort',
         props: {
-            selectClass: 'input-height-1',
+            selectClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         },
         options: [
@@ -205,6 +275,34 @@ const fileterFields = computed(() => [
             { value: 'asc', label: 'Terlama' },
         ]
     },
+]);
+
+const toolbarActions = computed(() => [
+
+    {
+        label: `Hapus (${selectedRow.value.length})`,
+        icon: 'fas fa-trash-alt',
+        iconColor: 'text-danger',
+        labelColor: 'text-danger',
+        disabled: !selectedRow.value.length > 0,
+        show: hasPermission('job.title.delete'),
+        click: deleteSelected
+    },
+
+    {
+        label: 'Jabatan Baru',
+        icon: 'fas fa-plus-circle',
+        isPrimary: true, // Prioritas Utama
+        show: hasPermission('job.title.create'),
+        click: create
+    },
+    {
+        label: 'Segarkan',
+        icon: 'fas fa-redo-alt',
+        iconColor: 'text-primary',
+        loading: isLoading.value,
+        click: reset
+    }
 ]);
 </script>
 <template>
@@ -215,141 +313,99 @@ const fileterFields = computed(() => [
             <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar Jabatan"
                 :items="[{ text: 'Daftar Jabatan' }]" />
-            <callout type="success" :duration="10" :message="message" />
+            <callout />
             <div class="row pb-3">
                 <div class="col-xl-12 col-12 mb-3">
-                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
+                    <base-filters title="Filter" v-model="filters" :fields="fileterFields" />
                 </div>
                 <div class="col-xl-12 col-12">
                     <div class="card card-modern border-0 shadow-sm rounded-4 overflow-hidden">
                         <div
-                            class="card-header bg-white py-3 px-4 border-bottom-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <h5 class="fw-bold mb-0 text-dark">Data Jabatan</h5>
-                                <p class="text-muted small mb-0">informasi jabatan tersedia</p>
-                            </div>
+                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
 
-                            <div class="d-flex gap-2">
-                                <transition name="fade">
-                                    <button v-if="perm.includes('job.title.delete') && selectedRow.length > 0"
-                                        :disabled="!isVisible" @click="deleteSelected" type="button"
-                                        class="btn btn-danger shadow-sm d-flex align-items-center animate-pop">
-                                        <i class="fas fa-trash me-2"></i>
-                                        <span class="fw-bold">Hapus ({{ selectedRow.length }})</span>
-                                    </button>
-                                </transition>
-
-                                <button v-if="perm.includes('job.title.create')" type="button" @click.prevent="create"
-                                    class="btn btn-primary shadow-sm d-flex align-items-center px-3">
-                                    <i class="fas fa-plus me-2"></i> Jabatan Baru
-                                </button>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                                    <i class="fas fa-briefcase fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">Data Jabatan</h5>
+                                    <p class="text-muted small mb-0">
+                                        informasi jabatan tersedia
+                                    </p>
+                                </div>
                             </div>
+                            <action-toolbar :actions="toolbarActions" />
                         </div>
 
-                        <div v-if="isLoading"
-                            class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center z-3">
-                            <loader-horizontal message="Memuat..." />
-                        </div>
 
-                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0 custom-table text-nowrap">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th v-if="perm.includes('job.title.delete')" class="text-center">
-                                                <div class="form-check d-flex justify-content-center">
-                                                    <input :disabled="!jobTitle?.data.length" type="checkbox"
-                                                        class="form-check-input custom-checkbox"
-                                                        :checked="isAllSelected" @change="toggleAll($event)" />
-                                                </div>
-                                            </th>
-                                            <th v-for="col in header" :key="col.key"
-                                                class="text-secondary text-uppercase fw-bold text-center">
-                                                {{ col.label }}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-if="!jobTitle?.data.length">
-                                            <td :colspan="header.length + 1" class="text-center">
-                                                <div class="text-muted d-flex flex-column align-items-center">
-                                                    <i class="far fa-folder-open fs-1 mb-3 opacity-25"></i>
-                                                    <span>Tidak ada data ditemukan</span>
-                                                </div>
-                                            </td>
-                                        </tr>
+                        <div class="card-body p-0 position-relative">
 
-                                        <tr v-for="(item, index) in jobTitle?.data" :key="index"
-                                            :class="{ 'row-selected': isSelected(item.job_title_id) }">
+                            <base-table :markAll="hasPermission('job.title.delete')" :loader="isLoading"
+                                loaderText="Sedang memuat data..." :headers="header" :items="jobTitle?.data"
+                                row-key="job_title_id" @update:selected="(val) => selectedRow = val">
 
-                                            <td class="text-center" v-if="perm.includes('job.title.delete')">
-                                                <div class="form-check d-flex justify-content-center">
-                                                    <input type="checkbox" class="form-check-input custom-checkbox"
-                                                        :name="item.job_title_id" :id="item.job_title_id"
-                                                        :value="item.job_title_id" v-model="selectedRow" />
-                                                </div>
-                                            </td>
+                                <template #empty>
+                                    <div class="text-muted d-flex flex-column align-items-center">
+                                        <i class="far fa-folder-open fs-1 mb-3 opacity-25"></i>
+                                        <span>Tidak ada data ditemukan</span>
+                                    </div>
+                                </template>
 
-                                            <td class="ps-3 text-muted">{{ index + 1 + (jobTitle?.current_page
-                                                - 1) * jobTitle?.per_page }}</td>
+                                <template #row="{ item, index }">
+                                    <td class="ps-3 text-muted">{{ index + 1 + (jobTitle?.current_page
+                                        - 1) * jobTitle?.per_page }}</td>
 
-                                            <td class="ps-3">
-                                                <div class="fw-bold text-dark"
-                                                    v-html="highlight(item[header[1].key], filters.keyword)"></div>
-                                            </td>
-                                            <td class="ps-3">
-                                                <div v-html="highlight(item[header[2].key], filters.keyword)"></div>
-                                            </td>
-                                            <td class="text-center">
-                                                <div v-html="highlight(item[header[3].key], filters.keyword)"></div>
-                                            </td>
-                                            <td class="ps-3">
-                                                <div class="text-muted" v-html="item[header[4].key]"></div>
-                                            </td>
+                                    <td class="ps-3">
+                                        <div class="fw-bold text-dark"
+                                            v-html="highlight(item.job_title_code, filters.keyword)"></div>
+                                    </td>
+                                    <td class="ps-3">
+                                        <div v-html="highlight(item.title, filters.keyword)"></div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div v-html="highlight(item.title_alias, filters.keyword)"></div>
+                                    </td>
+                                    <td class="ps-3">
+                                        <div class="text-muted" v-html="item.description"></div>
+                                    </td>
 
-                                            <td class="ps-3">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <div class="avatar-circle bg-light text-primary fw-bold">
-                                                        {{ item.creator?.name ?
-                                                            item.creator.name.substring(0, 2).toUpperCase() : '??' }}
-                                                    </div>
-                                                    <span>{{ item.creator?.name ?? '-' }}</span>
-                                                </div>
-                                            </td>
+                                    <td class="ps-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-circle bg-light text-primary fw-bold">
+                                                {{ item.creator?.name ?
+                                                    item.creator.name.substring(0, 2).toUpperCase() : '??' }}
+                                            </div>
+                                            <span>{{ item.creator?.name ?? '-' }}</span>
+                                        </div>
+                                    </td>
 
-                                            <td class="ps-3 small text-muted">{{ daysTranslate(item[header[6].key]) }}
-                                            </td>
-                                            <td class="ps-3 small text-muted">{{ daysTranslate(item[header[7].key]) }}
-                                            </td>
+                                    <td class="ps-3 small text-muted">{{ daysTranslate(item.created_at) }}
+                                    </td>
+                                    <td class="ps-3 small text-muted">{{ daysTranslate(item.updated_at) }}
+                                    </td>
 
-                                            <td class="text-center">
-                                                <div class="dropdown dropstart">
-                                                    <button class="btn btn-light btn-icon shadow-sm" type="button"
-                                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="fas fa-ellipsis-v text-muted"></i>
-                                                    </button>
-                                                    <ul
-                                                        class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-3">
-                                                        <li v-if="perm.includes('job.title.edit')">
-                                                            <button @click.prevent="edit(item.job_title_id)"
-                                                                class="dropdown-item rounded-2 py-2 mb-1 d-flex align-items-center">
-                                                                <i class="bi bi-pencil-square text-primary me-2"></i>
-                                                                Edit Data
-                                                            </button>
-                                                        </li>
-                                                        <li v-if="perm.includes('job.title.delete')">
-                                                            <button @click.prevent="deleted('job_title.deleted', item)"
-                                                                class="dropdown-item rounded-2 py-2 text-danger d-flex align-items-center">
-                                                                <i class="bi bi-trash me-2"></i> Hapus Data
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                    <td class="text-center">
+                                        <dropdown-action :item="item" :actions="[
+                                            {
+                                                label: 'Ubah Jabatan',
+                                                icon: 'bi bi-pencil-square fs-6',
+                                                color_icon: 'success',
+                                                action: 'edit',
+                                                permission: 'job.title.edit'
+                                            },
+
+                                            {
+                                                label: 'Hapus',
+                                                icon: 'bi bi-trash fs-6',
+                                                color: 'danger',
+                                                action: 'delete',
+                                                permission: 'job.title.delete'
+                                            }
+                                        ]" @edit="edit(item.job_title_id)"
+                                            @delete="deleted('job_title.deleted', item)" />
+                                    </td>
+                                </template>
+                            </base-table>
                         </div>
 
                         <div
@@ -374,59 +430,14 @@ const fileterFields = computed(() => [
     </app-layout>
 </template>
 <style scoped>
-.blur-area {
-    transition: all 0.3s ease;
-}
-
-.blur-area.is-blurred {
-    filter: blur(3px);
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.6;
-}
-
 /* Card Modern */
 .card-modern {
     background: #ffffff;
     transition: all 0.3s ease;
 }
 
-/* Custom Table Styling */
-.custom-table thead th {
-    letter-spacing: 0.5px;
-    background-color: #f8f9fa;
-    /* Abu-abu sangat muda */
-    border-bottom: 2px solid #e9ecef;
-}
 
-.custom-table tbody td {
-    border-bottom: 1px solid #f1f3f5;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
 
-/* Row Hover Effect */
-.custom-table tbody tr {
-    transition: background-color 0.2s ease;
-}
-
-.custom-table tbody tr:hover {
-    background-color: #f8faff;
-    /* Biru sangat pudar saat hover */
-}
-
-/* Row Selected State */
-.row-selected {
-    background-color: #eff6ff !important;
-    /* Biru muda jika checkbox dicentang */
-}
-
-/* Custom Checkbox Size */
-.custom-checkbox {
-    width: 1.1em;
-    height: 1.1em;
-    cursor: pointer;
-}
 
 /* Avatar Circle untuk kolom Creator */
 .avatar-circle {
@@ -439,21 +450,20 @@ const fileterFields = computed(() => [
     font-size: 0.7rem;
 }
 
-/* Tombol Icon Action (Titik tiga) */
+/* --- DROPDOWN & ICON --- */
 .btn-icon {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #f1f1f1;
+    transition: all 0.2s;
 }
 
 .btn-icon:hover {
     background-color: #e9ecef;
-    color: #000;
+    transform: rotate(90deg);
 }
-
 
 /* Animation Utilities */
 .animate-pop {

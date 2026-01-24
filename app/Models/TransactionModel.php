@@ -15,7 +15,6 @@ class TransactionModel extends Model
     protected $primaryKey = 'transaction_id';
     public $incrementing = false;
     protected $keyType = 'string';
-
     protected $fillable = [
         'created_by',
         'invoice',
@@ -26,6 +25,9 @@ class TransactionModel extends Model
         'price_discount',
         'price_final',
         'status',
+        'cancel_reason',
+        'cancelled_at',
+        'cancelled_by'
     ];
     public function creator()
     {

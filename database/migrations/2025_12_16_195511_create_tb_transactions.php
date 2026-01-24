@@ -42,7 +42,16 @@ return new class extends Migration
             $table->enum('status', [
                 'payment',
                 'repayment',
+                'cancelled'
             ])->default('payment')->index();
+
+            // ==== PEMBATALAN ====
+            $table->text('cancel_reason')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->foreignUuid('cancelled_by')
+                ->nullable()
+                ->constrained('users', 'id')
+                ->nullOnDelete();
 
             $table->softDeletes();
             $table->timestamps();

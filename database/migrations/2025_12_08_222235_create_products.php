@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('slug', 100)->nullable()->unique();
             $table->string('category', 100)->index();
 
+            $table->enum('item_condition', ['new', 'used', 'refurbished', 'damaged', 'discontinued'])->default('new')->index();
 
             $table->text('image_path')->nullable();
 

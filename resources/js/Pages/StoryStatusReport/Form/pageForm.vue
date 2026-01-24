@@ -134,7 +134,7 @@ function daysOnlyConvert(dayValue) {
                             <p class="text-muted small mb-0">Isi data aktivitas harian Anda dengan lengkap pada form di
                                 bawah.</p>
                         </div>
-                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm hover-scale">
+                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm">
                             <i class="fas fa-arrow-left me-2"></i>Kembali
                         </Link>
                     </div>
@@ -177,7 +177,7 @@ function daysOnlyConvert(dayValue) {
                                 <div class="d-flex align-items-center">
                                     <div
                                         class="icon-box-header bg-info bg-opacity-10 text-info rounded-3 me-3 d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-chart-line fs-4"></i>
+                                        <i class="fas fa-sticky-note fs-4"></i>
                                     </div>
 
                                     <div>
@@ -189,7 +189,7 @@ function daysOnlyConvert(dayValue) {
                                     </div>
                                 </div>
 
-                                <div class="d-flex align-items-center gap-2 flex-wrap"
+                                <div class="d-flex align-items-center gap-1 flex-wrap"
                                     v-if="!props.storyReport?.story_status_id">
 
                                     <div
@@ -203,14 +203,14 @@ function daysOnlyConvert(dayValue) {
                                         <transition name="fade">
                                             <button v-if="forms.length > 1" title="Hapus Semua Form"
                                                 @click="forms = [{ report_time: '', count_status: '' }]" type="button"
-                                                class="btn btn-outline-danger shadow-sm">
+                                                class="btn btn-outline-danger shadow-sm rounded-pill">
                                                 <i class="fas fa-trash-alt me-md-2"></i>
                                                 <span class="d-none d-md-inline">Hapus ({{ forms.length }})</span>
                                             </button>
                                         </transition>
 
                                         <button title="Tambah Form" @click="addForm"
-                                            class="btn btn-primary bg-gradient shadow-sm">
+                                            class="btn btn-primary bg-gradient shadow-sm rounded-pill">
                                             <i class="fas fa-plus me-md-2"></i>
                                             <span class="d-none d-md-inline">Tambah</span>
                                         </button>
@@ -220,15 +220,8 @@ function daysOnlyConvert(dayValue) {
                             </div>
                         </div>
 
-                        <div v-if="form.processing"
-                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                            style="z-index: 10;">
-                            <loader-horizontal
-                                :message="props.storyReport?.story_status_id ? 'Memperbarui Laporan...' : 'Menyimpan Laporan...'" />
-                        </div>
-
-                        <div class="card-body p-4 bg-light bg-opacity-25"
-                            :class="['blur-area', form.processing ? 'is-blurred' : '']">
+                        <div class="card-body p-4 position-relative">
+                            <loading-overlay :show="form.processing" />
                             <form-wrapper @submit="isSubmit">
 
                                 <div class="position-relative ps-1">
@@ -305,14 +298,18 @@ function daysOnlyConvert(dayValue) {
                                                 class="small fw-normal text-muted">Entri</span></div>
                                     </div>
 
-                                    <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <Link @click.prevent="goBack" :href="url"
+                                            class="btn btn-light border-0 text-muted">
+                                            Batal & Kembali
+                                        </Link>
                                         <base-button @click="isSubmit" waiting="Menyimpan..." :loading="form.processing"
-                                            class="rounded-3 shadow px-4 btn-height-1 fw-bold btn-save-custom"
+                                            class="rounded-3 shadow px-4 fw-bold"
                                             :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-save' : 'fas fa-paper-plane'"
                                             :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
                                             type="submit"
                                             :name="props.storyReport && props.storyReport?.story_status_id ? 'ubah' : 'simpan'"
-                                            :label="props.storyReport && props.storyReport?.story_status_id ? 'Simpan Perubahan' : 'Kirim Laporan'" />
+                                            :label="props.storyReport && props.storyReport?.story_status_id ? 'Simpan Perubahan' : 'Simpan Laporan'" />
                                     </div>
                                 </div>
 
@@ -336,7 +333,7 @@ function daysOnlyConvert(dayValue) {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
-    transform: translateY(-5px);
+    transform: translateY(-1px);
 }
 
 .fade-enter-to,
@@ -345,16 +342,6 @@ function daysOnlyConvert(dayValue) {
     transform: translateY(0);
 }
 
-.blur-area {
-    transition: all 0.3s ease;
-}
-
-.blur-area.is-blurred {
-    filter: blur(3px);
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.6;
-}
 
 
 .form-overlay {
@@ -417,6 +404,7 @@ function daysOnlyConvert(dayValue) {
 .tracking-tight {
     letter-spacing: -0.025em;
 }
+
 /* Utility Class untuk Tombol Kembali */
 .hover-scale {
     transition: transform 0.2s;
@@ -435,5 +423,4 @@ function daysOnlyConvert(dayValue) {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
 }
-
 </style>

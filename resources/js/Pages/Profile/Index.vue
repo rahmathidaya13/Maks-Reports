@@ -67,7 +67,6 @@ const labels = {
     4: "Photo",
 };
 const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
-// console.log(hasAnyErrors.value);
 </script>
 
 <template>
@@ -77,7 +76,7 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
     <div class="container py-5">
         <div class="row justify-content-center align-items-center">
             <div class="col-xl-12">
-                <alert :duration="15" :variant="page.message ? 'info' : 'success'" :message="page.message" />
+                <callout />
 
                 <div class="bg-light border rounded-3 p-4 mb-4 d-flex align-items-center border-secondary-subtle">
                     <div class="me-3 text-primary">
@@ -172,10 +171,16 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
                                     value="Jenjang Pendidikan" />
                                 <select-input class="input-height-1" text="-- Pilih Jenjang --" name="education"
                                     v-model="form.education" :options="[
+                                        { value: 'SD', label: 'SD/Sederajat' },
+                                        { value: 'SMP', label: 'SMP/Sederajat' },
                                         { value: 'SMA', label: 'SMA/SMK/Sederajat' },
+                                        { value: 'D1/Diploma', label: 'D1 - Diploma' },
+                                        { value: 'D2/Diploma', label: 'D2 - Diploma' },
                                         { value: 'D3/Diploma', label: 'D3 - Diploma' },
+                                        { value: 'D4/Diploma', label: 'D4 - Diploma' },
                                         { value: 'S1/Sarjana', label: 'S1 - Sarjana' },
                                         { value: 'S2/Magister', label: 'S2 - Magister' },
+                                        { value: 'S3/Doktor', label: 'S3 - Doktor' },
                                     ]" />
                                 <input-error :message="form.errors.education" />
                             </div>
@@ -297,9 +302,10 @@ const hasAnyErrors = computed(() => Object.keys(form.errors).length > 0);
                                         <ul class="mb-0 ps-3 small text-muted">
                                             <li>Pastikan seluruh data yang diinput sudah benar dan sesuai dokumen resmi.
                                             </li>
-                                            <li>Anda dapat kembali ke langkah sebelumnya ("Back") jika perlu melakukan
+                                            <li>Anda dapat kembali ke langkah sebelumnya ("Kembali") jika perlu
+                                                melakukan
                                                 koreksi.</li>
-                                            <li>Tekan tombol <strong>"Submit"</strong> di bawah untuk menyimpan profil
+                                            <li>Tekan tombol <strong>"Simpan"</strong> di bawah untuk menyimpan profil
                                                 Anda.</li>
                                         </ul>
                                     </div>

@@ -14,6 +14,7 @@ const form = useForm({
     city: props.customers?.city ?? "",
     province: props.customers?.province ?? "",
     address: props.customers?.address ?? "",
+    type_bussiness: props.customers?.type_bussiness ?? "",
 });
 const isSubmit = () => {
     if (props.customers?.customer_id) {
@@ -146,13 +147,13 @@ onMounted(() => {
                                         <input-label class="fw-bold small" for="customer_name" value="Nama Lengkap" />
                                         <div class="position-relative">
                                             <i class="fas fa-user text-muted input-icon-left"></i>
-                                            <text-input placeholder="Masukkan nama lengkap" class="input-fixed-height"
+                                            <text-input placeholder="Contoh: Bpk/Ibu, Abc" class="input-fixed-height"
                                                 v-model="form.customer_name" name="customer_name" />
                                         </div>
                                         <input-error :message="form.errors.customer_name" />
                                     </div>
 
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <input-label class="fw-bold small" for="number_phone"
                                             value="Nomor WhatsApp / HP" />
                                         <div class="position-relative">
@@ -162,6 +163,17 @@ onMounted(() => {
                                                 v-model="form.number_phone" />
                                         </div>
                                         <input-error :message="form.errors.number_phone" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input-label class="fw-bold small" for="type_bussines"
+                                            value="Jenis Usaha" />
+                                        <div class="position-relative">
+                                            <i class="fas fa-briefcase input-icon-left"></i>
+                                            <text-input input-class="input-fixed-height"
+                                                placeholder="Contoh: Jualan,UMKM, Dll" name="type_bussines" type="text"
+                                                v-model="form.type_bussiness" />
+                                        </div>
+                                        <input-error :message="form.errors.type_bussiness" />
                                     </div>
                                 </div>
 

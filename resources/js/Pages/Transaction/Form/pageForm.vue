@@ -1,6 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
+
+import { useConfirm } from "@/helpers/useConfirm.js"
+const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert
+
 const props = defineProps({
     transaction: Object,
     customer: Object,
@@ -28,7 +32,7 @@ const dpAmount = computed(() => {
     return priceFinal.value * 0.5
 })
 const paymentInfoText = computed(() => {
-    if (!priceFinal.vsalue) return null
+    if (!priceFinal.value) return null
 
     if (form.payment_type === 'payment') {
         return `Dana pertama (DP) minimal 50% dari harga akhir.`
@@ -40,23 +44,36 @@ const paymentInfoText = computed(() => {
 
     return null
 })
-const isSubmit = () => {
-    if (props.transaction?.transaction_id) {
-        form.put(route('transaction.update', props.transaction?.transaction_id), {
-            onSuccess: () => {
-                form.reset();
-            },
-        })
-    } else {
-        // Create
-        form.post(route('transaction.store'), {
-            onSuccess: () => {
-                form.reset();
-            }
+const isSubmit = async () => {
+    const isEdit = !!props.transaction?.transaction_id; // mode edit
+    const isGoToRepayment = form.payment_type === 'repayment';  // jika dipilih lunas
+    const settConfirm = !isEdit || isGoToRepayment;
+    if (settConfirm) {
+        const ok = await confirm.ask({
+            title: isEdit ? 'Konfirmasi Pelunasan' : 'Konfirmasi Transaksi Baru',
+            message: isGoToRepayment
+                ? 'Transaksi yang ditandai LUNAS tidak akan bisa diubah lagi. Pastikan data yang dibuat sudah benar sebelum diproses.'
+                : 'Mohon periksa kembali nominal dan data pelanggan. Pastikan data yang dibuat sudah benar sebelum diproses.',
+            confirmText: isEdit ? 'Proses Perubahan' : 'Proses Sekarang',
+            variantIcon: isEdit ? 'success' : 'primary',
+            variantButton: isEdit ? 'success' : 'primary',
+            requireCheckbox: true,
+            icon: isEdit ? 'fas fa-check-circle' : 'fas fa-check-circle',
+            checkboxText: 'Saya menyatakan data sudah benar & siap diproses.'
         });
+        if (!ok) return;
     }
+    executeSubmit()
 };
-
+const executeSubmit = () => {
+    const method = props.transaction?.transaction_id ? 'put' : 'post';
+    const actionRoute = props.transaction?.transaction_id
+        ? route('transaction.update', props.transaction?.transaction_id)
+        : route('transaction.store');
+    form[method](actionRoute, {
+        onSuccess: () => form.reset(),
+    });
+}
 const customerOptions = computed(() => {
     return props.customer?.map((value) => ({
         id: value.customer_id,
@@ -111,12 +128,6 @@ const goBack = () => {
 }
 // splash loader screen end
 
-// autofocus
-// const inputRef = ref(null);
-// onMounted(() => {
-//     inputRef.value.focus();
-// })
-// end autofocus
 
 function formatCurrency(value) {
     if (!value) return "0";
@@ -127,6 +138,7 @@ function formatCurrency(value) {
         maximumFractionDigits: 0,
     }).format(value)
 }
+
 </script>
 <template>
 
@@ -135,10 +147,9 @@ function formatCurrency(value) {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-
             <div class="row g-4 pb-3">
 
-                <div class="col-xl-8 col-lg-8 col-12">
+                <div class="col-xl-8 col-lg-12 col-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                         <div
                             class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
@@ -158,14 +169,10 @@ function formatCurrency(value) {
                             </Link>
                         </div>
 
-                        <div v-if="form.processing"
-                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                            style="z-index: 10;">
-                            <loader-horizontal
-                                :message="props.transaction?.transaction_id ? 'Memperbarui Transaksi...' : 'Menyimpan Transaksi...'" />
-                        </div>
+                        <div class="card-body p-4 position-relative">
+                            <loading-overlay :show="form.processing"
+                                :text="props.transaction?.transaction_id ? 'Memperbarui Transaksi...' : 'Menyimpan Transaksi...'" />
 
-                        <div class="card-body p-4">
                             <form-wrapper @submit="isSubmit">
 
                                 <h6 class="text-primary fw-bold mb-3 small text-uppercase">
@@ -232,11 +239,14 @@ function formatCurrency(value) {
                                     <div class="col-md-6">
                                         <input-label class="fw-bold small" for="payment_type"
                                             value="Jenis Pembayaran" />
-                                        <select-input name="payment_type" :options="[
-                                            { value: null, label: '— Pilih Opsi —' },
-                                            { value: 'payment', label: 'DP / Cicilan (50%)' },
-                                            { value: 'repayment', label: 'Lunas Langsung' },
-                                        ]" v-model="form.payment_type" />
+                                        <select-input :disabled="props.transaction?.transaction_id" name="payment_type"
+                                            :options="[
+                                                { value: null, label: '— Pilih Opsi —' },
+                                                { value: 'payment', label: 'DP / Cicilan (50%)' },
+                                                { value: 'repayment', label: 'Lunas Langsung' },
+                                            ]" v-model="form.payment_type" />
+                                        <input v-if="props.transaction?.transaction_id" type="hidden"
+                                            v-model="form.payment_type">
                                         <input-error :message="form.errors.payment_type" />
                                     </div>
 
@@ -244,9 +254,10 @@ function formatCurrency(value) {
                                         <input-label class="fw-bold small" for="payment_method" value="Metode Bayar" />
                                         <select-input name="payment_method" :options="[
                                             { value: null, label: '— Pilih Metode —' },
-                                            { value: 'cash', label: 'Tunai' },
-                                            { value: 'transfer', label: 'Transfer Bank' },
-                                            { value: 'debit', label: 'Debit Card' }
+                                            { value: 'cash', label: '💵 Tunai (Cash)' },
+                                            { value: 'transfer', label: '🏦 Transfer Bank' },
+                                            { value: 'debit', label: '💳 Kartu Debit' },
+                                            { value: 'qris', label: '𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃 QRIS' },
                                         ]" v-model="form.payment_method" />
                                         <input-error :message="form.errors.payment_method" />
                                     </div>
@@ -266,26 +277,18 @@ function formatCurrency(value) {
                                             <div class="mt-2 small text-muted">
                                                 <i class="fas fa-info-circle me-1"></i>
                                                 Minimal DP yang disarankan: <strong>{{ formatCurrency(dpAmount)
-                                                    }}</strong>
+                                                }}</strong>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="d-block d-lg-none mt-4">
-                                    <base-button :loading="form.processing" class="w-100 btn-lg rounded-3"
-                                        :variant="props.transaction?.transaction_id ? 'success' : 'primary'"
-                                        type="submit"
-                                        :label="props.transaction?.transaction_id ? 'Simpan Perubahan' : 'Buat Transaksi'" />
-                                </div>
-
                             </form-wrapper>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-4 col-lg-4 col-12">
-                    <div class="sticky-top" style="top: 20px; z-index: 1;">
+                <div class="col-xl-4 col-lg-12 col-12">
+                    <div class="sticky-top" style="top: 4.5rem; z-index: 1;">
                         <div class="card border-0 shadow-sm rounded-4 bg-light bg-gradient">
                             <div class="card-body p-4">
                                 <h6 class="fw-bold text-dark mb-4 text-uppercase ls-1 border-bottom pb-2">
@@ -301,7 +304,7 @@ function formatCurrency(value) {
                                     <span class="text-danger small"><i
                                             class="fas fa-minus-circle me-1"></i>Diskon</span>
                                     <span class="text-danger fw-semibold">- {{ formatCurrency(form.price_discount || 0)
-                                        }}</span>
+                                    }}</span>
                                 </div>
 
                                 <div class="bg-white p-3 rounded-3 shadow-sm border mb-4">
@@ -318,7 +321,7 @@ function formatCurrency(value) {
                                     <div v-if="form.payment_type === 'payment'">
                                         <div class="d-flex justify-content-between small mb-1">
                                             <span>Status:</span>
-                                            <span class="badge bg-warning text-dark">Kredit / DP</span>
+                                            <span class="badge bg-warning text-dark">DP/ Cicilan</span>
                                         </div>
                                         <div class="d-flex justify-content-between small fw-bold">
                                             <span>Bayar Sekarang (DP):</span>
@@ -342,9 +345,10 @@ function formatCurrency(value) {
                                 </div>
 
                                 <div class="d-grid gap-2">
-                                    <base-button :loading="form.processing" class="rounded-3 py-3 fw-bold shadow-sm"
+                                    <base-button :loading="form.processing" waiting="Memproses..."
+                                        class="rounded-3 btn-height-1 fw-bold shadow-sm"
                                         :class="props.transaction?.transaction_id ? 'btn-success' : 'btn-primary'"
-                                        :icon="props.transaction?.transaction_id ? 'fas fa-save' : 'fas fa-paper-plane'"
+                                        :icon="props.transaction?.transaction_id ? 'fas fa-check-circle' : 'fas fa-paper-plane'"
                                         type="button" @click="isSubmit"
                                         :label="props.transaction?.transaction_id ? 'Simpan Perubahan' : 'Proses Transaksi'" />
 
@@ -367,15 +371,3 @@ function formatCurrency(value) {
     </app-layout>
 
 </template>
-<style scoped>
-.blur-area {
-    transition: all 0.3s ease;
-}
-
-.blur-area.is-blurred {
-    filter: blur(3px);
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.6;
-}
-</style>

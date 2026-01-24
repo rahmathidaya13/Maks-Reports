@@ -19,6 +19,7 @@ class ProductModel extends Model
         'source',
         'slug',
         'name',
+        'item_condition',
         'link',
         'image_link',
         'image_path',

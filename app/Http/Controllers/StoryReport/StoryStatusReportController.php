@@ -24,6 +24,7 @@ class StoryStatusReportController extends Controller
     }
     public function index(Request $request)
     {
+        $this->authorize('view', StoryStatusReportModel::class);
         $filters = $request->only([
             'keyword',
             'limit',
@@ -51,6 +52,7 @@ class StoryStatusReportController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', StoryStatusReportModel::class);
         $this->storyReportRepository->clearCache(auth()->id());
         return Inertia::render('StoryStatusReport/Form/pageForm', [
             'date' => now()->toDateString(),
@@ -62,6 +64,7 @@ class StoryStatusReportController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', StoryStatusReportModel::class);
         $this->validationText($request->all());
         $reports = $request->input('report', []);
         $createdReportById = [];
@@ -76,10 +79,7 @@ class StoryStatusReportController extends Controller
         }
         $this->storyReportRepository->clearCache(auth()->id());
         return redirect()->route('story_report')
-            ->with('message', count($createdReportById) . ' ' . 'Laporan Update Status harian berhasil dibuat')
-            ->with('highlight_by_id', $createdReportById)
-            ->with('recent_timestamp', now()->toDateTimeString())
-            ->with('highlight_type', 'create');
+            ->with('message', count($createdReportById) . ' ' . 'Laporan Update Status harian berhasil dibuat');
     }
 
     /**
@@ -95,6 +95,7 @@ class StoryStatusReportController extends Controller
      */
     public function edit(StoryStatusReportModel $storyStatusReportModel, string $id)
     {
+        $this->authorize('edit', StoryStatusReportModel::class);
         $storyReport = $storyStatusReportModel::findOrFail($id);
         $this->storyReportRepository->clearCache(auth()->id());
         return Inertia::render('StoryStatusReport/Form/pageForm', [
@@ -108,6 +109,7 @@ class StoryStatusReportController extends Controller
      */
     public function update(Request $request, StoryStatusReportModel $storyStatusReportModel, string $id)
     {
+        $this->authorize('edit', StoryStatusReportModel::class);
         $data = $this->validationText($request->all());
         $storyReport = $storyStatusReportModel::findOrFail($id);
         $storyReport->created_by = auth()->id();
@@ -117,10 +119,7 @@ class StoryStatusReportController extends Controller
         $storyReport->update();
         $this->storyReportRepository->clearCache(auth()->id());
         return redirect()->route('story_report')
-            ->with('message', 'Laporan Update Status harian kamu berhasil diperbarui')
-            ->with('highlight_by_id', $storyReport->story_status_id)
-            ->with('recent_timestamp', now()->toDateTimeString())
-            ->with('highlight_type', 'edit');
+            ->with('message', 'Laporan Update Status harian kamu berhasil diperbarui');
     }
 
     /**
@@ -128,6 +127,7 @@ class StoryStatusReportController extends Controller
      */
     public function destroy(StoryStatusReportModel $storyStatusReportModel, string $id)
     {
+        $this->authorize('delete', StoryStatusReportModel::class);
         $storyReport = $storyStatusReportModel::find($id);
         $storyReport->delete();
         $this->storyReportRepository->clearCache(auth()->id());
@@ -136,6 +136,7 @@ class StoryStatusReportController extends Controller
 
     public function destroy_all(StoryStatusReportModel $storyStatusReportModel, Request $request)
     {
+        $this->authorize('delete', StoryStatusReportModel::class);
         $all_id = $request->input('ids', []);
         if (!count($all_id)) {
             return back()->with('message', 'Tidak ada data yang dipilih.');
@@ -143,5 +144,11 @@ class StoryStatusReportController extends Controller
         $storyStatusReportModel::whereIn('story_status_id', $all_id)->delete();
         $this->storyReportRepository->clearCache(auth()->id());
         return redirect()->route('story_report')->with('message', count($all_id) . ' Data berhasil Terhapus.');
+    }
+
+    public function reset()
+    {
+        $this->storyReportRepository->clearCache(auth()->id());
+        return redirect()->route('story_report')->with('message', 'Data laporan Update Status harian berhasil diperbarui');
     }
 }

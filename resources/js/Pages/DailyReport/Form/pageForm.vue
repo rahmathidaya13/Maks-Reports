@@ -112,7 +112,7 @@ function daysOnlyConvert(dayValue) {
                             <h4 class="fw-bold text-dark mb-1">Input Laporan</h4>
                             <p class="text-muted small mb-0">Isi data aktivitas harian Anda dengan lengkap.</p>
                         </div>
-                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm hover-scale">
+                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm">
                             <i class="fas fa-arrow-left me-2"></i>Kembali
                         </Link>
                     </div>
@@ -205,10 +205,10 @@ function daysOnlyConvert(dayValue) {
                                     <h6 class="section-title text-secondary mb-3"><i
                                             class="fas fa-history me-2"></i>Rincian Follow Up (FU)</h6>
 
-                                    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                                    <div class="row g-3">
 
-                                        <div class="col">
-                                            <div class="stat-card border rounded-3 p-3 h-100 hover-shadow">
+                                        <div class="col-6">
+                                            <div class="stat-card border rounded-3 p-3 h-100">
                                                 <div class="d-flex align-items-center mb-2 text-muted">
                                                     <i class="fas fa-clock me-2"></i> <span class="fw-bold small">FU
                                                         Pelanggan Kemarin</span>
@@ -229,8 +229,8 @@ function daysOnlyConvert(dayValue) {
                                             </div>
                                         </div>
 
-                                        <div class="col">
-                                            <div class="stat-card border rounded-3 p-3 h-100 hover-shadow">
+                                        <div class="col-6">
+                                            <div class="stat-card border rounded-3 p-3 h-100">
                                                 <div class="d-flex align-items-center mb-2 text-muted">
                                                     <i class="fas fa-calendar-minus me-2"></i> <span
                                                         class="fw-bold small">FU PELANGGAN 2 HARI LALU</span>
@@ -251,8 +251,8 @@ function daysOnlyConvert(dayValue) {
                                             </div>
                                         </div>
 
-                                        <div class="col">
-                                            <div class="stat-card border rounded-3 p-3 h-100 hover-shadow">
+                                        <div class="col-6">
+                                            <div class="stat-card border rounded-3 p-3 h-100">
                                                 <div class="d-flex align-items-center mb-2 text-muted">
                                                     <i class="fas fa-calendar-week me-2"></i> <span
                                                         class="fw-bold small">FU PELANGGAN MINGGU LALU</span>
@@ -273,8 +273,8 @@ function daysOnlyConvert(dayValue) {
                                             </div>
                                         </div>
 
-                                        <div class="col">
-                                            <div class="stat-card border rounded-3 p-3 h-100 hover-shadow">
+                                        <div class="col-6">
+                                            <div class="stat-card border rounded-3 p-3 h-100">
                                                 <div class="d-flex align-items-center mb-2 text-muted">
                                                     <i class="fas fa-users me-2"></i> <span
                                                         class="fw-bold small">PELANGGAN LAMA</span>
@@ -300,12 +300,12 @@ function daysOnlyConvert(dayValue) {
 
                                 <div class="d-flex justify-content-end mt-4 gap-3">
                                     <button @click.prevent="goBack"
-                                        class="btn btn-light text-muted border px-4 rounded-3 shadow-sm">
-                                        Batal
+                                        class="btn btn-light text-muted border-0 px-4 rounded-3 shadow-sm">
+                                        Batal & Kembali
                                     </button>
 
                                     <base-button waiting="Menyimpan..." :loading="form.processing"
-                                        button-class="btn-height-2 px-4 rounded-3 shadow-sm btn-save-custom"
+                                        button-class="btn-height-1 px-4 rounded-3 shadow-sm"
                                         :icon="props.dailyReport?.daily_report_id ? 'fas fa-check-circle' : 'fas fa-save'"
                                         :variant="props.dailyReport?.daily_report_id ? 'success' : 'primary'"
                                         type="submit"

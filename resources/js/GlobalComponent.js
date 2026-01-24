@@ -41,11 +41,17 @@ import InputYears from "./components/inputYears.vue";
 import Callout from "./components/Callout.vue";
 import FilterDynamic from "./components/FilterDynamic.vue";
 import ChartBar from "./components/ChartBar.vue";
+import InputWithButton from "./components/InputWithButton.vue";
+import DropdownAction from "./components/DropdownAction.vue";
+import Filters from "./components/Filters.vue";
+import LoadingOverlay from "./components/LoadingOverlay.vue";
+import ActionToolbar from "./components/ActionToolbar.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
         app.component("loader-horizontal", LoaderHorizontal);
         app.component("loader-page", LoaderPerPage);
+        app.component("loading-overlay", LoadingOverlay);
         app.component("alert", Alert);
         app.component("drop-down", DropDown);
         app.component("modal", Modal);
@@ -64,6 +70,7 @@ export default {
         app.component("input-years", InputYears);
         app.component("text-area", TextArea);
         app.component("text-input", TextInput);
+        app.component("input-with-button", InputWithButton);
         app.component("quill-text", QuillText);
         app.component("callout", Callout);
         app.component("currency-input", CurrencyInput);
@@ -77,12 +84,15 @@ export default {
         app.component("select-input", Selectinput);
         app.component("select-2", Selects2);
         app.component("popper", Popper);
-        app.component("base-table", BaseTable);
         app.component("tables", Tables);
+        app.component("base-table", BaseTable);
         app.component("radio-box", RadioBox);
         app.component("pagination", Pagination);
         app.component("summernote-editor", SummernoteEditor);
         app.component("filter-dynamic", FilterDynamic);
+        app.component("base-filters", Filters);
         app.component("chart-bar", ChartBar);
+        app.component("dropdown-action", DropdownAction);
+        app.component("action-toolbar", ActionToolbar);
     },
 };

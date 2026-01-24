@@ -8,7 +8,9 @@ trait DashboardSummaryStatusReport
 {
     public function dashboardSummary()
     {
-        $user = auth()->user()->id;
+
+        $user = auth()->id();
+
         $reports = StoryStatusReportModel::where('created_by', $user)
             ->whereDate('report_date', now()->toDateString())
             ->orderBy('report_time')

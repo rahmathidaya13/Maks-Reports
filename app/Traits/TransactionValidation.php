@@ -17,7 +17,7 @@ trait TransactionValidation
             'price_original' => 'required|numeric|min:0',
             'price_discount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
             'payment_type' => 'required|in:payment,repayment',
-            'payment_method' => 'required|in:cash,transfer,debit',
+            'payment_method' => 'required|in:cash,transfer,debit,qris',
             'amount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
         ], [
             'customer_id.required' => 'Customer wajib dipilih.',

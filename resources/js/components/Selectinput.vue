@@ -2,7 +2,7 @@
 import { computed, onMounted } from 'vue'
 const props = defineProps({
     modelValue: {
-        type: [String, Number,Array, null],
+        type: [String, Number, Array, null],
         default: null
     },
     text: {
@@ -18,7 +18,7 @@ const props = defineProps({
         default: () => []
     },
     disabled: {
-        type: Boolean,
+        type: [Boolean, String],
         default: false
     },
     selectClass: {
@@ -48,7 +48,7 @@ function formatLabel(label) {
 }
 </script>
 <template>
-    <select v-model="selectedValue" :disabled="disabled" :class="['form-select text-bg-grey', selectClass, {
+    <select v-model="selectedValue" :disabled="disabled" :class="['form-select', selectClass, {
         'is-invalid': isInvalid && $page.props.errors[name],
         'is-valid': isValid && modelValue && !$page.props.errors[name]
     }]" :name="name" :id="name">
@@ -58,3 +58,12 @@ function formatLabel(label) {
         </option>
     </select>
 </template>
+<style scoped>
+.was-validated .form-select:invalid:focus,
+.was-validated .datatable-selector:invalid:focus,
+.form-select.is-invalid:focus,
+.is-invalid.datatable-selector:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.1rem rgba(220, 53, 69, 0.25);
+}
+</style>

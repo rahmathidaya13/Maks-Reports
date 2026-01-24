@@ -25,16 +25,16 @@ defineProps({
 </script>
 <template>
     <div class="pagetitle mb-4 py-2">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
             <div class="d-flex align-items-center">
                 <div v-if="icon"
-                    class="bg-white text-primary shadow-sm rounded-3 d-flex align-items-center justify-content-center me-3"
-                    style="width: 45px; height: 45px; font-size: 1.2rem;">
+                    class="bg-white text-primary shadow-sm rounded-3 d-flex align-items-center justify-content-center me-2"
+                    style="width: 50px; height: 50px; font-size: 1.5rem;">
                     <i :class="icon"></i>
                 </div>
-                <div>
-                    <h4 class="fw-bold text-dark mb-0 ls-tight text-capitalize ">{{ title }}</h4>
+                <div class="w-90">
+                    <h4 class="fw-bold text-dark mb-0 ls-tight text-capitalize">{{ title }}</h4>
                 </div>
             </div>
 

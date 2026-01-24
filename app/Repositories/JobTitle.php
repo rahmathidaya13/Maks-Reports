@@ -14,21 +14,38 @@ class JobTitle extends BaseCacheRepository
     protected function getData(array $filters = []): LengthAwarePaginator
     {
         $user = auth()->user();
-        $query = JobTitleModel::with('creator')
-            ->when(
-                ! $user->hasAnyRole(['admin', 'developer']),
-                fn($q) => $q->where('created_by', $user->id) // 🔒 Batasi hanya untuk user biasa
-            )
-            ->when(!empty($filters['keyword']), function ($q) use ($filters) {
-                $search = $filters['keyword'];
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('title', 'like', "%{$search}%")
-                        ->orWhere('title_alias', 'like', "%{$search}%")
-                        ->orWhere('job_title_code', 'like', "%{$search}%");
-                });
-            });
+        $isAdmin = $user->hasAnyRole(['admin', 'developer']);
 
-        return $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
+        $query = JobTitleModel::query()
+            ->with('creator');
+
+        /*
+    |--------------------------------------------------------------------------
+    | ROLE-BASED ACCESS
+    |--------------------------------------------------------------------------
+    */
+        if (!$isAdmin) {
+            // 🔒 User biasa hanya boleh melihat data miliknya
+            $query->where('created_by', $user->id);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | FILTER KEYWORD (Vue kirim string kosong '')
+    |--------------------------------------------------------------------------
+    */
+        if (isset($filters['keyword']) && $filters['keyword'] !== '' && $filters['keyword'] !== null) {
+            $search = $filters['keyword'];
+
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('title_alias', 'like', "%{$search}%")
+                    ->orWhere('job_title_code', 'like', "%{$search}%");
+            });
+        }
+
+        return $query
+            ->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 10);
     }
 }

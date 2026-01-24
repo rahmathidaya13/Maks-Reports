@@ -13,15 +13,15 @@ class AuthorizationRoles extends BaseCacheRepository
      */
     protected function getData(array $filters = []): LengthAwarePaginator
     {
-        $query = Role::with('permissions')
-            ->when(!empty($filters['keyword']), function ($q) use ($filters) {
-                $search = $filters['keyword'];
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('name', 'like', "%{$search}%");
-                });
-            });
+        $query = Role::query()
+            ->with('permissions')
+            ->when(
+                filled($filters['keyword'] ?? null),
+                fn($q) => $q->where('name', 'like', '%' . trim($filters['keyword']) . '%')
+            );
 
-        return $query->orderBy('created_at', $filters['order_by'] ?? 'desc')
+        return $query
+            ->orderBy('created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 10);
     }
 }

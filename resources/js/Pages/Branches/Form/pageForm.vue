@@ -213,11 +213,8 @@ const removePhone = (index) => {
                                         <div class="mb-3">
                                             <input-label class="form-label-custom mb-2" for="address"
                                                 value="ALAMAT LENGKAP" />
-                                            <div class="quill-wrapper rounded-3 border overflow-hidden">
-                                                <quill-text :maxChar="500"
-                                                    placeholder="Jalan, Nomor, RT/RW, Kelurahan, Kecamatan..."
-                                                    v-model="form.address" height="250px" />
-                                            </div>
+                                            <text-area name="address" v-model="form.address" :rows="5"
+                                                placeholder="Jalan, Nomor, RT/RW, Kelurahan, Kecamatan..." />
                                             <input-error :message="form.errors.address" />
                                         </div>
                                     </div>
@@ -234,7 +231,6 @@ const removePhone = (index) => {
                                         :name="props.branch?.branches_id ? 'ubah' : 'simpan'"
                                         :label="props.branch?.branches_id ? 'Simpan Perubahan' : 'Simpan Data'" />
                                 </div>
-
                             </form-wrapper>
                         </div>
                     </div>

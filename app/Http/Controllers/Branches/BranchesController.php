@@ -127,4 +127,10 @@ class BranchesController extends Controller
         $this->branchesRepository->clearCache(auth()->id());
         return redirect()->route('branch')->with('message', count($all_id) . ' Data berhasil Terhapus.');
     }
+
+    public function reset()
+    {
+        $this->branchesRepository->clearCache(auth()->id());
+        return redirect()->route('branch')->with('message', 'Data Cabang berhasil diperbarui.');
+    }
 }

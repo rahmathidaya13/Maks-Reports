@@ -393,7 +393,7 @@ body {
 }
 
 .dropdown-menu .dropdown-item:hover {
-    background-color: #314668;
+    background-color: #cccccc;
     color: #ffffff;
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
 }

@@ -23,8 +23,8 @@ use App\Http\Controllers\Daily\DailyReportController;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Job\JobTitleController;
 use App\Http\Controllers\Products\ProductController;
+use App\Http\Controllers\Products\ProductExportController;
 use App\Http\Controllers\Profile\ProfileController;
-use App\Http\Controllers\Roles\RolesController;
 use App\Http\Controllers\StoryReport\StoryStatusReportController;
 use App\Http\Controllers\Transaction\TransactionController;
 
@@ -72,7 +72,8 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::controller(HomeController::class)->group(function () {
-        Route::get('/home', 'index')->name('home');
+        Route::get('/dashboard/analitics', 'index')->name('home');
+        Route::get('/dashboard/reset', 'reset')->name('home.reset');
     });
 
     Route::controller(JobTitleController::class)->group(function () {
@@ -83,6 +84,8 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::put('/job_title/update/{id}', 'update')->name('job_title.update');
         Route::delete('/job_title/destroy/{id}', 'destroy')->name('job_title.deleted');
         Route::post('/job_title/delete_all', 'destroy_all')->name('job_title.destroy_all');
+
+        Route::get('/job_title/reset', 'reset')->name('job_title.reset');
     });
     Route::controller(BranchesController::class)->group(function () {
         Route::get('/branch/list', 'index')->name('branch');
@@ -92,6 +95,8 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::put('/branch/update/{id}', 'update')->name('branch.update');
         Route::delete('/branch/destroy/{id}', 'destroy')->name('branch.deleted');
         Route::post('/branch/delete_all', 'destroy_all')->name('branch.destroy_all');
+
+        Route::get('/branch/reset', 'reset')->name('branch.reset');
     });
     // laporan harian
     Route::controller(DailyReportController::class)->group(function () {
@@ -102,6 +107,8 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::put('/daily_report/update/{id}', 'update')->name('daily_report.update');
         Route::delete('/daily_report/destroy/{id}', 'destroy')->name('daily_report.deleted');
         Route::post('/daily_report/delete_all', 'destroy_all')->name('daily_report.destroy_all');
+
+        Route::get('/daily_report/reset', 'reset')->name('daily_report.reset');
     });
     Route::controller(StoryStatusReportController::class)->group(function () {
         Route::get('/story_report/list', 'index')->name('story_report');
@@ -111,6 +118,8 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::put('/story_report/update/{id}', 'update')->name('story_report.update');
         Route::delete('/story_report/destroy/{id}', 'destroy')->name('story_report.deleted');
         Route::post('/story_report/delete_all', 'destroy_all')->name('story_report.destroy_all');
+
+        Route::get('/story_report/reset', 'reset')->name('story_report.reset');
     });
 
     Route::controller(TransactionController::class)->group(function () {
@@ -123,6 +132,11 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::put('/transaction/update/{id}', 'update')->name('transaction.update');
         Route::delete('/transaction/destroy/{id}', 'destroy')->name('transaction.deleted');
         Route::post('/transaction/delete_all', 'destroy_all')->name('transaction.destroy_all');
+
+        Route::get('/transaction/reset', 'reset')->name('transaction.reset');
+
+        Route::get('/transaction/transaction-cancelled/{id}', 'cancelled')->name('transaction.cancelled');
+        Route::put('/transaction/transaction-updated/{id}', 'cancelUpdated')->name('transaction.cancelled.updated');
     });
     Route::controller(CustomerController::class)->group(function () {
         Route::get('/customers/list', 'index')->name('customers');
@@ -132,6 +146,8 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
         Route::put('/customers/update/{id}', 'update')->name('customers.update');
         Route::delete('/customers/destroy/{id}', 'destroy')->name('customers.deleted');
         Route::post('/customers/delete_all', 'destroyAll')->name('customers.destroy_all');
+
+        Route::get('/customers/reset', 'reset')->name('customers.reset');
     });
 
     Route::controller(ProductController::class)->group(function () {
@@ -150,6 +166,10 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     });
 
     // cetak laporan
+    Route::controller(ProductExportController::class)->group(function () {
+        Route::get('/product/export', 'export')->name('product.export');
+    });
+
     Route::controller(StatusReportPrintOut::class)->group(function () {
         Route::get('/story_report/export_to_excel', 'printToExcel')->name('story_report.print_to_excel');
         Route::get('/story_report/export_to_pdf', 'printToPdf')->name('story_report.print_to_pdf');
@@ -204,6 +224,8 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::put('/roles/update/{id}', 'update')->name('roles.update');
         Route::delete('/roles/destroy/{id}', 'destroy')->name('roles.delete');
         Route::post('/roles/delete_all', 'destroyAll')->name('roles.destroy_all');
+
+        Route::get('/roles/reset', 'reset')->name('roles.reset');
     });
     Route::controller(PermissionController::class)->group(function () {
         Route::get('/permissions/list', 'index')->name('permissions');
@@ -217,6 +239,8 @@ Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->
         Route::post('/permissions/delete_all', 'destroyAll')->name('permissions.destroy_all');
         Route::get('/permissions/edited_all', 'editMultiple')->name('permissions.edited_all');
         Route::post('/permissions/store_multiple', 'storeMultiple')->name('permissions.store.multiple');
+
+        Route::get('/permissions/reset', 'reset')->name('permissions.reset');
     });
     Route::controller(UsersController::class)->group(function () {
         Route::get('/users/list', 'index')->name('users');

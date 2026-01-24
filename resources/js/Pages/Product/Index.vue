@@ -1,27 +1,23 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
-import { debounce } from "lodash";
-import { swalAlert, swalConfirmDelete } from "@/helpers/swalHelpers";
+import { debounce, has } from "lodash";
 import { highlight } from "@/helpers/highlight";
 import { formatText } from "@/helpers/formatText";
+import { hasRole, hasPermission } from "@/composables/useAuth";
 import moment from "moment";
-import Swal from "sweetalert2";
 moment.locale('id');
 
+import { useConfirm } from "@/helpers/useConfirm.js"
+import ModalExport from "./ModalExport.vue";
+const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
 
-const page = usePage();
-const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
     product: Object,
     filters: Object,
     category: Array,
     branch: Array,
 })
-// cek permission
-const perm = page.props.auth.user.permissions
-const roles = page.props.auth.user.roles
-
 const filters = reactive({
     keyword: props.filters.keyword ?? "",
     category: props.filters.category ?? null,
@@ -31,6 +27,7 @@ const filters = reactive({
     branch: props.filters?.branch ?? null,
     status: props.filters?.status ?? null,
     discount_only: props.filters?.discount_only ?? null,
+    condition: props.filters?.condition ?? null,
 })
 
 const isLoading = ref(false)
@@ -60,15 +57,9 @@ const branchOptions = computed(() => [
     }))
 ]);
 
-const header = [
-    { label: "No", key: "__index" },
-    { label: "Nama Produk", key: "name" },
-    { label: "Kategori", key: "category" },
-    { label: "Harga Asli", key: "price_original" },
-    { label: "Harga Diskon", key: "price_discount" },
-    { label: "Status", key: "status" },
-    { label: "Aksi", key: "-" },
-];
+
+
+
 watch(
     () => [
         filters.keyword,
@@ -78,6 +69,7 @@ watch(
         filters.branch,
         filters.status,
         filters.discount_only,
+        filters.condition,
     ],
     () => {
         filters.page = 1;
@@ -104,68 +96,64 @@ const edit = (id) => {
     });
 }
 
-const deleted = (data) => {
-    swalConfirmDelete({
+const deleted = async (data) => {
+    const setConfirm = await confirm.ask({
         title: 'Hapus',
-        text: `Produk ${data.product.name} akan dihapus. Data tidak dapat dikembalikan!`,
-        confirmText: 'Ya, Hapus!',
-        onConfirm: () => {
-            loaderActive.value?.show("Sedang memuat data...");
-            router.delete(route('product.deleted', data.product_price_id), {
-                onFinish: () => loaderActive.value?.hide(),
-                preserveScroll: false,
-                replace: true
-            });
-        },
-    })
+        message: `Produk ${formatText(data.product.name)} akan dihapus. Data tidak dapat dikembalikan!`,
+        confirmText: 'Ya, Hapus',
+        variant: 'danger' // Memberikan warna merah pada tombol konfirmasi
+    });
+
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.delete(route('product.deleted', data.product_price_id), {
+            onFinish: () => loaderActive.value?.hide(),
+            preserveScroll: false,
+            replace: true
+        });
+    }
 }
 
 // end CRUD OPERATION
 
 // MULTIPLE DELETE
 const selectedRow = ref([]);
-const isVisible = ref(false);
-
-const isAllSelected = computed(() => {
-    const rows = props.product?.data ?? [];
-    return rows.length > 0 && selectedRow.value.length === rows.length;
-})
-
-function deleteSelected() {
+const deleteSelected = async () => {
+    // 1. Kondisi Tidak Ada Data (Berfungsi sebagai Alert)
     if (!selectedRow.value.length) {
-        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk dihapus.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
     }
-    swalConfirmDelete({
-        title: 'Hapus Data Terpilih',
-        text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
-        confirmText: 'Ya, Hapus Semua!',
-        onConfirm: () => {
-            loaderActive.value?.show("Sedang memuat data...");
-            router.post(route('product.destroy_all'), { ids: selectedRow.value }, {
-                onFinish: () => loaderActive.value?.hide(),
-                preserveScroll: true,
-                preserveState: false,
-            })
-        },
-    })
-}
-const isSelected = (id) => {
-    return selectedRow.value.includes(id);
-}
-const toggleAll = (evt) => {
-    if (evt.target.checked) {
-        selectedRow.value = props.product?.data.map(r => r.product_price_id);
-    } else {
-        selectedRow.value = [];
+
+    // 2. Kondisi Konfirmasi Hapus
+    const setConfirm = await confirm.ask({
+        title: 'Konfirmasi Hapus',
+        message: `Apakah Anda yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batal',
+        variant: 'danger'
+    });
+
+    // 3. Eksekusi
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.post(route('product.destroy_all'), {
+            ids: selectedRow.value
+        }, {
+            onFinish: () => {
+                loaderActive.value?.hide();
+                selectedRow.value = []; // Bersihkan pilihan setelah sukses
+            },
+            preserveScroll: true,
+            preserveState: false,
+        });
     }
 }
-watch(selectedRow, (val) => {
-    if (val.length > 0) {
-        isVisible.value = true
-    } else {
-        isVisible.value = false
-    }
-})
 // END MULTIPLE DELETE
 
 // date convert
@@ -181,6 +169,16 @@ function daysTranslate(dayValue) {
     };
     const dateFormat = moment(dayValue).format('DD-MM-YYYY');
     return dateFormat === 'Invalid date' ? '00-00-0000' : dateFormat;
+}
+function itemCondition(val) {
+    const value = {
+        new: 'Baru',
+        used: 'Bekas',
+        demaged: 'Rusak',
+        discontinued: 'Dihentikan',
+        refurbished: 'Diperbaharui',
+    }
+    return value[val] ?? '-'
 }
 function formatCurrency(value) {
     if (!value) return "Rp 0";
@@ -218,10 +216,265 @@ const categories = computed(() => [
     }))
 
 ]);
-const inputRef = ref(null)
-onMounted(() => {
-    inputRef.value.focus()
-})
+
+
+// Function untuk menentukan warna badge
+const getConditionBadgeClass = (status) => {
+    switch (status) {
+        case 'new':
+            return 'badge-soft-success'; // Hijau Segar
+        case 'used':
+            return 'badge-soft-primary'; // Biru Netral
+        case 'refurbished':
+            return 'badge-soft-warning'; // Orange/Kuning (Proses/Perbaikan)
+        case 'damaged':
+            return 'badge-soft-danger';  // Merah (Bahaya/Rusak)
+        case 'discontinued':
+            return 'badge-soft-dark';    // Abu Gelap (Mati/Stop)
+        default:
+            return 'badge-soft-secondary'; // Default Abu-abu
+    }
+}
+
+const filterFields = computed(() => [
+    {
+        key: 'keyword',
+        label: 'Pencarian',
+        col: 'col-xl-5 col-md-12',
+        type: 'search',
+        icon: 'fas fa-search',
+        autofocus: true,
+        props: {
+            placeholder: 'Masukan nama dan produk...',
+            inputClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        }
+    },
+    {
+        key: 'category',
+        label: 'Kategori',
+        type: 'select',
+        col: 'col-xl-3 col-md-4',
+        icon: 'fas fa-tags',
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: categories.value
+    },
+    {
+        key: 'limit',
+        label: 'Tampilkan',
+        type: 'select',
+        col: 'col-xl-2 col-md-4 col-6',
+        icon: 'fas fa-list-ol',
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Batas' },
+            { value: 10, label: '10 Baris' },
+            { value: 20, label: '20 Baris' },
+            { value: 50, label: '50 Baris' },
+            { value: 100, label: '100 Baris' },
+        ]
+    },
+    {
+        key: 'order_by',
+        label: 'Urutan',
+        type: 'select',
+        col: 'col-xl-2 col-md-4 col-6',
+        icon: 'fas fa-sort',
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Pilih Urutan' },
+            { value: 'desc', label: 'Terbaru' },
+            { value: 'asc', label: 'Terlama' },
+        ]
+    },
+    {
+        key: 'branch',
+        label: 'Cabang',
+        type: 'select',
+        col: 'col-xl-3 col-md-6 col-6',
+        icon: 'fas fa-dot-circle',
+        roles: ['developer', 'admin'],
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: branchOptions.value
+    },
+    {
+        key: 'status',
+        label: 'Status Publikasi',
+        type: 'select',
+        col: 'col-xl-3 col-md-6 col-6',
+        icon: 'fas fa-dot-circle',
+        roles: ['developer', 'admin'],
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Semua Publikasi' },
+            { value: 'published', label: 'Published' },
+            { value: 'draft', label: 'Draft' },
+        ]
+    },
+    {
+        key: 'discount_only',
+        label: 'Tipe Harga',
+        type: 'select',
+        col: 'col-xl-3 col-md-6 col-6',
+        icon: 'fas fa-dot-circle',
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Semua Harga' },
+            { value: 'discount', label: 'Diskon' },
+            { value: 'normal', label: 'Normal' },
+        ]
+    },
+    {
+        key: 'condition',
+        label: 'Kondisi Produk',
+        type: 'select',
+        col: 'col-xl-3 col-md-6 col-6',
+        icon: 'fas fa-dot-circle',
+        props: {
+            selectClass: 'border-start-0 ps-2 shadow-none',
+            isValid: false,
+        },
+        options: [
+            { value: null, label: 'Semua Kondisi' },
+            { value: 'new', label: 'Baru' },
+            { value: 'used', label: 'Bekas' },
+            { value: 'refurbished', label: 'Diperbaiki' },
+            { value: 'damaged', label: 'Rusak' },
+            { value: 'discontinued', label: 'Dihentikan' },
+        ]
+    },
+]);
+
+const header = [
+    {
+        label: "No",
+        key: "__index",
+        attrs: {
+            class: "text-center",
+            style: "width:50px"
+        }
+    },
+    {
+        label: "Produk",
+        key: "name",
+        attrs: {
+            class: "ps-4 text-center"
+        }
+    },
+    {
+        label: "Kategori",
+        key: "category",
+        attrs: {
+            class: "d-none d-xl-table-cell text-center"
+        }
+    },
+    {
+        label: 'Cabang',
+        key: "branches_id",
+        attrs: {
+            class: "text-center"
+        }
+    },
+    {
+        label: "Harga",
+        key: "base_price",
+        attrs: {
+            class: "text-center"
+        }
+    },
+    {
+        label: "Tgl.Berlaku",
+        key: "valid_from",
+        attrs: {
+            class: "text-center d-none d-xl-table-cell"
+        }
+    },
+    {
+        label: "Tgl.Berakhir",
+        key: "valid_until",
+        attrs: {
+            class: "text-center d-none d-xl-table-cell"
+        }
+    },
+    {
+        label: "Tipe Harga",
+        key: "price_type",
+        attrs: {
+            class: "text-center d-none d-xl-table-cell"
+        }
+    },
+    {
+        label: "Publikasi",
+        key: "status",
+        attrs: {
+            class: "text-center d-none d-xl-table-cell"
+        }
+    },
+    {
+        label: "Aksi",
+        key: "-",
+        visible: hasRole(['admin', 'developer']),
+        attrs: {
+            class: "text-center"
+        }
+    },
+];
+const showModalExport = ref(false)
+const openModalExport = () => {
+    showModalExport.value = true
+}
+const toolbarActions = computed(() => [
+
+    {
+        label: `Hapus (${selectedRow.value.length})`,
+        icon: 'fas fa-trash-alt',
+        iconColor: 'text-danger', // Warna ikon spesifik
+        labelColor: 'text-danger',
+        disabled: !selectedRow.value.length > 0,
+        show: hasRole(['admin', 'developer']),
+        click: deleteSelected
+    },
+    {
+        label: 'Unduh',
+        icon: 'fas fa-download',
+        iconColor: 'text-success', // Warna ikon spesifik
+        show: hasRole(['admin', 'developer']),
+        click: openModalExport
+    },
+
+    {
+        label: 'Produk Baru',
+        icon: 'fas fa-plus-circle',
+        isPrimary: true, // Prioritas Utama
+        show: hasRole(['admin', 'developer']),
+        click: create
+    },
+    {
+        label: 'Segarkan',
+        icon: 'fas fa-redo-alt',
+        iconColor: 'text-primary',
+        loading: isLoading.value,
+        click: reset
+    }
+]);
 </script>
 <template>
 
@@ -230,118 +483,17 @@ onMounted(() => {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :home="false" icon="fas fa-tags" title="Daftar Produk" :items="[{ text: 'Daftar Produk' }]" />
-            <callout type="success" :duration="10" :message="message" />
+            <callout />
 
             <div class="row pb-5">
 
                 <div class="col-12 mb-3">
-                    <div class="card border-0 shadow-sm rounded-4 mb-4 filter-card">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-2">
-                                    <i class="fas fa-sliders-h fs-6"></i>
-                                </div>
-                                <h5 class="fw-bold text-dark mb-0 text-uppercase ls-1">Filter Produk</h5>
-                            </div>
-                            <div class="row g-3 align-items-end">
-                                <div class="col-xl-5 col-md-12">
-                                    <input-label class="form-label-custom mb-1" for="keyword" value="KATA KUNCI" />
-                                    <div class="input-group">
-                                        <span class="input-group-text border-end-0 text-muted ps-3">
-                                            <i class="fas fa-search"></i>
-                                        </span>
-                                        <text-input ref="inputRef" placeholder="Cari produk..." name="keyword"
-                                            v-model="filters.keyword" type="search" :is-valid="false"
-                                            input-class="border-start-0 ps-2 shadow-none" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-3 col-md-4">
-                                    <input-label class="form-label-custom mb-1" for="category" value="KATEGORI" />
-                                    <div class="input-group">
-                                        <span class="input-group-text border-end-0 text-muted ps-3">
-                                            <i class="fas fa-tags"></i>
-                                        </span>
-                                        <select-input text="--Pilih Kategori--" :is-valid="false"
-                                            v-model="filters.category" name="category" :options="categories"
-                                            select-class="border-start-0 ps-2 shadow-none" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-md-4 col-6">
-                                    <input-label class="form-label-custom mb-1" for="limit" value="TAMPILKAN" />
-                                    <div class="input-group">
-                                        <span class="input-group-text border-end-0 text-muted ps-3">
-                                            <i class="fas fa-list-ol"></i>
-                                        </span>
-                                        <select-input :is-valid="false" v-model="filters.limit" name="limit" :options="[
-                                            { value: null, label: 'Pilih Batas' },
-                                            { value: 10, label: '10 Baris' },
-                                            { value: 20, label: '20 Baris' },
-                                            { value: 50, label: '50 Baris' },
-                                            { value: 100, label: '100 Baris' },
-                                        ]" select-class="border-start-0 ps-2 shadow-none" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-2 col-md-4 col-6">
-                                    <input-label class="form-label-custom mb-1" for="order_by" value="URUTAN" />
-                                    <div class="input-group">
-                                        <span class="input-group-text border-end-0 text-muted ps-3">
-                                            <i class="fas fa-sort"></i>
-                                        </span>
-                                        <select-input :is-valid="false" v-model="filters.order_by" name="order_by"
-                                            :options="[
-                                                { value: null, label: 'Pilih Urutan' },
-                                                { value: 'desc', label: 'Terbaru' },
-                                                { value: 'asc', label: 'Terlama' },
-                                            ]" select-class="border-start-0 ps-2 shadow-none" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-4 col-md-4 col-4"
-                                    v-if="roles.includes('admin') || roles.includes('developer')">
-                                    <input-label class="form-label-custom mb-1" for="branch" value="Cabang" />
-                                    <div class="input-group">
-                                        <span class="input-group-text border-end-0 text-muted ps-3">
-                                            <i class="fas fa-dot-circle"></i>
-                                        </span>
-                                        <select-input :is-valid="false" v-model="filters.branch" name="branch"
-                                            :options="branchOptions" select-class="border-start-0 ps-2 shadow-none" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-4 col-md-4 col-4"
-                                    v-if="roles.includes('admin') || roles.includes('developer')">
-                                    <input-label class="form-label-custom mb-1" for="status" value="Status" />
-                                    <div class="input-group">
-                                        <span class="input-group-text border-end-0 text-muted ps-3">
-                                            <i class="fas fa-dot-circle"></i>
-                                        </span>
-                                        <select-input :is-valid="false" v-model="filters.status" name="status" :options="[
-                                            { value: null, label: 'Pilih Status Publikasi' },
-                                            { value: 'published', label: 'Published' },
-                                            { value: 'draft', label: 'Draft' },
-                                        ]" select-class="border-start-0 ps-2 shadow-none" />
-                                    </div>
-                                </div>
-                                <div class="col-xl-4 col-md-4 col-4">
-                                    <input-label class="form-label-custom mb-1" for="price_type" value="Tipe Harga" />
-                                    <div class="input-group">
-                                        <span class="input-group-text border-end-0 text-muted ps-3">
-                                            <i class="fas fa-dot-circle"></i>
-                                        </span>
-                                        <select-input text="Pilih Tipe Harga" :is-valid="false"
-                                            v-model="filters.discount_only" name="price_type" :options="[
-                                                { value: null, label: 'Semua Harga' },
-                                                { value: 'discount', label: 'Diskon' },
-                                                { value: 'normal', label: 'Normal' },
-                                            ]" select-class="border-start-0 ps-2 shadow-none" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <base-filters :roles="['admin', 'developer']" title="Filter Produk" v-model="filters"
+                        :fields="filterFields" />
                 </div>
 
                 <div class="col-12">
-                    <div class="card card-modern border-0 shadow rounded-4 overflow-hidden">
-
+                    <div class="card card-modern border-0 rounded-4 overflow-hidden">
                         <div
                             class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-3">
                             <div class="d-flex align-items-center">
@@ -355,250 +507,169 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <div class="d-flex gap-2">
-                                <transition name="pop" v-if="roles.includes('admin') || roles.includes('developer')">
-                                    <button v-if="selectedRow.length > 0" @click="deleteSelected" type="button"
-                                        class="btn btn-danger px-3 shadow-sm d-flex align-items-center hover-scale">
-                                        <i class="fas fa-trash-alt me-2"></i> Hapus ({{ selectedRow.length }})
-                                    </button>
-                                </transition>
+                            <action-toolbar v-if="hasRole(['admin', 'developer'])" :actions="toolbarActions" />
 
-                                <button type="button" @click.prevent="create"
-                                    v-if="roles.includes('admin') || roles.includes('developer')"
-                                    class="btn btn-primary px-4 shadow-sm d-flex align-items-center fw-bold hover-scale">
-                                    <i class="fas fa-plus me-2"></i> Produk Baru
-                                </button>
-
-                                <button type="button" @click.prevent="reset"
-                                    class="btn btn-outline-success px-4 shadow-sm d-flex align-items-center fw-bold hover-scale">
-                                    <i class="fas fa-sync me-2"></i> Segarkan
-                                </button>
-                            </div>
                         </div>
 
-                        <div v-if="isLoading"
-                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                            style="z-index: 10;">
-                            <div class="text-center">
-                                <div class="spinner-border text-primary mb-2" role="status"></div>
-                                <p class="fw-bold text-dark">Sedang memuat data...</p>
-                            </div>
-                        </div>
+                        <div class="card-body p-0 position-relative">
+                            <base-table :markAll="hasRole(['admin', 'developer'])" :loader="isLoading"
+                                loaderText="Sedang memuat data..." :headers="header" :items="product?.data"
+                                row-key="product_price_id" @update:selected="(val) => selectedRow = val">
 
-                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0 custom-table text-nowrap ">
-                                    <thead class="bg-light border-bottom">
-                                        <tr>
-                                            <th v-if="roles.includes('admin') || roles.includes('developer')" width="50"
-                                                class="text-center">
-                                                <div class="form-check d-flex justify-content-center">
-                                                    <input :disabled="!product?.data.length" type="checkbox"
-                                                        class="form-check-input custom-checkbox pointer"
-                                                        :checked="isAllSelected" @change="toggleAll($event)" />
+                                <template #empty>
+                                    <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                                        <i class="fas fa-box-open text-muted opacity-50 fs-1"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark">Tidak ada produk ditemukan</h6>
+                                    <p class="text-muted small">Ubah filter pencarian Anda.</p>
+                                </template>
+
+                                <template #row="{ item, index }">
+
+                                    <td class="ps-3 text-muted">{{ index + 1 + (product
+                                        ?.current_page
+                                        - 1) * product
+                                            ?.per_page }}
+                                    </td>
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-product me-3 shadow-sm rounded-3 overflow-hidden">
+                                                <img :src="resolveImage(item.product?.image_link || item.product?.image_path)"
+                                                    class="w-100 h-100 object-fit-cover" alt="Product">
+                                            </div>
+
+                                            <div style="max-width: 500px;">
+                                                <div class="fw-bold text-dark mb-1 text-truncate"
+                                                    :title="item.product?.name"
+                                                    v-html="highlight(item.product?.name ?? '-', filters.keyword)">
                                                 </div>
-                                            </th>
-                                            <th class="text-secondary text-uppercase fw-bold ps-4">Produk</th>
-                                            <th class="text-secondary text-uppercase fw-bold">Kategori</th>
-                                            <th class="text-secondary text-uppercase fw-bold">Cabang</th>
-                                            <th class="text-secondary text-uppercase fw-bold">Harga</th>
-                                            <th class="text-secondary text-uppercase fw-bold text-center">
-                                                Tgl.Berlaku</th>
-                                            <th class="text-secondary text-uppercase fw-bold text-center">
-                                                Tgl.Berakhir</th>
-                                            <th class="text-secondary text-uppercase fw-bold text-center">
-                                                Tipe Harga</th>
-                                            <th class="text-secondary text-uppercase fw-bold text-center">
-                                                Status Publish</th>
-                                            <th v-if="roles.includes('admin') || roles.includes('developer')"
-                                                class="text-secondary text-uppercase fw-bold text-center">
-                                                Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-if="!product?.data.length">
-                                            <td colspan="10" class="text-center py-5">
-                                                <div class="empty-state">
-                                                    <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
-                                                        <i class="fas fa-box-open text-muted opacity-50 fs-1"></i>
-                                                    </div>
-                                                    <h6 class="fw-bold text-dark">Tidak ada produk ditemukan</h6>
-                                                    <p class="text-muted small">Coba ubah filter pencarian Anda.</p>
+                                                <div class="small text-muted align-items-center d-flex">
+                                                    <span
+                                                        class="badge bg-light text-secondary border fw-normal rounded-5 me-2">ID:
+                                                        <span v-html="highlight(item.product_price_id.substr(0,
+                                                            8), filters.keyword)"></span>
+                                                    </span>
+
+                                                    <span class="badge border fw-bold rounded-pill me-2 px-3 py-1"
+                                                        :class="getConditionBadgeClass(item.product?.item_condition)">
+                                                        {{ itemCondition(item.product?.item_condition) }}
+                                                    </span>
+
+                                                    <a v-if="item.product?.link" :href="item.product?.link"
+                                                        target="_blank"
+                                                        class="text-primary text-decoration-none hover-underline">
+                                                        <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
+                                                    </a>
                                                 </div>
-                                            </td>
-                                        </tr>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="d-none d-xl-table-cell">
+                                        <span
+                                            class="d-inline-flex bg-gradient align-items-center text-secondary fw-medium px-2 py-1 rounded-2 bg-light border small">
+                                            <i class="fas fa-tag me-2 fs-10"></i> {{
+                                                formatCategory(item.product?.category) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="d-inline-flex text-white align-items-center fw-medium px-2 py-1 bg-opacity-75 rounded-2 bg-success border small text-capitalize">
+                                            <i class="fas fa-map-marker-alt me-2 fs-10"></i>
+                                            {{ item.branch?.name ?? 'Jabodetabek' }}
+                                        </span>
+                                    </td>
 
-                                        <tr v-for="(item, index) in product?.data" :key="index"
-                                            :class="{ 'row-selected': isSelected(item.product_price_id) }"
-                                            class="transition-colors">
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <template v-if="item.discount_price">
+                                                <span class="fw-bold text-dark">{{
+                                                    formatCurrency(item.discount_price) }}</span>
+                                                <small class="text-decoration-line-through fs-10 text-danger">{{
+                                                    formatCurrency(item.base_price) }}</small>
+                                            </template>
+                                            <template v-else>
+                                                <span class="fw-bold text-dark">{{
+                                                    formatCurrency(item.base_price) }}</span>
+                                            </template>
+                                        </div>
+                                    </td>
+                                    <td class="text-center fw-semibold d-none d-xl-table-cell">
+                                        {{ daysTranslate(item.valid_from) }}
+                                    </td>
+                                    <td class="text-center fw-semibold d-none d-xl-table-cell">
+                                        {{ daysTranslate(item.valid_until) }}
+                                    </td>
+                                    <td class="text-center fw-semibold small text-muted d-none d-xl-table-cell">
+                                        {{ item.price_type == 'discount' ? 'Diskon' : 'Normal' }}
+                                    </td>
 
-                                            <td v-if="roles.includes('admin') || roles.includes('developer')"
-                                                class="text-center">
-                                                <div class="form-check d-flex justify-content-center">
-                                                    <input type="checkbox"
-                                                        class="form-check-input custom-checkbox pointer"
-                                                        :value="item.product_price_id" v-model="selectedRow" />
-                                                </div>
-                                            </td>
-
-                                            <td class="ps-4 py-3">
-                                                <div class="d-flex align-items-center">
-                                                    <div
-                                                        class="avatar-product me-3 shadow-sm rounded-3 overflow-hidden group-hover-img">
-                                                        <img :src="resolveImage(item.product?.image_link || item.product?.image_path)"
-                                                            class="w-100 h-100 object-fit-cover" alt="Product">
-                                                    </div>
-
-                                                    <div style="max-width: 250px;">
-                                                        <div class="fw-bold text-dark text-truncate mb-1"
-                                                            :title="item.product?.name"
-                                                            v-html="highlight(item.product?.name ?? '-', filters.keyword)">
-                                                        </div>
-                                                        <div class="small text-muted align-items-center">
-                                                            <span
-                                                                class="badge bg-light text-secondary border fw-normal rounded-0 me-2">ID:
-                                                                {{ item.product_price_id.substr(0, 8) }}</span>
-                                                            <a v-if="item.product?.link" :href="item.product?.link"
-                                                                target="_blank"
-                                                                class="text-primary text-decoration-none hover-underline">
-                                                                <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    class="d-inline-flex bg-gradient align-items-center text-secondary fw-medium px-2 py-1 rounded-2 bg-light border small">
-                                                    <i class="fas fa-tag me-2 fs-10"></i> {{
-                                                        formatCategory(item.product?.category) }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    class="d-inline-flex text-white align-items-center fw-medium px-2 py-1 bg-opacity-75 rounded-2 bg-success border small text-capitalize">
-                                                    <i class="fas fa-map-marker-alt me-2 fs-10"></i>
-                                                    {{ item.branch?.name ?? 'Jabodetabek' }}
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <div class="d-flex flex-column">
-                                                    <template v-if="item.discount_price">
-                                                        <span class="fw-bold text-dark">{{
-                                                            formatCurrency(item.discount_price) }}</span>
-                                                        <small class="text-decoration-line-through fs-10 text-danger">{{
-                                                            formatCurrency(item.base_price) }}</small>
-                                                    </template>
-                                                    <template v-else>
-                                                        <span class="fw-bold text-dark">{{
-                                                            formatCurrency(item.base_price) }}</span>
-                                                    </template>
-                                                </div>
-                                            </td>
-                                            <td class="text-center fw-semibold">
-                                                {{ daysTranslate(item.valid_from) }}
-                                            </td>
-                                            <td class="text-center fw-semibold">
-                                                {{ daysTranslate(item.valid_until) }}
-                                            </td>
-                                            <td class="text-center fw-semibold small text-muted">
-                                                {{ item.price_type == 'discount' ? 'Diskon' : 'Normal' }}
-                                            </td>
-
-                                            <td class="text-center">
-                                                <span class="badge rounded-pill px-3 py-2 fw-bold" :class="{
-                                                    'badge-soft-success': item.status === 'published',
-                                                    'badge-soft-secondary': item.status === 'draft'
-                                                }">
-                                                    <i class="me-1"
-                                                        :class="item.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
-                                                    {{ item.status === 'published' ? 'Publish' : 'Draft' }}
-                                                </span>
-                                            </td>
+                                    <td class="text-center d-none d-xl-table-cell">
+                                        <span class="badge rounded-pill px-3 py-2 fw-bold" :class="{
+                                            'badge-soft-success': item.status === 'published',
+                                            'badge-soft-secondary': item.status === 'draft'
+                                        }">
+                                            <i class="me-1"
+                                                :class="item.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
+                                            {{ item.status === 'published' ? 'Publish' : 'Draft' }}
+                                        </span>
+                                    </td>
 
 
-                                            <td class="text-center ps-4"
-                                                v-if="roles.includes('admin') || roles.includes('developer')">
-                                                <div class="dropdown dropstart">
-                                                    <button
-                                                        class="btn btn-icon btn-lg btn-light rounded-circle shadow-sm"
-                                                        type="button" data-bs-toggle="dropdown">
-                                                        <i class="fas fa-ellipsis-h text-muted"></i>
-                                                    </button>
-                                                    <ul
-                                                        class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-3">
-                                                        <li>
-                                                            <button @click.prevent="edit(item.product_price_id)"
-                                                                class="dropdown-item rounded-2 py-2 d-flex align-items-center">
-                                                                <div
-                                                                    class="icon-box-xs bg-primary bg-opacity-10 text-primary rounded-1 me-2">
-                                                                    <i class="fas fa-pen fs-10"></i>
-                                                                </div>
-                                                                <span>Ubah Produk</span>
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <hr class="dropdown-divider my-1">
-                                                        </li>
-                                                        <li>
-                                                            <button @click.prevent="deleted(item)"
-                                                                class="dropdown-item rounded-2 py-2 d-flex align-items-center text-danger">
-                                                                <div
-                                                                    class="icon-box-xs bg-danger bg-opacity-10 text-danger rounded-1 me-2">
-                                                                    <i class="fas fa-trash fs-10"></i>
-                                                                </div>
-                                                                <span>Hapus Produk</span>
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </td>
+                                    <td class="text-center" v-if="hasRole(['admin', 'developer'])">
+                                        <dropdown-action :item="item" :actions="[
+                                            {
+                                                label: 'Ubah Produk',
+                                                icon: 'bi bi-pencil-square fs-6',
+                                                color_icon: 'success',
+                                                action: 'edit',
+                                                permission: 'product.edit'
+                                            },
+                                            {
+                                                label: 'Hapus Produk',
+                                                icon: 'bi bi-trash fs-6',
+                                                color: 'danger',
+                                                action: 'delete',
+                                                permission: 'product.delete'
+                                            }
+                                        ]" @edit="edit(item.product_price_id)" @delete="deleted(item)" />
+                                    </td>
 
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+
+                                </template>
+                            </base-table>
                         </div>
 
                         <div class="card-footer bg-white border-top py-3 px-4 overflow-hidden">
                             <div
-                                class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                                class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
                                 <span class="text-muted small">
                                     Menampilkan <strong>{{ props.product?.from ?? 0 }}</strong> - <strong>{{
                                         props.product?.to ?? 0 }}</strong>
                                     dari <strong>{{ props.product?.total ?? 0 }}</strong> data
                                 </span>
-                                <pagination :links="props.product?.links" routeName="product" :additionalQuery="{
-                                    limit: filters.limit,
-                                    order_by: filters.order_by,
-                                    keyword: filters.keyword,
-                                    category: filters.category,
-                                    branch: filters.branch,
-                                    status: filters.status,
-                                    discount_only: filters.discount_only
-                                }" />
+                                <pagination size="pagination-sm" :links="props.product?.links" routeName="product"
+                                    :additionalQuery="{
+                                        limit: filters.limit,
+                                        order_by: filters.order_by,
+                                        keyword: filters.keyword,
+                                        category: filters.category,
+                                        branch: filters.branch,
+                                        status: filters.status,
+                                        discount_only: filters.discount_only,
+                                        condition: filters.condition,
+                                    }" />
                             </div>
                         </div>
 
                     </div>
                 </div>
             </div>
+            <ModalExport :show="showModalExport" @update:show="showModalExport = $event" :branches="branch"
+                :categories="category" />
         </template>
     </app-layout>
 </template>
 <style scoped>
-.blur-area {
-    transition: all 0.3s ease;
-}
-
-.blur-area.is-blurred {
-    filter: blur(3px);
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.6;
-}
-
 .hover-scale {
     transition: transform 0.2s;
 }
@@ -613,42 +684,11 @@ onMounted(() => {
     transition: all 0.3s ease;
 }
 
-/* Custom Table Styling */
-.custom-table thead th {
-    letter-spacing: 0.5px;
-    background-color: #f4f4f5;
-    /* Abu-abu sangat muda */
-    border-bottom: 2px solid #e9ecef;
+.card-modern:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
 }
 
-.custom-table tbody td {
-    border-bottom: 1px solid #f1f3f5;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
 
-/* Row Hover Effect */
-.custom-table tbody tr {
-    transition: background-color 0.2s ease;
-}
-
-.custom-table tbody tr:hover {
-    background-color: #f8faff;
-    /* Biru sangat pudar saat hover */
-}
-
-/* Row Selected State */
-.row-selected {
-    /* Biru muda jika checkbox dicentang */
-    background-color: #d7e0ec !important;
-}
-
-/* Custom Checkbox Size */
-.custom-checkbox {
-    width: 1.1em;
-    height: 1.1em;
-    cursor: pointer;
-}
 
 /* Avatar Circle untuk kolom Creator */
 .avatar-circle {
@@ -684,39 +724,7 @@ onMounted(() => {
     font-size: 0.75rem;
 }
 
-/* Card Filter */
-.filter-card {
-    background: #ffffff;
-    transition: box-shadow 0.3s ease;
-}
 
-.filter-card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Target input/select komponen Vue kamu */
-.filter-card input,
-.filter-card select {
-    border-left: none;
-    /* Hilangkan border kiri input */
-    color: #495057;
-    font-weight: 500;
-}
-
-/* Efek Focus: Border input group menyala */
-.filter-card .input-group:focus-within .input-group-text,
-.filter-card .input-group:focus-within input,
-.filter-card .input-group:focus-within select {
-    border-color: #86b7fe;
-    /* Warna focus bootstrap */
-    box-shadow: none;
-    /* Hilangkan shadow default input, kita pakai border saja */
-}
-
-.filter-card .input-group:focus-within {
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    border-radius: 0.375rem;
-}
 
 /* Label Styling (Konsisten dengan halaman lain) */
 .form-label-custom {
@@ -730,47 +738,12 @@ onMounted(() => {
 
 
 
-/* --- TABLE STYLING --- */
-.custom-table th {
-    font-weight: 700;
-    color: #64748b;
-    border-bottom: 2px solid #f1f5f9;
-}
-
-.custom-table td {
-    vertical-align: middle;
-    border-bottom: 1px solid #f1f5f9;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
-
-/* Hover Row Effect */
-.table-hover tbody tr:hover {
-    background-color: #f8fafc;
-    /* Warna abu-abu sangat muda */
-}
-
 /* --- PRODUCT AVATAR --- */
 .avatar-product {
     width: 50px;
     height: 50px;
     background: #f8f9fa;
     border: 1px solid #e9ecef;
-}
-
-.img-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.group-hover-img:hover .img-overlay {
-    opacity: 1;
 }
 
 /* --- SOFT BADGES --- */
@@ -809,28 +782,7 @@ onMounted(() => {
     text-decoration: underline !important;
 }
 
-/* --- DROPDOWN & ICON --- */
-.btn-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
 
-.btn-icon:hover {
-    background-color: #e9ecef;
-    transform: rotate(90deg);
-}
-
-.icon-box-xs {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 /* --- ANIMATION --- */
 .hover-lift {
@@ -851,5 +803,57 @@ onMounted(() => {
 .pop-leave-to {
     opacity: 0;
     transform: scale(0.8);
+}
+
+/* Base Badge Style */
+.badge {
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+/* 1. BARU (NEW) - Emerald Green */
+.badge-soft-success {
+    background-color: #d1fae5;
+    /* Hijau Mint Muda */
+    color: #065f46;
+    /* Hijau Hutan Gelap */
+    border-color: #a7f3d0 !important;
+}
+
+/* 2. BEKAS (USED) - Sky Blue */
+.badge-soft-primary {
+    background-color: #e0f2fe;
+    /* Biru Langit Muda */
+    color: #0369a1;
+    /* Biru Laut Gelap */
+    border-color: #bae6fd !important;
+}
+
+/* 3. DIPERBAIKI (REFURBISHED) - Amber/Orange */
+.badge-soft-warning {
+    background-color: #fef3c7;
+    /* Kuning Krem */
+    color: #92400e;
+    /* Coklat Orange */
+    border-color: #fde68a !important;
+}
+
+/* 4. RUSAK (DAMAGED) - Rose Red */
+.badge-soft-danger {
+    background-color: #ffe4e6;
+    /* Merah Muda Pucat */
+    color: #be123c;
+    /* Merah Rose Gelap */
+    border-color: #fecdd3 !important;
+}
+
+/* 5. DIHENTIKAN (DISCONTINUED) - Slate Gray */
+.badge-soft-dark {
+    background-color: #f1f5f9;
+    /* Abu-abu Kebiruan Pucat */
+    color: #475569;
+    /* Abu-abu Slate Gelap */
+    border-color: #cbd5e1 !important;
 }
 </style>

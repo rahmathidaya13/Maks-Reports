@@ -8,6 +8,9 @@ import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 import { cleanTextCapitalize } from "@/helpers/cleanTextCapitalize";
 import moment from "moment";
 moment.locale('id');
+import { useConfirm } from "@/helpers/useConfirm.js"
+const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
+
 const page = usePage();
 const message = computed(() => page.props.flash.message || "");
 const props = defineProps({
@@ -32,14 +35,47 @@ const liveSearch = debounce((e) => {
         onFinish: () => isLoading.value = false
 
     });
-}, 1000);
+}, 500);
+
 const header = [
-    { label: "No", key: "__index" },
-    { label: "Nama Izin Akses", key: "name" },
-    { label: "Status", key: "guard_name" },
-    { label: "Dibuat", key: "created_at" },
-    { label: "Diperbarui", key: "updated_at" },
-    { label: "Aksi", key: "-" },
+    {
+        label: "No",
+        key: "__index",
+        attrs: {
+            class: "text-center",
+            style: "width:50px"
+        }
+    },
+    {
+        label: "Nama Izin Akses",
+        key: "name",
+        attrs: {
+            class: "text-center pe-xl-4",
+
+        }
+    },
+    {
+        label: "Dibuat",
+        key: "created_at",
+        attrs: {
+            class: "text-center"
+        }
+    },
+    {
+        label: "Diperbarui",
+        key: "updated_at",
+        attrs: {
+            class: "text-center"
+        }
+    },
+    {
+        label: "Aksi",
+        key: "-",
+        attrs: {
+            class: "text-center",
+            style: "width:100px"
+        }
+    }
 ];
 watch(
     () => [
@@ -62,35 +98,58 @@ const create = () => {
     });
 }
 
+
 const edit = (id) => {
     loaderActive.value?.show("Sedang memuat data...");
     router.get(route("permissions.edit", id), {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
-function deleteSelected() {
+const deleteSelected = async () => {
     if (!selectedRow.value.length) {
-        return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk dihapus.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
     }
-    swalConfirmDelete({
-        title: 'Hapus Data Terpilih',
-        text: `Yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
-        confirmText: 'Ya, Hapus Semua!',
-        onConfirm: () => {
-            router.post(route('permissions.destroy_all'), { all_id: selectedRow.value }, {
-                preserveScroll: true,
-                preserveState: false,
-            })
-        },
-    })
+
+    // 2. Kondisi Konfirmasi Hapus
+    const setConfirm = await confirm.ask({
+        title: 'Konfirmasi Hapus',
+        message: `Apakah Anda yakin ingin menghapus ${selectedRow.value.length} data terpilih?`,
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batal',
+        variant: 'danger'
+    });
+
+    // 3. Eksekusi
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.post(route('permissions.destroy_all'), {
+            all_id: selectedRow.value
+        }, {
+            onFinish: () => {
+                loaderActive.value?.hide();
+                selectedRow.value = []; // Bersihkan pilihan setelah sukses
+            },
+            preserveScroll: true,
+            preserveState: false,
+        });
+    }
 }
 const goEditMultiple = () => {
+    loaderActive.value?.show("Sedang memuat data...");
     if (!selectedRow.value.length) {
         return swalAlert('Peringatan', 'Tidak ada data yang dipilih.', 'warning');
     }
     router.get(route('permissions.edited_all'), { all_id: selectedRow.value }, {
         preserveScroll: true,
         preserveState: true,
+        replace: true,
+        onFinish: () => loaderActive.value?.hide(),
     })
 }
 watch(selectedRow, (val) => {
@@ -101,15 +160,22 @@ watch(selectedRow, (val) => {
     }
 })
 
-const deleted = (nameRoute, data) => {
-    swalConfirmDelete({
+const deleted = async (nameRoute, data) => {
+    const setConfirm = await confirm.ask({
         title: 'Hapus',
-        text: `Yakin ingin menghapus ${formatTextFromSlug(data.name)}?`,
-        confirmText: 'Ya, Hapus!',
-        onConfirm: () => {
-            router.delete(route(nameRoute, data.id), { preserveScroll: true, replace: true });
-        },
-    })
+        message: `Yakin ingin menghapus ${formatTextFromSlug(data.name)}?`,
+        confirmText: 'Ya, Hapus',
+        variant: 'danger' // Memberikan warna merah pada tombol konfirmasi
+    });
+
+    if (setConfirm) {
+        loaderActive.value?.show("Sedang menghapus data...");
+        router.delete(route(nameRoute, data.id), {
+            onFinish: () => loaderActive.value?.hide(),
+            preserveScroll: false,
+            replace: true
+        });
+    }
 }
 // end crud operation
 function daysTranslate(dayValue) {
@@ -128,44 +194,47 @@ function daysTranslate(dayValue) {
 }
 
 // filter berdasarkan field yang dimau
-const fileterFields = [
+const filterFields = [
     {
         key: 'keyword',
         label: 'Pencarian',
-        type: 'text',
-        col: 'col-xl-8 col-12',
+        col: 'col-xl-8 col-md-12 col-12',
+        type: 'search',
+        icon: 'fas fa-search',
+        autofocus: true,
         props: {
             placeholder: 'Masukan pencarian...',
-            inputClass: 'input-height-1',
-            autofocus: true,
+            inputClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         }
     },
     {
         key: 'limit',
-        label: 'Batas',
+        label: 'Tampilkan',
         type: 'select',
-        col: 'col-xl-2 col-md-6 col-6',
+        col: 'col-xl-2 col-md-6 col-12',
+        icon: 'fas fa-list-ol',
         props: {
-            selectClass: 'input-height-1',
+            selectClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         },
         options: [
-            { value: null, label: 'Pilih Batas Data' },
-            { value: 10, label: '10' },
-            { value: 20, label: '20' },
-            { value: 30, label: '30' },
-            { value: 50, label: '50' },
-            { value: 100, label: '100' },
+            { value: null, label: 'Pilih Batas' },
+            { value: 10, label: '10 Baris' },
+            { value: 20, label: '20 Baris' },
+            { value: 30, label: '30 Baris' },
+            { value: 50, label: '50 Baris' },
+            { value: 100, label: '100 Baris' },
         ]
     },
     {
         key: 'order_by',
-        label: 'Urutkan',
+        label: 'Urutan',
         type: 'select',
-        col: 'col-xl-2 col-md-6 col-6',
+        col: 'col-xl-2 col-md-6 col-12',
+        icon: 'fas fa-sort',
         props: {
-            selectClass: 'input-height-1',
+            selectClass: 'border-start-0 ps-2 shadow-none',
             isValid: false,
         },
         options: [
@@ -175,6 +244,48 @@ const fileterFields = [
         ]
     },
 ];
+
+const reset = () => {
+    isLoading.value = true
+    router.get(route("permissions.reset"), {}, {
+        preserveScroll: false,
+        replace: true,
+        onFinish: () => isLoading.value = false
+    });
+}
+const toolbarActions = computed(() => [
+
+    {
+        label: `Hapus (${selectedRow.value.length})`,
+        icon: 'fas fa-trash-alt',
+        iconColor: 'text-danger',
+        labelColor: 'text-danger',
+        disabled: !selectedRow.value.length > 0,
+        click: deleteSelected
+    },
+
+    {
+        label: `Ubah (${selectedRow.value.length})`,
+        icon: 'fas fa-edit',
+        iconColor: 'text-success',
+        labelColor: 'text-success',
+        disabled: !selectedRow.value.length > 0,
+        click: goEditMultiple
+    },
+    {
+        label: 'Izin Akses Baru',
+        icon: 'fas fa-plus-circle',
+        isPrimary: true, // Prioritas Utama
+        click: create
+    },
+    {
+        label: 'Segarkan',
+        icon: 'fas fa-redo-alt',
+        iconColor: 'text-primary',
+        loading: isLoading.value,
+        click: reset
+    }
+]);
 </script>
 <template>
 
@@ -183,90 +294,109 @@ const fileterFields = [
         <template #content>
             <loader-page ref="loaderActive" />
 
-            <bread-crumbs :home="false" icon="fas fa-cog" title="Daftar Izin Akses"
+            <bread-crumbs :home="false" icon="fas fa-user-lock" title="Daftar Izin Akses"
                 :items="[{ text: 'Daftar Izin Akses' }]" />
-            <callout type="success" :duration="10" :message="message" />
-            <div class="row">
-                <div class="col-xl-12 col-12 mb-3">
-                    <filter-dynamic title="Filter" v-model="filters" :fields="fileterFields" />
+            <callout />
+            <div class="row pb-3">
+                <div class="col-12">
+                    <base-filters title="Filter" v-model="filters" :fields="filterFields" />
                 </div>
-                <div class="col-xl-12 col-12">
-                    <div class="gap-1 mb-2 d-flex justify-content-between">
-                        <div class="gap-1 d-flex">
-                            <base-button :variant="[isVisible ? 'primary' : 'secondary']" :disabled="!isVisible"
-                                @click.prevent="goEditMultiple" label="Ubah" icon="fas fa-edit" />
-                            <button-delete-all :disabled="!isVisible" :variant="[isVisible ? 'danger' : 'secondary']"
-                                text="Hapus" :isVisible="true" :deleted="deleteSelected" />
-                        </div>
-                        <div class="ms-auto d-flex">
-                            <button type="button" @click.prevent="create" class="btn btn-success bg-gradient">
-                                <i class="fas fa-plus"></i> Buat Baru
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card mb-4 overflow-hidden rounded-3 shadow">
-                        <div v-if="isLoading">
-                            <loader-horizontal message="Sedang memproses data" />
-                        </div>
-                        <div class="card-body p-0" :class="['blur-area', isLoading ? 'is-blurred' : '']">
-                            <div class="table-responsive">
-                                <base-table @update:selected="selectedRow = $event"
-                                    :attributes="{ id: 'id', name: 'name' }" :data="props.permissions"
-                                    :headers="header">
-                                    <template #cell="{ row, keyName }">
-                                        <template v-if="keyName === 'name'">
-                                            <div class="fw-semibold text-start"
-                                                v-html="highlight(row.name, filters.keyword)">
-                                            </div>
-                                        </template>
-                                        <template v-if="keyName === '-'">
-                                            <div class="dropdown dropstart">
-                                                <button class="btn btn-secondary bg-gradient" type="button"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="fas fa-cog"></i>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li>
-                                                        <Link :href="route('permissions.edit', row.id)"
-                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                            Ubah <i class="bi bi-pencil-square text-info fs-5"></i>
-                                                        </Link>
-                                                    </li>
-                                                    <li>
-                                                        <button @click.prevent="deleted('permissions.delete', row)"
-                                                            class="dropdown-item fw-semibold d-flex justify-content-between align-items-center">
-                                                            Hapus <i class="bi bi-trash-fill text-danger fs-5"></i>
-                                                        </button>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </template>
-                                        <template v-if="keyName === 'created_at'">
-                                            {{ daysTranslate(row.created_at) }}
-                                        </template>
-                                        <template v-if="keyName === 'updated_at'">
-                                            {{ daysTranslate(row.updated_at) }}
-                                        </template>
-                                    </template>
-                                </base-table>
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div
+                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                                    <i class="fas fa-user-lock fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">Data Izin Akses</h5>
+                                    <p class="text-muted small mb-0">
+                                        Kelola daftar izin akses yang tersedia
+                                    </p>
+                                </div>
                             </div>
+
+                            <action-toolbar :actions="toolbarActions" />
+
                         </div>
-                        <div class="card-footer pb-0">
-                            <div
-                                class="d-flex flex-wrap justify-content-lg-between align-items-center flex-column flex-lg-row">
-                                <div class="mb-2 order-1 order-xl-0">
-                                    Menampilkan <strong>{{ props.permissions?.from ?? 0 }}</strong> sampai
-                                    <strong>{{ props.permissions?.to ?? 0 }}</strong> dari total
+                        <div class="card-body p-0 position-relative">
+                            <base-table markAll :loader="isLoading" loaderText="Sedang memuat data..." :headers="header"
+                                :items="permissions?.data" row-key="id" @update:selected="(val) => selectedRow = val">
+
+                                <template #empty>
+                                    <div class="py-4">
+                                        <i class="fas fa-key fa-3x text-muted opacity-25 mb-3"></i>
+                                        <p class="text-muted fw-semibold">Izin akses tidak ditemukan.</p>
+                                    </div>
+                                </template>
+
+                                <template #row="{ item, index }">
+                                    <td class="text-center text-muted fw-bold small">
+                                        {{ index + 1 + (permissions?.current_page - 1) * permissions?.per_page
+                                        }}
+                                    </td>
+
+                                    <td class="text-capitalize ps-xl-5">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <div class="avatar-circle bg-primary bg-opacity-10 text-primary fw-bold">
+                                                <i class="fas fa-key"></i>
+                                            </div>
+                                            <span style="font-size: 0.9rem;"
+                                                class="badge text-dark bg-secondary bg-opacity-10 border fw-semibold"
+                                                v-html="highlight(item.name, filters.keyword)"></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="text-muted fw-medium">{{ daysTranslate(item.created_at)
+                                            }}</div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="text-muted fw-medium">
+                                            {{ daysTranslate(item.updated_at)
+                                            }}
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center">
+                                            <dropdown-action :item="item" :actions="[
+                                                {
+                                                    label: 'Ubah Data',
+                                                    icon: 'fas fa-pen',
+                                                    color_icon: 'success',
+                                                    action: 'edit',
+                                                },
+                                                {
+                                                    type: 'divider'
+                                                },
+                                                {
+                                                    label: 'Hapus',
+                                                    icon: 'fas fa-trash',
+                                                    color: 'danger',
+                                                    action: 'delete',
+
+                                                }
+                                            ]" @edit="edit(item.id)" @delete="deleted('permissions.delete', item)" />
+                                        </div>
+                                    </td>
+
+                                </template>
+                            </base-table>
+                        </div>
+                        <div class="card-footer bg-white border-0 py-3" v-if="permissions?.data.length">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                <div class="text-muted small mb-2 mb-md-0">
+                                    Menampilkan <strong>{{ props.permissions?.from ?? 0 }}</strong> -
+                                    <strong>{{ props.permissions?.to ?? 0 }}</strong> dari
                                     <strong>{{ props.permissions?.total ?? 0 }}</strong> data
                                 </div>
                                 <pagination size="pagination-sm" :links="props.permissions?.links"
-                                    :keyword="filters.keyword" routeName="permissions" :additionalQuery="{
+                                    routeName="permissions" :additionalQuery="{
                                         order_by: filters.order_by,
                                         limit: filters.limit,
-                                        keyword: filters.keyword,
+                                        keyword: filters.keyword
                                     }" />
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -275,20 +405,14 @@ const fileterFields = [
     </app-layout>
 </template>
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-    transform: translateY(-5px);
-}
-
-.fade-enter-to,
-.fade-leave-from {
-    opacity: 1;
-    transform: translateY(0);
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    border: 1px solid #ccc;
 }
 </style>
