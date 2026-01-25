@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce, has } from "lodash";
-import { highlight } from "@/helpers/highlight";
+import { highlight, highlightForId } from "@/helpers/highlight";
 import { formatText } from "@/helpers/formatText";
 import { hasRole, hasPermission } from "@/composables/useAuth";
 import moment from "moment";
@@ -157,7 +157,7 @@ const deleteSelected = async () => {
 // END MULTIPLE DELETE
 
 // date convert
-function daysTranslate(dayValue) {
+function daysTranslate(dayValue, invalidText) {
     const dayConvert = {
         "Sunday": "Minggu",
         "Monday": "Senin",
@@ -168,7 +168,7 @@ function daysTranslate(dayValue) {
         "Saturday": "Sabtu",
     };
     const dateFormat = moment(dayValue).format('DD-MM-YYYY');
-    return dateFormat === 'Invalid date' ? '00-00-0000' : dateFormat;
+    return dateFormat === 'Invalid date' ? invalidText : dateFormat;
 }
 function itemCondition(val) {
     const value = {
@@ -546,11 +546,11 @@ const toolbarActions = computed(() => [
                                                 <div class="small text-muted align-items-center d-flex">
                                                     <span
                                                         class="badge bg-light text-secondary border fw-normal rounded-5 me-2">ID:
-                                                        <span v-html="highlight(item.product_price_id.substr(0,
-                                                            8), filters.keyword)"></span>
+                                                        <span v-html="highlight(item.product_id.substr(0,
+                                                            12).replace(/-/g, ''), filters.keyword)"></span>
                                                     </span>
 
-                                                    <span class="badge border fw-bold rounded-pill me-2 px-3 py-1"
+                                                    <span class="badge border fw-bold rounded-pill me-2 px-2 py-1"
                                                         :class="getConditionBadgeClass(item.product?.item_condition)">
                                                         {{ itemCondition(item.product?.item_condition) }}
                                                     </span>
@@ -575,7 +575,7 @@ const toolbarActions = computed(() => [
                                         <span
                                             class="d-inline-flex text-white align-items-center fw-medium px-2 py-1 bg-opacity-75 rounded-2 bg-success border small text-capitalize">
                                             <i class="fas fa-map-marker-alt me-2 fs-10"></i>
-                                            {{ item.branch?.name ?? 'Jabodetabek' }}
+                                            {{ item.branch?.name ?? 'Pusat' }}
                                         </span>
                                     </td>
 
@@ -593,11 +593,11 @@ const toolbarActions = computed(() => [
                                             </template>
                                         </div>
                                     </td>
-                                    <td class="text-center fw-semibold d-none d-xl-table-cell">
-                                        {{ daysTranslate(item.valid_from) }}
+                                    <td class="text-center fw-normal d-none d-xl-table-cell text-muted">
+                                        {{ daysTranslate(item.valid_from, 'Efektif') }}
                                     </td>
-                                    <td class="text-center fw-semibold d-none d-xl-table-cell">
-                                        {{ daysTranslate(item.valid_until) }}
+                                    <td class="text-center fw-normal d-none d-xl-table-cell text-muted">
+                                        {{ daysTranslate(item.valid_until, 'Seterusnya') }}
                                     </td>
                                     <td class="text-center fw-semibold small text-muted d-none d-xl-table-cell">
                                         {{ item.price_type == 'discount' ? 'Diskon' : 'Normal' }}

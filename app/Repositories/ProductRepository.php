@@ -24,11 +24,12 @@ class ProductRepository extends BaseCacheRepository
     */
         if (isset($filters['keyword']) && $filters['keyword'] !== '' && $filters['keyword'] !== null) {
             $search = $filters['keyword'];
-
-            $query->whereHas('product', function ($product) use ($search) {
-                $product->where(function ($q) use ($search) {
+            // 1. Buat versi "bersih" dari input user (hapus semua tanda strip/dash)
+            $cleanSearch = str_replace('-', '', $search);
+            $query->whereHas('product', function ($product) use ($search, $cleanSearch) {
+                $product->where(function ($q) use ($search, $cleanSearch) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('product_id', 'like', "%{$search}%");
+                        ->orWhereRaw("REPLACE(product_id, '-', '') LIKE ?", ["%{$cleanSearch}%"]);
                 });
             });
         }

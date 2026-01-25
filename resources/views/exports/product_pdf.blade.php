@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>{{ $title ?? 'Laporan Produk' }}</title>
     <style>
         @page {
             size: A4 landscape;
-            margin: 10mm 15mm 15mm 15mm; /* Top, Right, Bottom, Left */
+            margin: 10mm 15mm 15mm 15mm;
+            /* Top, Right, Bottom, Left */
         }
 
         body {
-            font-family: "DejaVu Sans", sans-serif; /* Font aman untuk DOMPDF */
-            font-size: 11px; /* Sedikit dikecilkan agar muat banyak kolom */
+            font-family: "DejaVu Sans", sans-serif;
+            /* Font aman untuk DOMPDF */
+            font-size: 11px;
+            /* Sedikit dikecilkan agar muat banyak kolom */
             color: #34495e;
             line-height: 1.4;
         }
@@ -22,7 +26,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.05;
+            opacity: 0.03;
             width: 500px;
             z-index: -1;
             filter: grayscale(100%);
@@ -33,7 +37,8 @@
             width: 100%;
             margin-bottom: 25px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #3498db; /* Aksen Biru */
+            border-bottom: 2px solid #3498db;
+            /* Aksen Biru */
             position: relative;
         }
 
@@ -94,7 +99,8 @@
         }
 
         table th {
-            background-color: #2c3e50; /* Midnight Blue */
+            background-color: #2c3e50;
+            /* Midnight Blue */
             color: #ffffff;
             font-weight: bold;
             text-transform: uppercase;
@@ -113,35 +119,73 @@
 
         /* Zebra Striping yang lebih modern */
         table tbody tr:nth-child(even) {
-            background-color: #f8fbfd; /* Biru sangat muda */
+            background-color: #f8fbfd;
+            /* Biru sangat muda */
         }
-        
+
         table tbody tr:hover {
             background-color: #eef6fb;
         }
 
         /* Kolom Harga biasanya Rata Kanan */
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .font-bold { font-weight: bold; }
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
 
         /* --- PRODUCT BADGES (Untuk Kondisi) --- */
         .badge {
             padding: 3px 6px;
             border-radius: 4px;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: bold;
             text-transform: uppercase;
             color: #fff;
             display: inline-block;
+            vertical-align: middle
         }
-        
+
         /* Warna Badge berdasarkan kondisi */
-        .badge.new { background-color: #27ae60; } /* Hijau */
-        .badge.used { background-color: #f39c12; } /* Orange */
-        .badge.refurbished { background-color: #8e44ad; } /* Ungu */
-        .badge.damaged { background-color: #c0392b; } /* Merah */
-        .badge.discontinued { background-color: #7f8c8d; } /* Abu */
+        .badge.new {
+            background-color: #348ad1;
+        }
+
+        /* Hijau */
+        .badge.used {
+            background-color: #f39c12;
+        }
+
+        /* Orange */
+        .badge.refurbished {
+            background-color: #8e44ad;
+        }
+
+        /* Ungu */
+        .badge.damaged {
+            background-color: #c0392b;
+        }
+
+        /* Merah */
+        .badge.discontinued {
+            background-color: #7f8c8d;
+        }
+
+        .badge.published {
+            background-color: #27ae60;
+        }
+
+        .badge.draft {
+            background-color: #7f8c8d;
+        }
+
+        /* Abu */
 
         /* --- PRICE TAG STYLING --- */
         .price-tag {
@@ -149,7 +193,7 @@
             font-weight: bold;
             color: #2980b9;
         }
-        
+
         .discount-strike {
             text-decoration: line-through;
             color: #e74c3c;
@@ -172,15 +216,85 @@
             width: 100%;
         }
 
-        .footer-left { display: table-cell; text-align: left; width: 50%; }
-        .footer-right { display: table-cell; text-align: right; width: 50%; }
+        .footer-left {
+            display: table-cell;
+            text-align: left;
+            width: 50%;
+        }
+
+        .footer-right {
+            display: table-cell;
+            text-align: right;
+            width: 50%;
+        }
 
         /* Nomor Halaman Otomatis DOMPDF */
         .page-number:before {
             content: counter(page);
         }
+
+
+        /* --- STYLING KHUSUS KOLOM HARGA (YANG DIPERBAIKI) --- */
+        .price-box {
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed #dcdcdc;
+        }
+
+        .price-box:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .branch-name {
+            font-size: 9px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .price-row {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .base-price-strike {
+            text-decoration: line-through;
+            color: #95a5a6;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .final-price {
+            font-family: "Courier New", monospace;
+            font-weight: bold;
+            color: #2980b9;
+            font-size: 12px;
+        }
+
+        .discount-badge {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .period-info {
+            font-size: 9px;
+            color: #7f8c8d;
+            margin-top: 2px;
+            display: block;
+        }
     </style>
 </head>
+
 <body>
 
     @if (!empty($logo))
@@ -191,14 +305,14 @@
         <div class="header-content">
             <div class="header-left">
                 <div class="title">{{ $title ?? 'DAFTAR PRODUK' }}</div>
-                <div class="subtitle">{{ $filter_branch ?? 'Semua Cabang' }}</div>
-                
+                <div class="subtitle">Filter Cabang: {{ ucwords($filter_branch) ?? 'Semua Cabang' }}</div>
+
                 <div class="meta-info">
-                    Dicetak Oleh: <b>{{ auth()->user()->name ?? 'Admin' }}</b> | 
+                    Dicetak Oleh: <b>{{ auth()->user()->name ?? 'Admin' }}</b> |
                     Total Produk: <b>{{ count($products) }}</b>
                 </div>
             </div>
-            
+
             <div class="header-right">
                 @if (!empty($logo))
                     <img src="{{ $logo }}" class="logo-img" alt="Logo Perusahaan">
@@ -217,7 +331,7 @@
                 <th style="width: 15%">Kategori</th>
                 <th style="width: 10%" class="text-center">Kondisi</th>
                 <th style="width: 30%">Detail Harga & Cabang</th>
-                <th style="width: 15%">Link</th>
+                <th style="width: 15%">Publikasi</th>
             </tr>
         </thead>
         <tbody>
@@ -226,9 +340,10 @@
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>
                         <div class="font-bold">{{ $product->name }}</div>
-                        <span style="font-size: 9px; color: #7f8c8d;">SKU: {{ substr($product->product_id, 0, 8) }}</span>
+                        <span style="font-size: 9px; color: #7f8c8d;">ID:
+                            {{ substr(str_replace('-', '', $product->product_id), 0, 11) }}</span>
                     </td>
-                    <td>{{ $product->category }}</td>
+                    <td style="text-align: center">{{ ucwords(str_replace('-', ' ', $product->category)) }}</td>
                     <td class="text-center">
                         {{-- Class dinamis berdasarkan value (new, used, dll) --}}
                         <span class="badge {{ strtolower($product->item_condition) }}">
@@ -237,28 +352,79 @@
                     </td>
                     <td>
                         @forelse($product->prices as $price)
-                            <div style="margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px dashed #eee;">
-                                <span style="font-size:9px; color:#555;">{{ $price->branch->name ?? 'Pusat' }}:</span>
-                                <br>
-                                @if($price->price_type == 'discount')
-                                    <span class="discount-strike">Rp {{ number_format($price->base_price, 0, ',', '.') }}</span>
-                                    <span class="price-tag">Rp {{ number_format($price->discount_price, 0, ',', '.') }}</span>
-                                @else
-                                    <span class="price-tag">Rp {{ number_format($price->base_price, 0, ',', '.') }}</span>
-                                @endif
-                            </div>
-                        @empty
-                            <span style="color: #95a5a6; font-style: italic;">Belum ada harga</span>
+                            <div class="price-box">
+                                {{-- Nama Cabang --}}
+                                <span class="branch-name">
+                                    {{ $price->branch->name ?? 'Pusat' }}
+                                </span>
+
+                                {{-- Baris Harga --}}
+                                <div class="price-row">
+                                    @if ($price->price_type == 'discount' && $price->discount_price < $price->base_price)
+                                        {{-- Hitung Diskon --}}
+                                        @php
+                                            $discountPercent = 0;
+                                            if ($price->base_price > 0) {
+                                                $discountPercent = round(
+                                                    (($price->base_price - $price->discount_price) /
+                                                        $price->base_price) *
+                                                        100,
+                                                );
+                                            }
+                                        @endphp
+
+                                        {{-- Harga Coret --}}
+                                        <span class="base-price-strike">
+                                           Rp {{ number_format($price->base_price, 0, ',', '.') }}
+                                        </span>
+
+                                        {{-- Harga Akhir --}}
+                                        <span class="final-price">
+                                            Rp {{ number_format($price->discount_price, 0, ',', '.') }}
+                                        </span>
+
+                                        {{-- Badge Persen --}}
+                                        <span class="discount-badge">
+                                            -{{ $discountPercent }}%
+                                        </span>
+                                    @else
+                                        {{-- Harga Normal --}}
+                                        <span class="final-price">
+                                            Rp {{ number_format($price->base_price, 0, ',', '.') }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <span class="period-info">
+                                    {{-- Logika Tampilan Tanggal Mulai --}}
+                                    @if ($price->valid_from)
+                                        {{ 'Berlaku mulai ' . \Carbon\Carbon::parse($price->valid_from)->format('d M y') }}
+                                    @else
+                                        <span style="font-style:italic;">Efektif</span>
+                                    @endif
+
+                                    {{-- Logika Tampilan Tanggal Berakhir --}}
+                                    @if ($price->valid_until)
+                                        s/d {{ \Carbon\Carbon::parse($price->valid_until)->format('d M y') }}
+                                    @else
+                                        {{-- Jika null, berarti berlaku selamanya --}}
+                                        &#8594; Seterusnya
+                                    @endif
+                                </span>
+
+                            @empty
+                                <div style="color: #bdc3c7; font-style: italic; font-size:9px;">
+                                    Belum ada harga diatur.
+                                </div>
                         @endforelse
                     </td>
-                    <td>
-                        @if($product->link)
-                            <a href="{{ $product->link }}" target="_blank" style="text-decoration: none; color: #3498db; font-size: 10px;">
-                                Lihat Marketplace
-                            </a>
-                        @else
-                            -
-                        @endif
+                    <td style="text-align: center">
+                        @forelse ($product->prices as $pr)
+                            <span class="badge {{ strtolower($pr->status) }}">
+                                {{ $pr->status === 'published' ? 'Publish' : 'Draft' }}
+                            </span>
+                        @empty
+                            <span style="color: #bdc3c7; font-style: italic; font-size:9px;">-</span>
+                        @endforelse
                     </td>
                 </tr>
             @empty
@@ -281,4 +447,5 @@
     </div>
 
 </body>
+
 </html>

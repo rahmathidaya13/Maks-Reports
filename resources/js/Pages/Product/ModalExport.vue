@@ -20,6 +20,9 @@ const conditions = [
     { value: 'discontinued', label: 'Tidak Produksi (Discontinued)' },
 ];
 const close = () => {
+    filter.branch = null;
+    filter.item_condition = null;
+    filter.category = null;
     emit("update:show", false);
 }
 

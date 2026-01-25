@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Products;
 
+use App\Exports\ProductExport;
 use App\Http\Controllers\Controller;
 use App\Models\BranchesModel;
 use App\Models\ProductModel;
@@ -42,22 +43,24 @@ class ProductExportController extends Controller
             }]);
         }
 
-        $products = $query->get();
-        // if ($request['format'] === 'excel') {
-        //     return Excel::download(new ProductsExport($products), 'laporan_produk.xlsx');
-        // }
+        if ($request['format'] === 'excel') {
+            return Excel::download(new ProductExport($query), 'laporan_produk_' . now()->format('Ymd_His') . '.xlsx');
+        }
 
         if ($request['format'] === 'pdf') {
-            // if ($query->count() > 1000) {
-            //     return back()->with('error', 'Data terlalu banyak untuk format PDF (>1000). Silakan Export menggunakan Excel.');
-            // }
+            if ($query->count() > 1000) {
+                return back()->withErrors(['error' => 'Data terlalu banyak untuk format PDF (>1000). Silakan Export menggunakan Excel.']);
+            }
+            $products = $query->get();
             $pdf = Pdf::loadView('exports.product_pdf', [
                 'products' => $products,
-                'filter_branch' => $request['branches_id'] ? BranchesModel::find($request['branches_id'])->name : 'Semua Cabang'
+                'title' => 'Daftar Produk ' . ($request['branches_id'] ? BranchesModel::find($request['branches_id'])->name : 'Semua Cabang'),
+                'filter_branch' => $request['branches_id'] ? BranchesModel::find($request['branches_id'])->name : 'Semua Cabang',
+                'logo' => public_path('storage/logo/logo.jpg')
             ]);
             return $pdf->setPaper('a4', 'landscape')
                 ->setWarnings(false)
-                ->stream('laporan_produk.pdf');
+                ->stream('laporan_produk_' . now()->format('Ymd_His') . '.pdf');
         }
     }
 }
