@@ -20,29 +20,40 @@ class TransactionModel extends Model
         'invoice',
         'transaction_date',
         'customer_id',
-        'product_id',
-        'price_original',
-        'price_discount',
-        'price_final',
+        // 'product_id',
+        // 'price_original',
+        // 'price_discount',
+        // 'price_final',
+        // 'quantity',
         'status',
+        'grand_total',
         'cancel_reason',
         'cancelled_at',
         'cancelled_by'
     ];
+
+    // Relasi ke CREATOR (User) pembuat transaksi
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
-    public function customer()
+    // Relasi ke ITEM BELANJA (One to Many)
+    // "Satu Transaksi punya BANYAK Barang"
+    public function items()
     {
-        return $this->belongsTo(CustomerModel::class, 'customer_id', 'customer_id');
+        return $this->hasMany(TransactionItemModel::class, 'transaction_id', 'transaction_id');
     }
-    public function product()
-    {
-        return $this->belongsTo(ProductModel::class, 'product_id', 'product_id');
-    }
+    // Relasi ke PEMBAYARAN (One to Many)
+    // "Satu Transaksi bisa dibayar berkali-kali (DP, Cicilan)"
     public function payments()
     {
         return $this->hasMany(TransactionPayment::class, 'transaction_id', 'transaction_id');
     }
+    // Relasi ke CUSTOMER (Many to One)
+    // "Transaksi ini milik SATU Customer"
+    public function customer()
+    {
+        return $this->belongsTo(CustomerModel::class, 'customer_id', 'customer_id');
+    }
+
 }

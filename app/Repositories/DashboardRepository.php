@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\TransactionItemModel;
 use Carbon\Carbon;
 use App\Models\TransactionModel;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +51,7 @@ class DashboardRepository extends BaseCacheRepository
          * ======================================================
          */
         $transactions = TransactionModel::query()
+            ->with(['items','customer','creator','payments'])
             ->where('created_by', $userId)
             ->where('status', '!=', 'cancelled')
             ->whereNull('cancelled_at')
@@ -58,26 +60,25 @@ class DashboardRepository extends BaseCacheRepository
             ->withMax('payments', 'payment_date')
             ->get();
 
-
-
-
         /**
          * ======================================================
          * FILTER LUNAS BULAN INI & BULAN LALU
          * ======================================================
          */
+        $isPaid = fn($trx, $status = 'repayment') =>
+        $trx->status === $status &&
+            ($trx->payments_sum_amount >= $trx->grand_total);
+
         $completedThisMonth = $transactions->filter(
             fn($trx) =>
-            $trx->payments_sum_amount >= $trx->price_final &&
-                Carbon::parse($trx->payments_max_payment_date)
-                ->between($startDate, $endDate)
+            $isPaid($trx) &&
+                Carbon::parse($trx->transaction_date)->between($startDate, $endDate)
         );
 
         $completedLastMonth = $transactions->filter(
             fn($trx) =>
-            $trx->payments_sum_amount >= $trx->price_final &&
-                Carbon::parse($trx->payments_max_payment_date)
-                ->between($lastMonthStart, $lastMonthEnd)
+            $isPaid($trx) &&
+                Carbon::parse($trx->transaction_date)->between($lastMonthStart, $lastMonthEnd)
         );
 
         /**
@@ -88,10 +89,8 @@ class DashboardRepository extends BaseCacheRepository
 
         $dpThisMonth = $transactions->filter(
             fn($trx) =>
-            $trx->payments_sum_amount > 0 &&
-                $trx->payments_sum_amount < $trx->price_final &&
-                Carbon::parse($trx->transaction_date)
-                ->between($startDate, $endDate)
+            $trx->status === 'payment' && // Status harus payment (bukan cancelled)
+                Carbon::parse($trx->transaction_date)->between($startDate, $endDate)
         );
 
         /**
@@ -99,13 +98,21 @@ class DashboardRepository extends BaseCacheRepository
          * HITUNG METRIK UTAMA
          * ======================================================
          */
-        $totalSales     = $completedThisMonth->sum('price_final');
-        $lastMonthSales = $completedLastMonth->sum('price_final');
+        $totalSales     = $completedThisMonth->sum('grand_total');
+        $lastMonthSales = $completedLastMonth->sum('grand_total');
 
         // hitung GROWTH
         $growth = $lastMonthSales > 0
             ? (($totalSales - $lastMonthSales) / $lastMonthSales) * 100
             : 0;
+
+        // Hitung Total Item Terjual yang lunas dan masih dp atau belum lunas (Quantity)
+        $productsSoldQty = $completedThisMonth->sum(function ($trx) {
+            return $trx->items->sum('quantity');
+        });
+        $productsSoldQtyDp = $dpThisMonth->sum(function ($trx) {
+            return $trx->items->sum('quantity');
+        });
 
         /**
          * ======================================================
@@ -113,10 +120,11 @@ class DashboardRepository extends BaseCacheRepository
          * ======================================================
          */
         $dailyStats = TransactionModel::query()
+            ->with(['items','customer','creator','payments'])
             ->where('created_by', $userId)
             ->whereBetween('transaction_date', [$startDate, $endDate])
             ->where('status', '!=', 'cancelled')
-            ->selectRaw('DATE(transaction_date) as date, SUM(price_final) as total')
+            ->selectRaw('DATE(transaction_date) as date, SUM(grand_total) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
@@ -126,31 +134,38 @@ class DashboardRepository extends BaseCacheRepository
          * TOP PRODUCTS
          * ======================================================
          */
-        $topProducts = TransactionModel::query()
-            ->where('created_by', $userId)
-            ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->where('status', '!=', 'cancelled')
-            ->select('product_id', DB::raw('COUNT(*) as total'))
+
+        $topProducts = TransactionItemModel::query()
+            ->with(['creator', 'transactions', 'product'])
+            ->select('product_id', DB::raw('SUM(quantity) as total'))
+
+            // 2. FILTER: Cek kondisi di tabel 'Parent' (Transaction)
+            ->whereHas('transactions', function ($query) use ($userId, $startDate, $endDate) {
+                $query->where('created_by', $userId)
+                    ->whereBetween('transaction_date', [$startDate, $endDate])
+                    ->where('status', '!=', 'cancelled');
+            })
             ->groupBy('product_id')
-            ->with('product:product_id,name')
             ->orderByDesc('total')
             ->limit(5)
             ->get()
             ->map(fn($item) => [
-                'name'  => $item->product->name ?? '-',
-                'total' => $item->total,
+                'name'  => $item->product->name ?? 'Produk Terhapus',
+                'total' => (int) $item->total,
             ]);
 
         return [
             'stats' => [
                 'bonus' => round($totalSales * 0.01, 2),
                 'sales_volume' => $totalSales,
-                'products_sold' => $completedThisMonth->count(),
+                'products_sold' => $productsSoldQty,
+                'products_sold_dp' => $productsSoldQtyDp,
                 'growth' => round($growth, 1),
-                'pending_count' => $dpThisMonth->count(),
                 'current_month_name' => $startDate->translatedFormat('F Y'),
+                'transactions_count_inv' => $completedThisMonth->count(),
+                'transactions_count_dp_inv' => $dpThisMonth->count(),
                 'remaining_payment' => $dpThisMonth->sum(fn($trx) =>
-                $trx->price_final - $trx->payments_sum_amount),
+                $trx->grand_total - $trx->payments_sum_amount),
             ],
             'chart_data' => [
                 'labels' => $dailyStats->pluck('date'),

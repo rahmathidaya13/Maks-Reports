@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 
 import { useConfirm } from "@/helpers/useConfirm.js"
@@ -15,34 +15,102 @@ const props = defineProps({
 const form = useForm({
     invoice: props.transaction?.invoice ?? '',
     customer_id: props.transaction?.customer?.customer_id ?? '',
-    product_id: props.transaction?.product?.product_id ?? '',
-    price_original: props.transaction?.price_original ?? 0,
-    price_discount: props.transaction?.price_discount ?? 0,
+    // product_id: props.transaction?.product?.product_id ?? '',
+    // price_original: props.transaction?.price_original ?? 0,
+    // price_discount: props.transaction?.price_discount ?? 0,
+    // payment_type: props.transaction?.payments[0].payment_type ?? null,
+    // payment_method: props.transaction?.payments[0].payment_method ?? null,
+    // amount: props.transaction?.payments[0].amount ?? 0,
+    // quantity: props.transaction?.quantity ?? '',
+
+    items: props.transaction?.items?.map((item) => ({
+        product_id: item.product_id,
+        price_original: Number(item.price_unit),
+        price_discount: Number(item.discount_amount),
+        quantity: Number(item.quantity),
+        product_name: item.product?.name,
+    })) ?? [],
     payment_type: props.transaction?.payments[0].payment_type ?? null,
     payment_method: props.transaction?.payments[0].payment_method ?? null,
-    amount: props.transaction?.payments[0].amount ?? 0,
+    amount: Number(props.transaction?.payments[0].amount ?? 0),
+
 });
-const priceFinal = computed(() => {
-    const original = Number(form.price_original || 0)
-    const discount = Number(form.price_discount || 0)
-    return Math.max(original - discount, 0)
+
+// STATE UNTUK INPUT BARANG SEMENTARA
+
+const tempItem = reactive({
+    product_id: '',
+    price_original: 0,
+    price_discount: 0,
+    quantity: 1
 })
+
+watch(() => tempItem.product_id, () => {
+    tempItem.price_original = 0;
+    tempItem.quantity = 1;
+    tempItem.price_discount = 0
+})
+
+const addItem = () => {
+    if (!tempItem.product_id) {
+        alert("Pilih produk terlebih dahulu.");
+        return;
+    }
+
+    // VALIDASI TAMBAHAN: Harga tidak boleh 0 atau kosong
+    if (!tempItem.price_original || tempItem.price_original <= 0) {
+        alert("Mohon isi Harga Satuan produk ini secara manual.");
+        return;
+    }
+
+    const existingIndex = form.items.findIndex(i => i.product_id === tempItem.product_id);
+    console.log(existingIndex)
+    if (existingIndex !== -1) {
+        form.items[existingIndex].quantity += parseInt(tempItem.quantity);
+        form.items[existingIndex].price_original = tempItem.price_original;
+    } else {
+        const selected = props.product.find(p => p.product_id === tempItem.product_id);
+        form.items.push({
+            product_id: tempItem.product_id,
+            price_original: tempItem.price_original, // Ambil dari input manual
+            quantity: tempItem.quantity,
+            price_discount: 0,
+            product_name: selected?.name || 'Unknown Product',
+        });
+    }
+
+    // Reset input sementara
+    tempItem.product_id = '';
+    tempItem.price_original = 0;
+    tempItem.price_discount = 0
+    tempItem.quantity = 1;
+};
+
+// Function Hapus Item
+const removeItem = (index) => {
+    form.items.splice(index, 1);
+};
+
+const grandTotal = computed(() => {
+    return form.items.reduce((total, item) => {
+        const subtotal = (item.price_original * item.quantity) - item.price_discount;
+        return total + subtotal;
+    }, 0);
+});
+
+// const subtotal = computed(() => {
+//     const original = Number(form.price_original || 0)
+//     const qty = Number(form.quantity || 1)
+//     return original * qty
+// })
+// const priceFinal = computed(() => {
+//     const discount = Number(form.price_discount || 0)
+//     // Math.max agar tidak minus
+//     return Math.max(subtotal.value - discount, 0)
+// })
 // minimal dana pertama
 const dpAmount = computed(() => {
-    return priceFinal.value * 0.5
-})
-const paymentInfoText = computed(() => {
-    if (!priceFinal.value) return null
-
-    if (form.payment_type === 'payment') {
-        return `Dana pertama (DP) minimal 50% dari harga akhir.`
-    }
-
-    if (form.payment_type === 'repayment') {
-        return `Pembayaran lunas sesuai harga akhir setelah diskon.`
-    }
-
-    return null
+    return grandTotal.value * 0.5
 })
 const isSubmit = async () => {
     const isEdit = !!props.transaction?.transaction_id; // mode edit
@@ -147,9 +215,19 @@ function formatCurrency(value) {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-            <div class="row g-4 pb-3">
 
-                <div class="col-xl-8 col-lg-12 col-12">
+            <div v-if="Object.keys(form.errors).length > 0" class="alert alert-danger m-4">
+                <strong>Waduh! Ada Error Validasi:</strong>
+                <ul class="mb-0 mt-2">
+                    <li v-for="(error, key) in form.errors" :key="key">
+                        {{ key }}: {{ error }}
+                    </li>
+                </ul>
+            </div>
+
+            <div class="row g-2 pb-3">
+
+                <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                         <div
                             class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
@@ -178,6 +256,7 @@ function formatCurrency(value) {
                                 <h6 class="text-primary fw-bold mb-3 small text-uppercase">
                                     <i class="fas fa-user-tag me-1"></i> Informasi Dasar
                                 </h6>
+
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <input-label class="fw-bold small" for="invoice" value="Nomor Invoice" />
@@ -200,45 +279,105 @@ function formatCurrency(value) {
 
                                 <hr class="border-dashed my-4 opacity-50">
 
-                                <h6 class="text-primary fw-bold mb-3 small text-uppercase">
-                                    <i class="fas fa-box-open me-1"></i> Detail Produk
+                                <h6
+                                    class="text-primary fw-bold mb-3 small text-uppercase d-flex justify-content-between">
+                                    <span><i class="fas fa-box-open me-1"></i> Detail Produk & Pembayaran</span>
                                 </h6>
 
-                                <div class="mb-3">
-                                    <input-label class="fw-bold small" for="product_name" value="Pilih Produk" />
-                                    <select-2
-                                        :settings="{ width: '100%', placeholder: 'Cari Produk...', allowClear: true }"
-                                        name="product_name" :options="productOptions" v-model="form.product_id" />
-                                    <input-error :message="form.errors.product_id" />
+                                <div class="bg-light p-3 rounded-3 border mb-3">
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-12">
+                                            <label class="small fw-bold mb-1" for="product_id">Pilih Produk</label>
+                                            <select-2 :settings="{ width: '100%', placeholder: 'Cari Produk...' }"
+                                                :options="productOptions" v-model="tempItem.product_id" />
+                                        </div>
+                                        <div class="col-5">
+                                            <label class="small fw-bold mb-1" for="price_original">Harga Satuan
+                                                (Asli)</label>
+                                            <currency-input :isValid="false" :decimals="0"
+                                                v-model="tempItem.price_original" />
+                                        </div>
+                                        <div class="col-5">
+                                            <label class="small fw-bold mb-1" for="quantity">Jumlah (Qty)</label>
+                                            <input-number placeholder="0" :isValid="false" v-model="tempItem.quantity"
+                                                name="quantity" />
+                                        </div>
+                                        <div class="col-2">
+                                            <button type="button" @click="addItem" class="btn btn-primary w-100 fw-bold"
+                                                :disabled="!tempItem.product_id || !tempItem.price_original">
+                                                <i class="fas fa-plus me-1"></i> Tambah
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-6">
-                                        <input-label class="fw-bold small" for="price_original"
-                                            value="Harga Satuan (Asli)" />
-                                        <currency-input :decimals="0" v-model="form.price_original"
-                                            name="price_original" />
-                                        <input-error :message="form.errors.price_original" />
-                                    </div>
-                                    <div class="col-md-6">
-                                        <input-label class="fw-bold small" for="price_discount"
-                                            value="Potongan / Diskon" />
-                                        <currency-input :decimals="0" name="price_discount"
-                                            v-model="form.price_discount" />
-                                        <input-error :message="form.errors.price_discount" />
-                                    </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm align-middle">
+                                        <thead class="table-light text-center small text-uppercase text-muted">
+                                            <tr>
+                                                <th style="width: 30%">Produk</th>
+                                                <th style="width: 10%">Qty</th>
+                                                <th style="width: 20%">Harga Satuan</th>
+                                                <th style="width: 15%">Diskon</th>
+                                                <th style="width: 20%">Subtotal</th>
+                                                <th style="width: 5%">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-if="form.items.length === 0">
+                                                <td colspan="6" class="text-center py-3 text-muted small fst-italic">
+                                                    Belum ada produk yang ditambahkan.
+                                                </td>
+                                            </tr>
+                                            <tr v-for="(item, index) in form.items" :key="index">
+                                                <td>
+                                                    <span class="fw-bold text-dark small">{{ item.product_name }}</span>
+                                                </td>
+                                                <td>
+                                                    <input type="number" v-model="item.quantity" min="1"
+                                                        class="form-control form-control-sm">
+                                                </td>
+                                                <td>
+                                                    <currency-input :isValid="false" :decimals="0"
+                                                        v-model="item.price_original" class="form-control-sm" />
+                                                </td>
+                                                <td>
+                                                    <currency-input :isValid="false" :decimals="0"
+                                                        v-model="item.price_discount" class="form-control-sm" />
+                                                </td>
+                                                <td class="text-end fw-bold text-dark pe-3">
+                                                    {{ formatCurrency((item.price_original * item.quantity) -
+                                                        item.price_discount) }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" @click="removeItem(index)"
+                                                        class="btn btn-link text-danger btn-sm p-0">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot v-if="form.items.length > 0">
+                                            <tr>
+                                                <td colspan="4" class="text-end fw-bold small text-uppercase pe-3">Total
+                                                    Tagihan</td>
+                                                <td class="text-end fw-bolder text-primary pe-3 fs-6">
+                                                    {{ formatCurrency(grandTotal) }}
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
 
-                                <hr class="border-dashed my-4 opacity-50">
-
+                                <hr class="border-dashed my-3 opacity-50">
                                 <h6 class="text-primary fw-bold mb-3 small text-uppercase">
-                                    <i class="fas fa-wallet me-1"></i> Skema Pembayaran
+                                    <i class="fas fa-wallet me-1"></i> Pembayaran
                                 </h6>
 
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <input-label class="fw-bold small" for="payment_type"
-                                            value="Jenis Pembayaran" />
+                                        <input-label class="fw-bold small" value="Jenis Pembayaran" />
                                         <select-input :disabled="props.transaction?.transaction_id" name="payment_type"
                                             :options="[
                                                 { value: null, label: '— Pilih Opsi —' },
@@ -249,9 +388,8 @@ function formatCurrency(value) {
                                             v-model="form.payment_type">
                                         <input-error :message="form.errors.payment_type" />
                                     </div>
-
                                     <div class="col-md-6">
-                                        <input-label class="fw-bold small" for="payment_method" value="Metode Bayar" />
+                                        <input-label class="fw-bold small" value="Metode" />
                                         <select-input name="payment_method" :options="[
                                             { value: null, label: '— Pilih Metode —' },
                                             { value: 'cash', label: '💵 Tunai (Cash)' },
@@ -281,13 +419,14 @@ function formatCurrency(value) {
                                             </div>
                                         </div>
                                     </div>
+
                                 </div>
                             </form-wrapper>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-4 col-lg-12 col-12">
+                <div class="col-12">
                     <div class="sticky-top" style="top: 4.5rem; z-index: 1;">
                         <div class="card border-0 shadow-sm rounded-4 bg-light bg-gradient">
                             <div class="card-body p-4">
@@ -295,24 +434,12 @@ function formatCurrency(value) {
                                     Ringkasan Biaya
                                 </h6>
 
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="text-muted">Harga Produk</span>
-                                    <span class="fw-semibold">{{ formatCurrency(form.price_original || 0) }}</span>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="text-danger small"><i
-                                            class="fas fa-minus-circle me-1"></i>Diskon</span>
-                                    <span class="text-danger fw-semibold">- {{ formatCurrency(form.price_discount || 0)
-                                    }}</span>
-                                </div>
-
                                 <div class="bg-white p-3 rounded-3 shadow-sm border mb-4">
                                     <div class="text-center">
                                         <small class="text-uppercase text-muted fw-bold ls-1"
                                             style="font-size: 0.7rem;">Total Tagihan Akhir</small>
                                         <h2 class="text-primary fw-bolder mb-0 mt-1">
-                                            {{ formatCurrency(priceFinal) }}
+                                            {{ formatCurrency(grandTotal) }}
                                         </h2>
                                     </div>
                                 </div>
@@ -330,7 +457,7 @@ function formatCurrency(value) {
                                         <div
                                             class="d-flex justify-content-between small mt-1 text-muted border-top pt-1">
                                             <span>Sisa Pelunasan:</span>
-                                            <span>{{ formatCurrency(priceFinal - (form.amount || 0)) }}</span>
+                                            <span>{{ formatCurrency(grandTotal - (form.amount || 0)) }}</span>
                                         </div>
                                     </div>
                                     <div v-else-if="form.payment_type === 'repayment'">
@@ -348,7 +475,6 @@ function formatCurrency(value) {
                                     <base-button :loading="form.processing" waiting="Memproses..."
                                         class="rounded-3 btn-height-1 fw-bold shadow-sm"
                                         :class="props.transaction?.transaction_id ? 'btn-success' : 'btn-primary'"
-                                        :icon="props.transaction?.transaction_id ? 'fas fa-check-circle' : 'fas fa-paper-plane'"
                                         type="button" @click="isSubmit"
                                         :label="props.transaction?.transaction_id ? 'Simpan Perubahan' : 'Proses Transaksi'" />
 
@@ -357,11 +483,6 @@ function formatCurrency(value) {
                                         Batal & Kembali
                                     </button>
                                 </div>
-
-                                <div class="mt-3 small text-center text-muted fst-italic" v-if="paymentInfoText">
-                                    <i class="fas fa-info-circle me-1"></i> {{ paymentInfoText }}
-                                </div>
-
                             </div>
                         </div>
                     </div>

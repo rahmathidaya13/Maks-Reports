@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Auth\ConfirmPasswordController;
 use App\Http\Controllers\Daily\DailyReportPrintOut;
 use App\Http\Controllers\Sales\SalesRecordsController;
@@ -20,10 +21,12 @@ use App\Http\Controllers\Authorization\UsersController;
 use App\Http\Controllers\Branches\BranchesController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Daily\DailyReportController;
+use App\Http\Controllers\Helpdesk\HelpdeskController;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Job\JobTitleController;
 use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\Products\ProductExportController;
+use App\Http\Controllers\Products\ProductRequestUserController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\StoryReport\StoryStatusReportController;
 use App\Http\Controllers\Transaction\TransactionController;
@@ -164,10 +167,23 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
 
         Route::delete('/product/delete/image-gallery/{id}', 'deletedGalleryImage')->name('product.deleted.gallery.image');
     });
+    Route::controller(ProductRequestUserController::class)->group(function () {
+        Route::get('/product/create-product-requests', 'create')->name('product.request.create');
+        Route::post('/product/store/product-requests', 'store')->name('product.request.store');
+        Route::put('/product/update/product-requests/{id}', 'update')->name('product.request.update');
+    });
+
+    // khusus hanya untuk permintaan produk
+    Route::controller(AdminController::class)->group(function () {
+        Route::get('/product/request/list', 'index')->name('admin.request.index');
+        Route::put('/product/update/{id}', 'update')->name('admin.request.update');
+        Route::get('/product/reset', 'reset')->name('admin.request.reset');
+    });
 
     // cetak laporan
     Route::controller(ProductExportController::class)->group(function () {
         Route::get('/product/export', 'export')->name('product.export');
+        Route::get('/product/information/details', 'information')->name('product.information');
     });
 
     Route::controller(StatusReportPrintOut::class)->group(function () {
@@ -183,6 +199,13 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     });
     Route::controller(ScrapedController::class)->group(function () {
         Route::get('/scraped/products', 'scrape')->name('scrape');
+    });
+
+
+    Route::controller(HelpdeskController::class)->group(function () {
+        Route::get('/helpdesk/info', 'index')->name('helpdesk.index');
+        Route::post('/helpdesk/store', 'store')->name('helpdesk.store');
+        Route::get('/helpdesk/messages/{id}', 'show')->name('helpdesk.show');
     });
 });
 

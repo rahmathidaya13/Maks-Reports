@@ -11,6 +11,7 @@ use App\Models\BranchesModel;
 use App\Models\ProductPriceModel;
 use App\Traits\ProductValidation;
 use App\Http\Controllers\Controller;
+use App\Models\ProductRequestUserModel;
 use App\Repositories\ProductRepository;
 use Illuminate\Support\Facades\Storage;
 
@@ -61,11 +62,27 @@ class ProductController extends Controller
         $category = ProductModel::select('category')->distinct()->get();
         $branch = BranchesModel::select('branches_id', 'name')->get();
 
+        $baseProduct = ProductModel::with(['prices' => function ($q) {
+            $q->select('base_price', 'product_id');
+        }])
+            ->select('product_id', 'name')
+            ->get();
+
+        $productRequest = ProductRequestUserModel::query()
+            ->with(['user.profile.branch', 'product'])
+            ->where('user_id', auth()->id())
+            ->orderByRaw("FIELD('status', 'pending', 'approved', 'rejected')")
+            ->latest()
+            ->get();
+
         return Inertia::render('Product/Index', [
             'product' => $products,
             'filters' => $filters,
             'category' => $category,
-            'branch' => $branch
+            'branch' => $branch,
+            'baseProduct' => $baseProduct,
+            'productRequest' => $productRequest
+
         ]);
     }
 
@@ -149,11 +166,11 @@ class ProductController extends Controller
         $product = $productPriceModel::with(['creator', 'product', 'branch'])->findOrFail($id);
         $branch = BranchesModel::select('branches_id', 'name')->get();
 
+
         $this->productRepository->clearCache(auth()->id());
         return Inertia::render('Product/Form/pageForm', [
             'product' => $product,
-            'branch' => $branch
-
+            'branch' => $branch,
         ]);
     }
 

@@ -163,7 +163,7 @@ watch(() => props.form.errors, (errors) => {
 
                     <div>
                         <button v-if="step > 1"
-                            class="btn btn-light text-secondary border fw-bold px-4 rounded-pill hover-lift"
+                            class="btn btn-light text-secondary border fw-bold px-4 rounded-pill"
                             @click="prevStep">
                             <i class="fas fa-arrow-left me-2"></i> Kembali
                         </button>
@@ -172,13 +172,13 @@ watch(() => props.form.errors, (errors) => {
                     <div class="d-flex gap-2">
 
                         <button v-if="step < props.step"
-                            class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm hover-lift d-flex align-items-center"
+                            class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm d-flex align-items-center"
                             @click="nextStep" :disabled="!canGoNext()">
                             Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                         </button>
 
                         <button v-if="step === props.step"
-                            class="btn btn-success fw-bold px-5 rounded-pill shadow hover-lift d-flex align-items-center"
+                            class="btn btn-success fw-bold px-5 rounded-pill shadow d-flex align-items-center"
                             @click="emit('submit')">
                             <i class="fas fa-check-circle me-2"></i> Simpan Data
                         </button>

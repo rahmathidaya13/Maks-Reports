@@ -10,6 +10,7 @@ moment.locale('id');
 
 import { useConfirm } from "@/helpers/useConfirm.js"
 import ModalExport from "./ModalExport.vue";
+import ModalFormRequest from "./ModalFormRequest.vue";
 const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
 
 const props = defineProps({
@@ -17,7 +18,10 @@ const props = defineProps({
     filters: Object,
     category: Array,
     branch: Array,
+    baseProduct: Array,
+    productRequest: Array
 })
+console.log(props.productRequest)
 const filters = reactive({
     keyword: props.filters.keyword ?? "",
     category: props.filters.category ?? null,
@@ -437,9 +441,24 @@ const header = [
         }
     },
 ];
+// modal untuk tampilkan export to
 const showModalExport = ref(false)
 const openModalExport = () => {
     showModalExport.value = true
+}
+// end modal untuk tampilkan export to
+
+const modalFormRequest = ref(false)
+const openModalFormRequest = () => {
+    modalFormRequest.value = true
+}
+const requestProduct = () => {
+    loaderActive.value?.show("Memproses...");
+    router.get(route("product.request.create"), {}, {
+        onFinish: () => {
+            loaderActive.value?.hide()
+        }
+    });
 }
 const toolbarActions = computed(() => [
 
@@ -466,6 +485,13 @@ const toolbarActions = computed(() => [
         isPrimary: true, // Prioritas Utama
         show: hasRole(['admin', 'developer']),
         click: create
+    },
+    {
+        label: 'Buat Permintaan',
+        icon: 'fas fa-plus-circle',
+        isPrimary: true, // Prioritas Utama
+        show: hasRole(['admin', 'developer']),
+        click: openModalFormRequest
     },
     {
         label: 'Segarkan',
@@ -664,8 +690,11 @@ const toolbarActions = computed(() => [
                     </div>
                 </div>
             </div>
-            <ModalExport :show="showModalExport" @update:show="showModalExport = $event" :branches="branch"
-                :categories="category" />
+            <ModalExport :product="product" :show="showModalExport" @update:show="showModalExport = $event"
+                :branches="branch" :categories="category" />
+
+            <ModalFormRequest :productRequest="productRequest" :products="baseProduct" :show="modalFormRequest"
+                @update:show="modalFormRequest = $event" />
         </template>
     </app-layout>
 </template>

@@ -144,7 +144,7 @@ onMounted(async () => {
                     </div>
                     <slot v-else :name="field.key" :model="filters" />
                 </div>
-                <div class="d-flex gap-1 mt-3" v-if="buttonField.length > 0">
+                <div class="d-flex gap-1 mt-0" v-if="buttonField.length > 0">
                     <button :disabled="btn.disabled" v-for="btn in buttonField" :key="btn.key" :type="btn.type"
                         :name="btn.name" :id="btn.name" :class="['btn', btn.class || 'btn-primary']" v-bind="btn.props"
                         @click="handleButtonClick(btn)">

@@ -314,6 +314,7 @@ const toolbarActions = computed(() => [
             <bread-crumbs :home="false" icon="fas fa-briefcase" title="Daftar Jabatan"
                 :items="[{ text: 'Daftar Jabatan' }]" />
             <callout />
+
             <div class="row pb-3">
                 <div class="col-xl-12 col-12 mb-3">
                     <base-filters title="Filter" v-model="filters" :fields="fileterFields" />

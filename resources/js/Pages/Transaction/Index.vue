@@ -68,79 +68,30 @@ const header = [
         }
     },
     {
-        label: "ID Transaksi",
-        key: "transaction_id",
+        label: "Invoice/Tanggal",
+        key: "invoice",
         attrs: {
             class: "text-center",
 
         }
     },
     {
-        label: "Tgl.Transaksi",
-        key: "transaction_date",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Invoice",
-        key: "invoice",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Tgl.Pembayaran",
-        key: "payment_date",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Nama Pelanggan",
-        key: "customer_id",
+        label: "Pelanggan",
+        key: "customers",
         attrs: {
             class: "text-center"
         }
     },
     {
         label: "Produk",
-        key: "product_id",
+        key: "products",
         attrs: {
             class: "text-center"
         }
     },
     {
-        label: "Harga Asli",
-        key: "price_original",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Diskon",
-        key: "price_discount",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Total Harga",
-        key: "price_final",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Sudah Bayar",
-        key: "total_paid",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Sisa Pembayaran",
-        key: "-",
+        label: "Total Tagihan",
+        key: "payment",
         attrs: {
             class: "text-center"
         }
@@ -152,7 +103,6 @@ const header = [
             class: "text-center"
         }
     },
-
     {
         label: "Aksi",
         key: "-",
@@ -456,7 +406,6 @@ const showModaDetailInfo = ref(false);
 const openModalCancelled = (data) => {
     selectedData.value = data;
     showModalCancelInfo.value = true;
-    // console.log(data);
 };
 const openModalDetail = (data) => {
     selectedData.value = data;
@@ -562,164 +511,112 @@ const toolbarActions = computed(() => [
                                         }}
                                     </td>
                                     <td class="text-center">
-                                        <button v-if="item.status === 'cancelled'"
-                                            class="btn btn-link text-decoration-none text-capitalize"
-                                            @click="openModalCancelled(item)">
-                                            <span
-                                                v-html="highlight(subString(item.transaction_id, 8), filters.keyword)"></span>
-                                        </button>
-                                        <button v-else-if="item.status !== 'cancelled'"
-                                            class="btn btn-link text-decoration-none text-capitalize"
-                                            @click="openModalDetail(item)">
-                                            <span
-                                                v-html="highlight(subString(item.transaction_id, 8), filters.keyword)"></span>
-                                        </button>
-                                    </td>
-
-                                    <td class="text-center">
-                                        <div class="fw-semibold text-dark">
-                                            {{ daysTranslate(item.transaction_date).split(",")[0] }}
+                                        <div class="fw-bold text-primary">
+                                            <a v-if="item.status === 'cancelled'" :href="'invoice/' + item.invoice"
+                                                @click.prevent="openModalCancelled(item)">
+                                                <span v-html="highlight(item.invoice, filters.keyword)"></span>
+                                            </a>
+                                            <a v-else-if="item.status !== 'cancelled'" :href="'invoice/' + item.invoice"
+                                                @click.prevent="openModalDetail(item)">
+                                                <span v-html="highlight(item.invoice, filters.keyword)"></span>
+                                            </a>
                                         </div>
-                                        <div class="small text-muted" style="font-size: 0.9rem">
-                                            {{ daysTranslate(item.transaction_date).split(",")[1] }}
-                                        </div>
-                                    </td>
-                                    <td class="text-start">
-                                        <span
-                                            class="badge text-bg-info bg-opacity-10 border border-secondary border-opacity-10 fw-normal text-capitalize"
-                                            style="font-size: 0.9rem">
-                                            <span v-html="highlight(item.invoice, filters.keyword)"></span>
-                                        </span>
-                                    </td>
-
-                                    <td class="text-start" style="min-width: 200px">
-                                        <div class="d-flex flex-column gap-2">
-                                            <div
-                                                class="d-flex justify-content-between align-items-center border rounded-3 p-1 px-2 bg-light bg-opacity-50">
-                                                <span class="badge bg-warning text-dark bg-opacity-25 rounded-pill"
-                                                    style="font-size: 0.65rem">
-                                                    DP 50%
-                                                </span>
-                                                <span class="small fw-bold text-dark">{{
-                                                    getPaymentDate(item.payments, "payment") }}
-                                                </span>
-                                            </div>
-                                            <div
-                                                class="d-flex justify-content-between align-items-center border rounded-3 p-1 px-2 bg-success bg-opacity-10">
-                                                <span class="badge bg-success text-success bg-opacity-25 rounded-pill"
-                                                    style="font-size: 0.65rem">Lunas</span>
-                                                <span class="small fw-bold text-success">{{
-                                                    getPaymentDate(item.payments, "repayment")
-                                                    }}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <td class="text-center">
-                                        <div class="d-flex align-items-center justify-content-center gap-2">
-                                            <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center"
-                                                style="width: 30px; height: 30px">
-                                                <i class="fas fa-user-circle"></i>
-                                            </div>
-                                            <span class="fw-semibold text-capitalize text-dark" v-html="highlight(item.customer?.customer_name, filters.keyword) ??
-                                                '-'
-                                                "></span>
+                                        <div class="small text-muted">
+                                            {{ daysTranslate(item.transaction_date) }}
                                         </div>
                                     </td>
 
                                     <td class="text-start">
-                                        <span
-                                            class="badge bg-secondary bg-opacity-25 text-dark border border-secondary border-opacity-10 fw-normal text-capitalize"
-                                            style="font-size: 0.9rem">
-                                            <span v-html="highlight(item.product?.name, filters.keyword)"></span>
+                                        <div class="fw-semibold"
+                                            v-html="highlight(item.customer?.customer_name, filters.keyword)"></div>
+                                        <div class="small text-muted" style="font-size: 0.75rem;">
+                                            Oleh: {{ item.creator?.name }}
+                                        </div>
+                                    </td>
+
+                                    <td class="text-start">
+                                        <div v-if="item.items && item.items.length > 0">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-box text-muted me-2"></i>
+                                                <span class="fw-medium text-dark">
+                                                    {{ item.items[0].product?.name }}
+                                                </span>
+                                            </div>
+
+                                            <div v-if="item.items_count > 1" class="ms-4 mt-1">
+                                                <span class="badge bg-light text-secondary border rounded-pill"
+                                                    style="font-size: 0.7rem;">
+                                                    + {{ item.items_count - 1 }} produk lainnya
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div v-else class="text-danger small fst-italic">
+                                            Item kosong
+                                        </div>
+                                    </td>
+
+
+                                    <td class="text-start fw-bold">
+                                        {{ formatCurrency(item.grand_total) }}
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span v-if="item.status === 'repayment'"
+                                            class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                                            <i class="fas fa-check-circle me-1"></i> Lunas
                                         </span>
-                                    </td>
 
-                                    <td class="text-end pe-4">
-                                        <div class="text-dark fw-bold">
-                                            {{ formatCurrency(item.price_original) }}
-                                        </div>
-                                    </td>
-                                    <td class="text-end pe-4">
-                                        <div class="text-danger text-decoration-line-through">
-                                            {{ formatCurrency(item.price_discount) }}
-                                        </div>
-                                    </td>
+                                        <span v-else-if="item.status === 'payment'"
+                                            class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill border border-warning">
+                                            <i class="fas fa-hourglass-half me-1"></i> Belum Lunas
+                                        </span>
 
-                                    <td class="text-end fw-bold text-primary pe-4" style="font-size: 1rem">
-                                        {{ formatCurrency(item.price_final) }}
-                                    </td>
-
-                                    <td class="text-end fw-bold text-success pe-4">
-                                        {{ formatCurrency(item.total_paid) }}
-                                    </td>
-
-                                    <td class="text-end pe-4">
-                                        <span class="fw-bold" :class="item.price_final - item.total_paid > 0
-                                            ? 'text-danger'
-                                            : 'text-muted'
-                                            ">
-                                            {{ formatCurrency(item.price_final - item.total_paid) }}
+                                        <span v-else
+                                            class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">
+                                            Belum Bayar
                                         </span>
                                     </td>
 
                                     <td class="text-center">
-                                        <span class="badge rounded-pill px-3 py-2 fw-bold"
-                                            :class="status(item.status).badge">
-                                            <i :class="['me-1', status(item.status).icon]"></i>
-                                            {{ status(item.status).label }}
-                                        </span>
-                                    </td>
-
-                                    <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1">
-                                            <button v-if="item.status !== 'cancelled'"
-                                                @click.prevent="cancelled(item.transaction_id)"
-                                                class="btn btn-sm d-flex align-items-center px-2 rounded-pill" :class="[
-                                                    item.status === 'cancelled'
-                                                        ? 'btn-secondary'
-                                                        : 'btn-danger',
-                                                ]" title="Pelunasan">
-                                                <i :class="[
-                                                    'me-0 me-xl-2',
-                                                    item.status === 'cancelled'
-                                                        ? 'fas fa-check'
-                                                        : 'fas fa-times',
-                                                ]"></i>
-                                                <span class="d-none d-xl-inline">{{
-                                                    item.status === "cancelled" ? "Dibatalkan" : "Batalkan"
-                                                    }}</span>
-                                            </button>
-
-
-                                            <button :disabled="item.status !== 'payment'"
-                                                @click.prevent="repayment(item.transaction_id)"
-                                                class="btn btn-sm d-flex align-items-center px-3 rounded-pill" :class="[
-                                                    item.status === 'payment'
-                                                        ? 'btn-success text-white'
-                                                        : 'btn-light text-muted border',
-                                                ]" title="Pelunasan">
-                                                <i class="fas fa-cash-register me-0 me-xl-2"></i>
-                                                <span class="d-none d-xl-inline">Bayar</span>
-                                            </button>
-                                            <dropdown-action :item="item" :actions="[
-                                                {
-                                                    label: 'Ubah Transaksi',
-                                                    icon: 'bi bi-pencil-square fs-6',
-                                                    color_icon: 'success',
-                                                    action: 'edit',
-                                                    permission: 'transaction.edit',
-                                                },
-                                                {
-                                                    label: 'Hapus',
-                                                    icon: 'bi bi-trash fs-6',
-                                                    color: 'danger',
-                                                    action: 'delete',
-                                                    permission: 'transaction.delete',
-                                                },
-                                            ]" @edit="edit(item.transaction_id)"
-                                                @delete="deleted('transaction.deleted', item)" />
-                                        </div>
+                                        <dropdown-action :item="item" :actions="[
+                                            {
+                                                label: 'Ubah Transaksi',
+                                                icon: 'bi bi-pencil-square fs-6',
+                                                color_icon: 'success',
+                                                action: 'edit',
+                                                permission: 'transaction.edit',
+                                            },
+                                            {
+                                                label: 'Pelunasan',
+                                                icon: 'bi bi-check-circle fs-6',
+                                                color: 'success',
+                                                action: 'repayment',
+                                                permission: 'transaction.edit',
+                                                show: item.status !== 'repayment' && item.status !== 'cancelled',
+                                            },
+                                            {
+                                                label: 'Batalkan Transaksi',
+                                                icon: 'bi bi-x-circle fs-6',
+                                                color_icon: 'danger',
+                                                action: 'cancelled',
+                                                permission: 'transaction.edit',
+                                                show: item.status !== 'cancelled',
+                                            },
+                                            {
+                                                type: 'divider'
+                                            },
+                                            {
+                                                label: 'Hapus',
+                                                icon: 'bi bi-trash fs-6',
+                                                color: 'danger',
+                                                action: 'delete',
+                                                permission: 'transaction.delete',
+                                            },
+                                        ]" @edit="edit(item.transaction_id)"
+                                            @delete="deleted('transaction.deleted', item)"
+                                            @repayment="repayment(item.transaction_id)"
+                                            @cancelled="cancelled(item.transaction_id)" />
                                     </td>
                                 </template>
                             </base-table>

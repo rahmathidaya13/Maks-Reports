@@ -78,7 +78,7 @@ class RegisterController extends Controller
         $user->profile()->firstOrCreate([
             'users_id' => $user->id,
         ]);
-        $user->syncRoles('user');
+        $user->assignRole('user');
         // $user->syncPermissions(['create', 'read', 'update', 'delete', 'share', 'download']);
         event(new Registered($user));
 

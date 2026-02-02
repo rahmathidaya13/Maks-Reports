@@ -17,10 +17,11 @@ const form = useForm({
 // ===== PERHITUNGAN =====
 const totalPaid = computed(() => {
     return props.transaction.payments?.reduce((sum, p) => sum + p.amount, 0) ?? 0
+
 })
 
 const remaining = computed(() => {
-    return Math.max(props.transaction.price_final - totalPaid.value, 0)
+    return Math.max(props.transaction.grand_total - totalPaid.value, 0)
 })
 
 const canSubmit = computed(() => {
@@ -111,11 +112,12 @@ function formatCurrency(value) {
                                 <div>
                                     <h5 class="fw-bold text-dark mb-1">Pelunasan Transaksi {{
                                         transaction.customer.customer_name }}</h5>
-                                    <p class="text-muted small mb-0">Selesaikan pembayaran untuk pesanan ini.</p>
+                                    <p class="text-muted small mb-0">Invoice: <span class="fw-bold text-primary">{{
+                                        transaction.invoice }}</span></p>
                                 </div>
                             </div>
                             <Link @click.prevent="goBack" :href="url"
-                                class="btn btn-danger fw-bold border hover-scale px-3 mt-3 mt-xl-0">
+                                class="btn btn-danger fw-bold border px-3 mt-3 mt-xl-0">
                                 <i class="fas fa-arrow-left me-2"></i> Kembali
                             </Link>
                         </div>
@@ -133,58 +135,72 @@ function formatCurrency(value) {
                             <loading-overlay :show="form.processing" text="Sedang memproses pelunasan..." />
 
                             <div
-                                class="bg-primary bg-opacity-10 rounded-4 p-4 mb-4 text-center border border-primary border-opacity-25 position-relative overflow-hidden">
+                                class="bg-primary bg-gradient text-white rounded-4 p-4 mb-4 text-center shadow position-relative overflow-hidden">
+                                <i class="fas fa-wallet position-absolute top-50 start-0 translate-middle text-white opacity-25"
+                                    style="font-size: 8rem; margin-left: 20px;"></i>
 
-                                <i class="fas fa-file-invoice-dollar position-absolute bottom-0 end-0 text-primary opacity-25"
-                                    style="font-size: 6rem; transform: rotate(-20deg) translate(20px, 10px);"></i>
-
-                                <div class="position-relative" style="z-index: 1;">
-                                    <span
-                                        class="badge bg-white text-primary border border-primary border-opacity-25 mb-2 px-3 py-2 rounded-pill shadow-sm">
-                                        <i class="fas fa-tag me-1"></i> Pembayaran Untuk
-                                    </span>
-
-                                    <h3 class="fw-bolder text-dark mb-0 text-break px-3">
-                                        {{ transaction.product.name ?? 'Nama Produk/Jasa' }}
-                                    </h3>
-                                </div>
-
-                                <hr class="border-primary border-opacity-25 border-2 border-dashed mx-auto w-75 my-4 position-relative"
-                                    style="z-index: 1;">
-
-                                <div class="position-relative" style="z-index: 1;">
-                                    <p class="text-uppercase text-primary fw-bold small mb-1 ls-1">Sisa Yang Harus
-                                        Dibayar</p>
-                                    <h1 class="display-4 fw-bolder text-primary mb-0">
+                                <div class="position-relative" style="z-index: 2;">
+                                    <p class="text-uppercase text-white-50 fw-bold small mb-2 ls-1">Sisa Tagihan
+                                    </p>
+                                    <h1 class="display-4 fw-bolder mb-0">
                                         {{ formatCurrency(remaining) }}
                                     </h1>
+                                    <div
+                                        class="mt-2 badge bg-white bg-opacity-25 text-white fw-normal px-3 py-2 rounded-pill">
+                                        {{ transaction.customer?.customer_name }}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="row g-3 mb-4">
-                                <div class="col-12">
-                                    <div class="d-flex justify-content-between small text-muted mb-1">
-                                        <span>Progress Pembayaran</span>
-                                        <span>{{ Math.round((totalPaid / transaction.price_final) * 100) }}%</span>
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-muted small text-uppercase mb-3">
+                                    <i class="fas fa-list me-1"></i> Rincian Item Belanja
+                                </h6>
+                                <div class="border rounded-4 overflow-hidden">
+                                    <div
+                                        class="bg-light p-3 px-4 border-bottom d-flex justify-content-between small fw-bold text-muted">
+                                        <span>Produk</span>
+                                        <span>Subtotal</span>
                                     </div>
-                                    <div class="progress" style="height: 10px; border-radius: 10px;">
-                                        <div class="progress-bar bg-success" role="progressbar"
-                                            :style="{ width: (totalPaid / transaction.price_final) * 100 + '%' }">
+
+                                    <div class="list-group list-group-flush px-2">
+                                        <div v-for="item in transaction.items" :key="item.id"
+                                            class="list-group-item d-flex justify-content-between align-items-center p-3">
+
+                                            <div>
+                                                <div class="fw-bold text-dark mb-1">
+                                                    {{ item.product?.name ?? 'Produk Dihapus' }}
+                                                </div>
+                                                <div class="small text-muted">
+                                                    <span class="badge bg-light text-dark border me-1">{{ item.quantity
+                                                        }} x</span>
+                                                    {{ formatCurrency(item.price_unit) }}
+
+                                                    <span v-if="item.discount_amount > 0" class="text-danger ms-1"
+                                                        style="font-size: 0.75rem;">
+                                                        (Disc: {{ formatCurrency(item.discount_amount) }})
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="fw-bold text-dark">
+                                                {{ formatCurrency(item.subtotal) }}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="col-6">
-                                    <div class="border rounded-3 p-2 bg-light">
-                                        <small class="text-muted d-block">Total Tagihan</small>
-                                        <span class="fw-bold text-dark">{{ formatCurrency(transaction.price_final)
-                                        }}</span>
+                                    <div
+                                        class="bg-light p-3 px-4 d-flex justify-content-between align-items-center border-top">
+                                        <span class="small fw-bold text-uppercase text-muted">Total Transaksi</span>
+                                        <span class="fw-bold fs-5 text-dark">{{ formatCurrency(transaction.grand_total)
+                                            }}</span>
                                     </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="border rounded-3 p-2 bg-light">
-                                        <small class="text-muted d-block">Sudah Dibayar</small>
-                                        <span class="fw-bold text-success">{{ formatCurrency(totalPaid) }}</span>
+
+                                    <div
+                                        class="bg-white p-3 px-4 d-flex justify-content-between align-items-center border-top text-success">
+                                        <span class="small fw-bold"><i class="fas fa-check-circle me-1"></i> Sudah
+                                            Dibayar (DP)</span>
+                                        <span class="fw-bold">- {{ formatCurrency(totalPaid) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -235,8 +251,6 @@ function formatCurrency(value) {
 
                             </form-wrapper>
                         </div>
-
-
                     </div>
                 </div>
             </div>
@@ -272,4 +286,6 @@ function formatCurrency(value) {
 .hover-scale:hover {
     transform: scale(1.05);
 }
+
+.list-group-item:first-child { border-top: 0; }
 </style>

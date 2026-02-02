@@ -20,7 +20,7 @@ const togglePasswordVisibilty = () => {
     showPassword.value = !showPassword.value;
 };
 const page = usePage();
-const message = computed(() => page.props.flash.message);
+
 onMounted(() => {
     if (typeof grecaptcha !== 'undefined' && document.getElementById('recaptcha-box') && document.getElementById('recaptcha-box').innerHTML === '') {
         grecaptcha.render('recaptcha-box', {
@@ -39,9 +39,6 @@ onMounted(() => {
     <div class="container">
         <div class="row justify-content-center min-vh-100 align-items-center">
             <div class="col-xl-5">
-                <!-- <alert :duration="10"
-                    :variant="$page.props.flash.error || $page.props.errors.error ? 'danger' : 'success'"
-                    :message="$page.props.flash.error || message || $page.props.errors.error" /> -->
                 <callout />
                 <div class="card overflow-auto shadow-sm rounded rounded-4 p-xl-4 p-0">
                     <div class="card-title text-center mb-0 py-3">

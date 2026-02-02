@@ -13,7 +13,7 @@ trait TransactionValidation
             'product_id'  => 'required|exists:products,product_id',
 
             'invoice' => 'required|max:25|unique:transactions,invoice,' . $id . ',transaction_id',
-
+            'quantity' => 'required|integer|min:1',
             'price_original' => 'required|numeric|min:0',
             'price_discount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
             'payment_type' => 'required|in:payment,repayment',
@@ -45,6 +45,10 @@ trait TransactionValidation
 
             'amount.required_if' => 'Nominal DP wajib diisi.',
             'amount.numeric' => 'Nominal DP harus berupa angka.',
+
+            'quantity.required' => 'Jumlah barang wajib diisi.',
+            'quantity.integer' => 'Jumlah barang harus berupa angka.',
+            'quantity.min' => 'Jumlah barang minimal 1.',
         ])->validate();
     }
 }

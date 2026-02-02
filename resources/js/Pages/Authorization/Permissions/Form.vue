@@ -86,13 +86,13 @@ const addForm = () => {
         id: null,
         name: "",
     })
-    nextTick(() => {
-        const lastIndex = forms.value.length - 1;
-        const el = formRefs.value[lastIndex];
-        // Focus otomatis ke input Jam di form baru
-        const input = el?.querySelector("input");
-        input?.focus();
-    })
+    // nextTick(() => {
+    //     const lastIndex = forms.value.length - 1;
+    //     const el = formRefs.value[lastIndex];
+    //     // Focus otomatis ke input Jam di form baru
+    //     const input = el?.querySelector("input");
+    //     input?.focus();
+    // })
 }
 const removeForm = (index) => {
     if (isEditMode.value || forms.value.length === 1) return;

@@ -1,9 +1,11 @@
 <script setup>
-import { computed, reactive } from "vue";
+import axios from "axios";
+import { computed, reactive, watch, ref } from "vue";
 const props = defineProps({
     show: Boolean,
     branches: Object,
     categories: Object,
+    product: Object,
 });
 const emit = defineEmits(["update:show"]);
 const filter = reactive({
@@ -19,17 +21,18 @@ const conditions = [
     { value: 'damaged', label: 'Rusak (Damaged)' },
     { value: 'discontinued', label: 'Tidak Produksi (Discontinued)' },
 ];
-const close = () => {
-    filter.branch = null;
-    filter.item_condition = null;
-    filter.category = null;
-    emit("update:show", false);
+function formatCategory(cat) {
+    return cat
+        .split('/')                      // pecah sub kategori
+        .map(part => part.replace(/-/g, ' '))  // ganti - dengan spasi
+        .map(part => part.replace(/\b\w/g, char => char.toUpperCase())) // kapital
+        .join(' - ');                    // gabungkan dengan pemisah cantik
 }
 
 const categories = computed(() => [
     { label: "Semua Kategori", value: null },
     ...props.categories.map(cat => ({
-        label: cat.category,
+        label: formatCategory(cat.category),
         value: cat.category,
     }))
 
@@ -38,7 +41,7 @@ const branch = computed(() => [
     { label: "Semua Cabang", value: null },
     ...props.branches.map(br => ({
         label: br.name,
-        value: br.branches_id,
+        value: br.name,
     }))
 ]);
 
@@ -46,11 +49,10 @@ const download = (format, ignoreFilters = false) => {
     // Siapkan parameter
     const params = {};
     if (!ignoreFilters) {
-        if (filter.branch) params.branches_id = filter.branch;
+        if (filter.branch) params.branch = filter.branch;
         if (filter.item_condition) params.item_condition = filter.item_condition;
         if (filter.category) params.category = filter.category;
     }
-    // Generate URL (gunakan helper route() Ziggy)
     const url = route('product.export', {
         format: format,
         ...params
@@ -59,15 +61,49 @@ const download = (format, ignoreFilters = false) => {
     // Buka di tab baru
     window.open(url, '_blank');
 
-    // Opsional: Tutup modal setelah download
-    close();
 };
+const totalProductFilter = ref(0)
+const isLoadingCount = ref(false);
+let isReseting = false
+watch(filter, async () => {
+    if (isReseting) return;
+    isLoadingCount.value = true
+    try {
+        const response = await axios.get(route('product.information'), {
+            params: {
+                branch: filter.branch, // Kirim parameter
+                item_condition: filter.item_condition,
+                category: filter.category
+            }
+        });
+        totalProductFilter.value = response.data.total
+
+    } catch (error) {
+        totalProductFilter.value = 0
+    } finally {
+        isLoadingCount.value = false
+    }
+}, { deep: true });
+
+const close = () => {
+    isReseting = true
+    filter.branch = null;
+    filter.item_condition = null;
+    filter.category = null;
+    totalProductFilter.value = 0
+    isLoadingCount.value = false
+    emit("update:show", false);
+
+    setTimeout(() => {
+        isReseting = false
+    }, 300);
+}
 </script>
 <template>
     <div class="row" v-if="props.show">
         <div class="col-xl-12 col-sm-12">
-            <modal size="modal-lg" :footer="false" icon="fas fa-download" :show="props.show" title="Unduh Data Produk"
-                @closed="close">
+            <modal size="modal-lg" :footer="false" icon="fas fa-download text-success" :show="props.show"
+                title="Unduh Data Produk" @closed="close">
                 <template #body>
                     <div class="p-2">
 
@@ -78,56 +114,65 @@ const download = (format, ignoreFilters = false) => {
                             <div class="alert-content">
                                 <h6 class="fw-bold text-dark mb-1">Tips Unduh Data</h6>
                                 <p class="text-muted small mb-0">
-                                    Gunakan filter di bawah untuk laporan spesifik, atau tombol "Unduh Semua" untuk
-                                    backup data lengkap.
+                                    Gunakan filter di bawah untuk unduh laporan spesifik, atau tombol "Unduh Semua".
+                                    Untuk data yang jumlah (>1000) tidak dapat diunduh semua dengan format PDF.
                                 </p>
                             </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-4">
+                        <div class="row g-2 row-cols-2">
+                            <div class="col-6">
                                 <label class="form-label fw-bold small text-muted">Cabang</label>
                                 <select-input :options="branch" v-model="filter.branch" name="branch" />
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-6">
                                 <label class="form-label fw-bold small text-muted">Kondisi Produk</label>
-                                <select class="form-select" v-model="filter.item_condition">
-                                    <option v-for="cond in conditions" :key="cond.value" :value="cond.value">
-                                        {{ cond.label }}
-                                    </option>
-                                </select>
+                                <select-input :options="conditions" v-model="filter.item_condition" name="condition" />
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-12">
                                 <label class="form-label fw-bold small text-muted">Kategori</label>
                                 <select-input :options="categories" v-model="filter.category" name="category" />
                             </div>
                         </div>
 
-                        <hr class="border-secondary border-opacity-25 my-4">
 
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="alert alert-light border d-flex justify-content-between align-items-center mt-3">
+                            <span class="text-muted small">Total Data Terpilih:</span>
+
+                            <span v-if="isLoadingCount" class="spinner-border spinner-border-sm text-primary"></span>
+                            <span v-else class="fw-bold text-primary fs-5">
+                                {{ totalProductFilter }} Produk
+                            </span>
+                        </div>
+
+                        <hr class="border-secondary border-opacity-50 my-2">
+
+                        <div class="d-block justify-content-between gap-2 d-xl-flex">
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-secondary btn-sm"
-                                    @click="download('pdf', true)">
+                                <button :disabled="props.product.total > 1000" type="button"
+                                    class="btn btn-outline-secondary rounded-pill" @click="download('pdf', true)">
                                     <i class="fas fa-file-pdf me-1"></i> PDF (Semua)
                                 </button>
-                                <button type="button" class="btn btn-outline-success btn-sm"
+                                <button type="button" class="btn btn-outline-success rounded-pill"
                                     @click="download('excel', true)">
                                     <i class="fas fa-file-excel me-1"></i> Excel (Semua)
                                 </button>
                             </div>
 
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-danger shadow-sm" @click="download('pdf')">
-                                    <i class="fas fa-file-pdf me-2"></i> Export PDF
+                                <button type="button" class="btn btn-danger shadow-sm rounded-pill"
+                                    @click="download('pdf')">
+                                    <i class="fas fa-file-pdf me-2"></i>PDF
                                 </button>
-                                <button type="button" class="btn btn-success shadow-sm" @click="download('excel')">
-                                    <i class="fas fa-file-excel me-2"></i> Export Excel
+                                <button type="button" class="btn btn-success shadow-sm rounded-pill"
+                                    @click="download('excel')">
+                                    <i class="fas fa-file-excel me-2"></i>Excel
                                 </button>
                             </div>
                         </div>
+
                     </div>
                 </template>
             </modal>

@@ -12,6 +12,8 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    width: { type: String, default: '' },
+    height: { type: String, default: '' },
     icon: {
         type: String,
         default: null,
@@ -58,7 +60,21 @@ const closeModal = () => {
     if (modalInstance) modalInstance.hide()
 }
 onUnmounted(() => {
-    if (modalInstance) modalInstance.dispose()
+    // 1. Coba hide dan dispose instance bootstrap standar
+    if (modalInstance) {
+        modalInstance.dispose();
+        modalInstance.hide();
+    }
+    // 2. PEMBERSIHAN PAKSA (Force Cleanup)
+    // Ini menghapus sisa-sisa elemen jika Bootstrap gagal membersihkannya
+    // karena perpindahan halaman Inertia yang terlalu cepat.
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+
+    // Hapus backdrop hitam yang tertinggal di DOM
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
 })
 
 watch(() => props.show, async (v) => {
@@ -75,8 +91,10 @@ watch(() => props.show, async (v) => {
 
 <template>
     <div class="modal custom-modal fade" tabindex="-1" ref="modalEl">
-        <div :class="['modal-dialog modal-dialog-scrollable ', position, size]">
-            <div class="modal-content smooth-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div :class="['modal-dialog modal-dialog-scrollable ', position, size]"
+            :style="width ? { maxWidth: width } : {}">
+            <div class="modal-content smooth-content border-0 shadow-lg rounded-4 overflow-hidden"
+                :style="height ? { height: height } : {}">
 
                 <div class="modal-header bg-transparent border-0">
                     <h5 :class="`modal-title fw-bold ${classModalTitle}`"> <i v-if="icon" :class="icon"></i> {{ title }}
@@ -121,11 +139,41 @@ watch(() => props.show, async (v) => {
 }
 
 .modal-body::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .modal-body::-webkit-scrollbar-thumb {
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+</style>
+<style>
+/* Efek Blur pada Backdrop */
+.modal-backdrop {
+    /* Warna latar hitam transparan */
+    --bs-backdrop-bg: #000;
+    --bs-backdrop-opacity: 0.7;
+
+    /* Efek Blur Kaca  */
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Pastikan saat modal muncul, backdrop juga ikut transisi halus */
+.modal-backdrop.fade {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.modal-backdrop.show {
+    opacity: var(--bs-backdrop-opacity);
 }
 </style>

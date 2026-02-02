@@ -10,6 +10,7 @@ const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert
 const props = defineProps({
     transaction: Object,
 });
+
 const form = useForm({
     reason: '',
 })
@@ -20,11 +21,10 @@ const totalPaid = computed(() => {
     return props.transaction.payments.reduce((sum, pay) => sum + Number(pay.amount), 0);
 });
 
-console.log(totalPaid.value);
-const remaining = computed(() => {
-    return Math.max(props.transaction.price_final - totalPaid.value, 0)
-})
-// console.log(remaining.value);
+const grandTotal = computed(() => {
+    return Number(props.transaction.grand_total || 0);
+});
+
 const submit = async () => {
     const settConfirm = await confirm.ask({
         title: 'Konfirmasi Pembatalan',
@@ -90,7 +90,7 @@ const goBack = () => {
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
 
-            <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
                 <div>
                     <h4 class="fw-bold text-dark mb-1">Batalkan Transaksi</h4>
                     <p class="text-muted small mb-0">Proses ini akan mengubah status transaksi menjadi 'Batal'.</p>
@@ -100,8 +100,7 @@ const goBack = () => {
                     Kembali
                 </Link>
             </div>
-            <div class="row g-4 pb-3 justify-content-center">
-
+            <div class="row g-3 pb-3 justify-content-center">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                         <div
@@ -116,72 +115,109 @@ const goBack = () => {
                         </div>
 
 
-                        <div class="card-body p-5 position-relative">
+                        <div class="card-body position-relative">
                             <loading-overlay :show="form.processing" text="Sedang memproses pembatalan..." />
-                            <form-wrapper @submit="submit">
-                                <div class="bg-light rounded-3 p-3 mb-4 border border-dashed">
-                                    <h6 class="text-uppercase text-xs fw-bold text-muted mb-3 ls-1">Detail Transaksi
-                                    </h6>
 
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="symbol symbol-40px me-3">
-                                            <div class="d-flex align-items-center justify-content-center rounded-circle bg-white border text-primary"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fas fa-user"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="text-muted text-xs">Nama Pelanggan</div>
-                                            <div class="fw-bold text-dark">{{ props.transaction.customer?.customer_name
-                                                ?? '-' }}</div>
+                            <div v-if="totalPaid > 0"
+                                class="alert alert-warning border-warning border-opacity-25 d-flex align-items-center mb-4 shadow-sm">
+                                <div class="bg-warning bg-opacity-25 text-warning rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
+                                    style="width: 40px; height: 40px;">
+                                    <i class="fas fa-exclamation-triangle fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">Perhatian: Dana Masuk Terdeteksi</div>
+                                    <div class="small text-dark text-opacity-75">
+                                        Terdapat pembayaran masuk sebesar <strong class="text-danger">{{
+                                            formatCurrency(totalPaid) }}</strong>.
+                                        Pastikan Anda memproses <u>Refund / Pengembalian Dana</u> kepada pelanggan
+                                        setelah pembatalan.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-light rounded-3 p-3 mb-4 border border-dashed">
+                                <h6 class="text-uppercase text-xs fw-bold text-muted mb-3 ls-1">Detail Transaksi
+                                </h6>
+
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="symbol symbol-40px me-3">
+                                        <div class="d-flex align-items-center justify-content-center rounded-circle bg-white border text-primary"
+                                            style="width: 40px; height: 40px;">
+                                            <i class="fas fa-user"></i>
                                         </div>
                                     </div>
-
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="symbol symbol-40px me-3">
-                                            <div class="d-flex align-items-center justify-content-center rounded-circle bg-white border text-success"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fas fa-box-open"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="text-muted text-xs">Produk Dibeli</div>
-                                            <div class="fw-bold text-dark">{{ props.transaction.product?.name ?? '-' }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="symbol symbol-40px me-3">
-                                            <div class="d-flex align-items-center justify-content-center rounded-circle bg-white border text-info"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fas fa-money-bill"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="text-muted text-xs">Harga Produk</div>
-                                            <div class="fw-bold text-dark">{{
-                                                formatCurrency(props.transaction.price_original) ?? '-' }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-2 mt-2 pt-2 border-top">
-                                        <div class="col-6">
-                                            <div class="text-muted text-xs">Tanggal</div>
-                                            <div class="fw-bold text-dark text-sm">{{
-                                                formatDate(props.transaction.transaction_date) }}</div>
-                                        </div>
-                                        <div class="col-6 text-end">
-                                            <div class="text-muted text-xs">Total Sudah Bayar</div>
-                                            <div class="fw-bold text-danger">{{
-                                                formatCurrency(totalPaid) }}</div>
-                                        </div>
+                                    <div>
+                                        <div class="text-muted text-xs">Nama Pelanggan</div>
+                                        <div class="fw-bold text-dark">{{ props.transaction.customer?.customer_name
+                                            ?? '-' }}</div>
                                     </div>
                                 </div>
 
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-dark small mb-2">
+                                <div class="row g-2 mt-2 pt-2 border-top">
+                                    <div class="col-6">
+                                        <div class="text-muted text-xs">Tanggal</div>
+                                        <div class="fw-bold text-dark text-sm">{{
+                                            formatDate(props.transaction.transaction_date) }}</div>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <div class="text-muted text-xs">Total Sudah Bayar</div>
+                                        <div class="fw-bold text-danger">{{
+                                            formatCurrency(totalPaid) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card rounded-3 overflow-hidden shadow-none mb-4">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0 fw-bold text-muted small text-uppercase">
+                                        <i class="fas fa-box-open me-1"></i> Item Yang Dibatalkan
+                                    </h6>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead class="bg-white text-muted text-uppercase text-xs fw-bold border-bottom">
+                                            <tr>
+                                                <th class="ps-3 py-2">Produk</th>
+                                                <th class="text-center py-2">Jumlah (Qty)</th>
+                                                <th class="text-end py-2">Harga</th>
+                                                <th class="text-end pe-3 py-2">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="item in transaction.items" :key="item.id">
+                                                <td class="ps-3 py-2">
+                                                    <div class="fw-bold text-dark text-sm">{{ item.product?.name ??
+                                                        'Item Terhapus' }}</div>
+                                                    <div class="text-xs text-muted" v-if="item.discount_amount > 0">
+                                                        Disc: <span class="text-danger">-{{
+                                                            formatCurrency(item.discount_amount) }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center text-sm py-2">x{{ item.quantity }}</td>
+                                                <td class="text-end text-sm text-muted py-2">{{
+                                                    formatCurrency(item.price_unit) }}</td>
+                                                <td class="text-end fw-bold text-dark text-sm pe-3 py-2">
+                                                    {{ formatCurrency((item.price_unit * item.quantity) -
+                                                        item.discount_amount) }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot class="bg-light border-top">
+                                            <tr>
+                                                <td colspan="3" class="text-end text-muted text-sm fw-bold py-2 pe-3">
+                                                    TOTAL NILAI TRANSAKSI</td>
+                                                <td class="text-end fw-bolder text-dark text-sm py-2 pe-3">
+                                                    {{ formatCurrency(grandTotal) }}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <form-wrapper @submit="submit">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small">
                                         Alasan Pembatalan <span class="text-danger">*</span>
                                     </label>
                                     <text-area placeholder="Jelaskan alasan pembatalan..." name="reason"
@@ -189,7 +225,7 @@ const goBack = () => {
                                     <input-error :message="form.errors.reason" />
                                 </div>
 
-                                <div class="d-block mt-4">
+                                <div class="d-block mt-3 mb-4">
                                     <base-button waiting="Memproses..." :loading="form.processing"
                                         class="w-100 btn-lg rounded-3"
                                         :variant="props.transaction?.transaction_id ? 'danger' : 'primary'"

@@ -37,11 +37,13 @@ const totalPaid = computed(() => {
     if (!props.transaction.payments) return 0;
     return props.transaction.payments.reduce((sum, pay) => sum + Number(pay.amount), 0);
 });
-const grandTotal = computed(() => Number(props.transaction?.price_final ?? 0));
+const grandTotal = computed(() => Number(props.transaction?.grand_total ?? 0));
+
 const remainingBalance = computed(() => {
     const sisa = grandTotal.value - totalPaid.value
     return sisa > 0 ? sisa : 0;
 });
+
 const paymentPercentage = computed(() => {
     if (grandTotal.value === 0) return 0;
     const percentage = (totalPaid.value / grandTotal.value) * 100;
@@ -52,6 +54,18 @@ const paymentStatus = computed(() => {
     if (totalPaid.value >= grandTotal.value && grandTotal.value > 0) return 'PAID';
     if (totalPaid.value > 0) return 'PARTIAL';
     return 'UNPAID';
+});
+
+//  Hitung Total Diskon (Looping dari semua item)
+const totalDiscount = computed(() => {
+    if (!props.transaction?.items) return 0;
+    return props.transaction.items.reduce((sum, item) => sum + Number(item.discount_amount), 0);
+});
+
+//  Hitung Total Kotor (Sebelum Diskon)
+const grossTotal = computed(() => {
+    if (!props.transaction?.items) return 0;
+    return props.transaction.items.reduce((sum, item) => sum + (Number(item.price_unit) * Number(item.quantity)), 0);
 });
 
 // Warna Tema Berdasarkan Status
@@ -92,14 +106,14 @@ const themeColor = computed(() => {
                                     <span v-else-if="paymentStatus === 'PARTIAL'">BELUM LUNAS (DP)</span>
                                     <span v-else>MENUNGGU PEMBAYARAN</span>
                                 </span>
-
                             </div>
                         </div>
 
-                        <div class="bg-light border-bottom px-4 py-3 mt-3 rounded-4" v-if="transaction.status !== 'cancelled'">
+                        <div class="bg-light border-bottom px-4 py-3 mt-3 rounded-4"
+                            v-if="transaction.status !== 'cancelled'">
                             <div class="d-flex justify-content-between small fw-bold mb-1">
                                 <span :class="`text-${themeColor}`">Terbayar: {{ Math.round(paymentPercentage)
-                                    }}%</span>
+                                }}%</span>
                                 <span class="text-muted">Tagihan: {{ formatCurrency(grandTotal) }}</span>
                             </div>
                             <div class="progress shadow-sm" style="height: 10px;">
@@ -110,12 +124,11 @@ const themeColor = computed(() => {
                             </div>
                         </div>
 
-                        <div class="p-4">
+                        <div class="py-3">
 
-                            <div class="row g-4 mb-4">
+                            <div class="row g-3 mb-4">
                                 <div class="col-md-6">
-                                    <div
-                                        class="d-flex align-items-start p-3 bg-white rounded-3 border h-100">
+                                    <div class="d-flex align-items-start p-3 bg-white rounded-3 border h-100">
                                         <div class="symbol symbol-45px me-3">
                                             <div class="d-flex align-items-center justify-content-center rounded-3 bg-primary bg-opacity-10 text-primary"
                                                 style="width: 45px; height: 45px;">
@@ -125,20 +138,18 @@ const themeColor = computed(() => {
                                         <div>
                                             <small
                                                 class="text-muted text-uppercase text-xs fw-bold ls-1">Pelanggan</small>
-                                            <div class="fw-bold text-dark fs-6">{{ transaction.customer?.customer_name ??
-                                                'Umum / Guest' }}</div>
+                                            <div class="fw-bold text-dark fs-6">{{ transaction.customer?.customer_name
+                                                ?? 'Umum / Guest' }}</div>
                                             <div class="text-xs text-secondary mt-1">
                                                 <i class="fas fa-id-badge me-1 opacity-50"></i> ID: {{
-                                                    transaction.customer_id ? subString(transaction.customer_id,8)
-                                                        : '-' }}
+                                                    transaction.customer_id ? subString(transaction.customer_id, 8) : '-' }}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <div
-                                        class="d-flex align-items-start p-3 bg-white rounded-3 border h-100">
+                                    <div class="d-flex align-items-start p-3 bg-white rounded-3 border h-100">
                                         <div class="symbol symbol-45px me-3">
                                             <div class="d-flex align-items-center justify-content-center rounded-3 bg-info bg-opacity-10 text-info"
                                                 style="width: 45px; height: 45px;">
@@ -147,8 +158,8 @@ const themeColor = computed(() => {
                                         </div>
                                         <div>
                                             <small class="text-muted text-uppercase text-xs fw-bold ls-1">Sales</small>
-                                            <div class="fw-bold text-dark fs-6">{{  transaction.creator?.name ??
-                                                '-' }}</div>
+                                            <div class="fw-bold text-dark fs-6">{{ transaction.creator?.name ?? '-' }}
+                                            </div>
                                             <div class="text-xs text-secondary mt-1">
                                                 <i class="fas fa-calendar-alt me-1 opacity-50"></i> {{
                                                     formatDate(transaction.transaction_date) }}
@@ -159,22 +170,41 @@ const themeColor = computed(() => {
                             </div>
 
                             <div class="card border border-dashed bg-light mb-4">
-                                <div class="card-body d-flex align-items-center">
-                                    <div class="bg-white p-2 rounded border me-3">
-                                        <i class="fas fa-box-open fs-1 text-secondary opacity-50"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <small class="text-muted text-uppercase text-xs">Produk Dibeli</small>
-                                        <h6 class="fw-bold text-dark mb-0">{{ transaction.product?.name ??
-                                            'Nama Produk Tidak Tersedia' }}</h6>
-                                        <span class="badge bg-white border text-secondary mt-1 fw-normal text-xs">
-                                            {{ formatCategory(transaction.product?.category) ?? 'Uncategorized' }}
-                                        </span>
-                                    </div>
-                                    <div class="text-end">
-                                        <small class="text-muted d-block text-xs">Harga Produk</small>
-                                        <span class="fw-bold text-dark">{{ formatCurrency(transaction.price_original) }}</span>
-                                    </div>
+                                <div class="card-header bg-white border-bottom py-2">
+                                    <h6 class="fw-bold mb-0 text-dark small text-uppercase">
+                                        <i class="fas fa-box-open me-2 text-secondary"></i>Item Belanja
+                                    </h6>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead class="bg-light text-muted text-uppercase text-xs fw-bold">
+                                            <tr>
+                                                <th class="ps-3">Produk</th>
+                                                <th class="text-center">Qty</th>
+                                                <th class="text-end">Harga</th>
+                                                <th class="text-end pe-3">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="item in transaction.items" :key="item.id">
+                                                <td class="ps-3">
+                                                    <div class="fw-bold text-dark text-sm">{{ item.product?.name ??
+                                                        'Item Terhapus' }}</div>
+                                                    <div class="text-xs text-muted" v-if="item.discount_amount > 0">
+                                                        Disc: <span class="text-danger">-{{
+                                                            formatCurrency(item.discount_amount) }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center text-sm">x{{ item.quantity }}</td>
+                                                <td class="text-end text-sm text-muted">{{
+                                                    formatCurrency(item.price_unit) }}</td>
+                                                <td class="text-end fw-bold text-dark text-sm pe-3">
+                                                    {{ formatCurrency((item.price_unit * item.quantity) -
+                                                        item.discount_amount) }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
@@ -189,23 +219,24 @@ const themeColor = computed(() => {
                                         <thead class="bg-light text-muted text-uppercase text-xs fw-bold">
                                             <tr>
                                                 <th class="ps-4">Tanggal</th>
-                                                <th>Metode pembayaran</th>
-                                                <th>Tipe pembayaran</th>
+                                                <th class="text-center">Metode Pembayaran</th>
+                                                <th class="text-center">Tipe Pembayaran</th>
                                                 <th class="pe-4 text-end">Jumlah</th>
                                             </tr>
                                         </thead>
+
                                         <tbody>
                                             <tr v-for="(pay, idx) in transaction.payments" :key="idx">
                                                 <td class="text-sm ps-4">{{ formatDate(pay.payment_date) }}</td>
-                                                <td class="text-uppercase text-sm">
+                                                <td class="text-uppercase text-sm text-center">
                                                     <i class="fas fa-credit-card me-1 text-muted"></i> {{
                                                         pay.payment_method }}
                                                 </td>
-                                                <td>
-                                                    <span class="badge rounded-pill text-xs border "
+                                                <td class="text-center">
+                                                    <span class="badge rounded-pill text-xs border"
                                                         :class="pay.payment_type === 'repayment' ? 'bg-success bg-opacity-10 text-success border-success' : 'bg-warning bg-opacity-10 text-warning border-warning'">
-                                                        {{ pay.payment_type === 'repayment' ? 'PELUNASAN'
-                                                            : 'DP / CICILAN' }}
+                                                        {{ pay.payment_type === 'repayment' ?
+                                                            'PELUNASAN' : 'DP / CICILAN' }}
                                                     </span>
                                                 </td>
                                                 <td class="pe-4 text-end fw-bold text-dark text-sm">
@@ -221,29 +252,34 @@ const themeColor = computed(() => {
 
                                         <tfoot class="bg-light border-top">
                                             <tr>
-                                                <td colspan="3" class="ps-4 text-end text-muted text-sm">Harga Awal</td>
+                                                <td colspan="3" class="ps-4 text-end text-muted text-sm">Total Subtotal
+                                                </td>
                                                 <td class="pe-4 text-end text-muted text-sm">{{
-                                                    formatCurrency(transaction.price_original) }}</td>
+                                                    formatCurrency(grossTotal) }}</td>
                                             </tr>
-                                            <tr v-if="transaction.price_discount > 0">
-                                                <td colspan="3" class="ps-4 text-end text-danger text-sm">Diskon /
-                                                    Potongan</td>
+
+                                            <tr v-if="totalDiscount > 0">
+                                                <td colspan="3" class="ps-4 text-end text-danger text-sm">Total Diskon
+                                                </td>
                                                 <td class="pe-4 text-end text-danger text-sm">- {{
-                                                    formatCurrency(transaction.price_discount) }}</td>
+                                                    formatCurrency(totalDiscount) }}</td>
                                             </tr>
+
                                             <tr>
                                                 <td colspan="3"
                                                     class="ps-4 text-end fw-bold text-dark text-sm border-top">Total
                                                     Tagihan (Net)</td>
                                                 <td class="pe-4 text-end fw-bold text-dark text-sm border-top">{{
-                                                    formatCurrency(transaction.price_final) }}</td>
+                                                    formatCurrency(grandTotal) }}</td>
                                             </tr>
+
                                             <tr>
                                                 <td colspan="3" class="ps-4 text-end text-success fw-bold text-sm">Total
                                                     Dibayar</td>
                                                 <td class="pe-4 text-end text-success fw-bold text-sm">{{
                                                     formatCurrency(totalPaid) }}</td>
                                             </tr>
+
                                             <tr v-if="remainingBalance > 0">
                                                 <td colspan="3" class="ps-4 text-end text-danger fw-bold fs-6 pt-3">SISA
                                                     TAGIHAN</td>
@@ -273,7 +309,11 @@ const themeColor = computed(() => {
 .text-xs {
     font-size: 0.75rem;
 }
-.text-xxs { font-size: 0.65rem; }
+
+.text-xxs {
+    font-size: 0.65rem;
+}
+
 .text-sm {
     font-size: 0.9rem;
 }
@@ -281,16 +321,22 @@ const themeColor = computed(() => {
 .ls-1 {
     letter-spacing: 0.5px;
 }
+
 /* Font Monospace untuk Angka Uang (Agar lurus sejajar) */
 .font-monospace {
     font-family: 'Consolas', 'Monaco', monospace;
 }
+
 /* Shadow Hover Effect */
-.shadow-sm-hover { transition: all 0.2s ease; }
+.shadow-sm-hover {
+    transition: all 0.2s ease;
+}
+
 .shadow-sm-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
 }
+
 /* Dashed Border Utility */
 .border-dashed {
     border-style: dashed !important;
@@ -301,6 +347,7 @@ const themeColor = computed(() => {
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
+
 /* Custom Symbol Size */
 .symbol-45px {
     width: 45px;

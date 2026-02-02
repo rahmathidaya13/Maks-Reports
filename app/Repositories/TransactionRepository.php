@@ -18,9 +18,10 @@ class TransactionRepository extends BaseCacheRepository
             ->with([
                 'creator:id,name',
                 'customer:customer_id,customer_name,number_phone_customer',
-                'product:product_id,name,category',
                 'payments:payment_id,transaction_id,payment_date,payment_type,amount,payment_method',
             ])
+            ->with(['items.product'])
+            ->withCount('items')
             ->withSum('payments as total_paid', 'amount')
             ->where('created_by', auth()->id())
             ->when(
@@ -39,13 +40,8 @@ class TransactionRepository extends BaseCacheRepository
 
                     $q->where(function ($qq) use ($search) {
                         $qq->whereHas('customer', function ($customer) use ($search) {
-                            $customer->where('customer_name', 'like', "%{$search}%")
-                                ->orWhere('number_phone_customer', 'like', "%{$search}%");
+                            $customer->where('customer_name', 'like', "%{$search}%");
                         })
-                            ->orWhereHas('product', function ($product) use ($search) {
-                                $product->where('name', 'like', "%{$search}%");
-                            })
-                            ->orWhere('transaction_id', 'like', "%{$search}%")
                             ->orWhere('invoice', 'like', "%{$search}%");
                     });
                 }

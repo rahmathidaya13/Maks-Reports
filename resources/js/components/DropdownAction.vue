@@ -23,6 +23,7 @@ const emit = defineEmits();
 const visibleActions = computed(() => {
     return props.actions.filter(action => {
         if (action.type === 'divider') return true;
+        if (action.show === false) return false;
         if (action.permission && !hasPermission(action.permission)) return false;
         if (action.role && !hasRole(action.role)) return false;
         return true;

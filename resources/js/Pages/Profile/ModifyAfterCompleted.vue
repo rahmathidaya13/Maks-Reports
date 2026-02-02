@@ -326,7 +326,7 @@ const goToBack = (id) => {
 
                                         <div class="d-flex justify-content-end mt-5 pt-3">
                                             <base-button waiting="Menyimpan..." :loading="form.processing"
-                                                button-class="rounded-3 px-3 btn-height-1 shadow btn-save-animate"
+                                                button-class="rounded-3 px-3 btn-height-1 shadow"
                                                 type="submit" icon="fas fa-save" name="submit" label="Simpan Perubahan"
                                                 variant="primary" />
                                         </div>

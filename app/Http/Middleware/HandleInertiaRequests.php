@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ProductRequestUserModel;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -56,6 +57,12 @@ class HandleInertiaRequests extends Middleware
                 'highlight_by_id' => $request->session()->get('highlight_by_id'),
                 'highlight_type' => $request->session()->get('highlight_type'),
             ],
+            'pending_request_count' => function () {
+                if (auth()->check()) {
+                    return ProductRequestUserModel::where('status', 'pending')->count();
+                }
+                return 0;
+            },
             'old' => fn() => session()->getOldInput(),
             'path' => fn() => $request->path(),
             'fullUrl' => fn() => $request->fullUrl(),

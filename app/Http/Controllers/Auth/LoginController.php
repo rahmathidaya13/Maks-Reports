@@ -60,16 +60,6 @@ class LoginController extends Controller
                 'error' => ['Email atau password salah.'],
             ]);
         }
-
-        // Beri hak akses penuh jika user adalah developer
-        // if ( auth()->user()->hasRole( 'developer' ) ) {
-        //     auth()->user()->syncPermissions( Permission::all()->pluck( 'name' )->toArray() );
-        // }
-
-        // if ( auth()->user()->hasRole( 'user' ) ) {
-        //     auth()->user()->syncPermissions( [ 'create', 'read', 'update', 'delete', 'share', 'download' ] );
-        // }
-
         $user = User::where('email', $request->input('email'))->first();
         if (!$user->is_active) {
             $user->status = 'active';

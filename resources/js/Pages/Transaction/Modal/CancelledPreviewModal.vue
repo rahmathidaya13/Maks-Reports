@@ -39,7 +39,7 @@ const totalPaid = computed(() => {
 
 const remainingBalance = computed(() => {
     if (!props.transaction) return 0;
-    return Number(props.transaction.price_final) - totalPaid.value;
+    return Number(props.transaction.grand_total) - totalPaid.value;
 });
 </script>
 <template>
@@ -87,8 +87,8 @@ const remainingBalance = computed(() => {
                             </div>
                         </div>
 
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-6">
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
                                 <div class="h-100 p-3 bg-light rounded-3 border border-dashed">
                                     <div class="d-flex align-items-center">
                                         <div class="symbol symbol-45px me-3">
@@ -115,41 +115,59 @@ const remainingBalance = computed(() => {
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="col-md-6">
-                                <div class="h-100 p-3 bg-light rounded-3 border border-dashed">
-                                    <div class="d-flex align-items-center">
-                                        <div class="symbol symbol-45px me-3">
-                                            <div class="d-flex align-items-center justify-content-center rounded-3 bg-info bg-opacity-10 text-primary"
-                                                style="width: 45px; height: 45px;">
-                                                <i class="fas fa-box"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <small class="text-muted text-uppercase text-xs fw-bold ls-1">Produk</small>
-                                            <div class="fw-bold text-dark">
-                                                {{ transaction.product?.name ?? "-" }}
-                                            </div>
-                                            <span class="badge bg-white border text-secondary mt-1 fw-normal text-xs">
-                                                {{ formatCategory(transaction.product?.category) ?? 'Uncategorized' }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
-                        <div class="card border border-light shadow-none">
-                            <div class="card-header bg-white border-bottom py-3 p-0">
-                                <h6 class="fw-bold mb-0 text-dark">Rincian Keuangan</h6>
+                        <div class="card border border-danger border-opacity-25 bg-danger bg-opacity-10 mb-4">
+                            <div class="card-header bg-transparent border-danger border-opacity-25 py-2">
+                                <h6 class="fw-bold mb-0 text-danger small text-uppercase">
+                                    <i class="fas fa-ban me-2"></i>Item Yang Dibatalkan
+                                </h6>
+                            </div>
+                            <div class="table-responsive bg-white">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead class="bg-light text-muted text-uppercase text-xs fw-bold">
+                                        <tr>
+                                            <th class="ps-3">Produk</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-end pe-3">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="item in transaction.items" :key="item.id">
+                                            <td class="ps-3">
+                                                <div class="fw-bold text-dark text-sm">
+                                                    {{ item.product?.name ?? 'Item Terhapus' }}</div>
+                                            </td>
+                                            <td class="text-center text-sm">x{{ item.quantity }}</td>
+                                            <td class="text-end fw-bold text-dark text-sm pe-3">
+                                                {{ formatCurrency((item.price_unit * item.quantity) -
+                                                    item.discount_amount) }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot class="bg-light border-top">
+                                        <tr>
+                                            <td colspan="2" class="text-end fw-bold text-muted text-xs ps-3">TOTAL NILAI
+                                                TRANSAKSI</td>
+                                            <td class="text-end fw-bold text-dark text-sm pe-3">
+                                                {{ formatCurrency(transaction.grand_total) }}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card shadow-none">
+                            <div class="card-header bg-white border-bottom py-3 px-4">
+                                <h6 class="fw-bold mb-0 text-dark">Riwayat Pembayaran</h6>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table align-middle mb-0">
                                         <thead class="bg-light text-muted text-uppercase text-xs fw-bold">
                                             <tr>
-                                                <th class="ps-4 py-3">Riwayat Pembayaran</th>
-                                                <th class="py-3">Metode</th>
+                                                <th class="ps-4 py-3">Tipe Pembayaran</th>
+                                                <th class="py-3">Metode Pembayaran</th>
                                                 <th class="py-3 text-end pe-4">Jumlah</th>
                                             </tr>
                                         </thead>
@@ -190,10 +208,10 @@ const remainingBalance = computed(() => {
                                         <tfoot class="bg-light border-top">
                                             <tr>
                                                 <td colspan="2" class="ps-4 py-2 text-end text-muted text-sm">
-                                                    Harga Deal Produk
+                                                    Total Subtotal
                                                 </td>
                                                 <td class="pe-4 py-2 text-end fw-bold text-dark">
-                                                    {{ formatCurrency(transaction.price_final) }}
+                                                    {{ formatCurrency(transaction.grand_total) }}
                                                 </td>
                                             </tr>
 

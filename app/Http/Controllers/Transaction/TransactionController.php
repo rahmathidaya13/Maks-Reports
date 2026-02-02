@@ -76,64 +76,86 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create', TransactionModel::class);
-        $this->validationText($request->all());
+        // dd($request->all());
+        // $this->authorize('create', TransactionModel::class);
+        $request->validate([
+            'invoice' => 'required|max:25',
+            'customer_id' => 'required',
+            'items' => 'required|array|min:1', // Wajib array dan minimal 1
+            'items.*.product_id' => 'required',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price_original' => 'required|numeric|min:0', // Harga Manual
+            'items.*.price_discount' => 'nullable|numeric|min:0', // Diskon Manual
 
-        // 1. Hitung Harga Final
-        $priceFinal = (int) $request['price_original'] - ($request['price_discount'] ?? 0);
+            'payment_type' => 'required|in:payment,repayment',
+            'payment_method' => 'required|in:cash,transfer,debit,qris',
+            'amount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
+        ]);
 
-        // 2. Validasi Bisnis (Early Return)
-        if ($priceFinal <= 0) {
-            return back()->withErrors([
-                'price_discount' => 'Diskon tidak boleh melebihi harga barang.'
-            ]);
+        // Hitung Grand Total (Looping Server Side)
+        // Jangan percaya total dari frontend, hitung ulang di backend demi keamanan
+        $grandTotal = 0;
+        foreach ($request->items as $item) {
+            $subtotal = ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0);
+            $grandTotal += $subtotal;
         }
 
-        if ($request['payment_type'] === 'payment') {
-            $dpMin = $priceFinal * 0.5;
-            if ($request['amount'] < $dpMin) {
-                return back()->withErrors([
-                    'amount' => 'Minimal Dana Pertama (DP) adalah Rp ' . number_format($dpMin, 0, ',', '.')
-                ]);
+        // Validasi Bisnis (DP)
+        if ($request->payment_type === 'payment') {
+            $dpMin = $grandTotal * 0.5;
+            if ($request->amount < $dpMin) {
+                return back()->withErrors(['amount' => 'Minimal DP 50% adalah Rp ' . number_format($dpMin)]);
             }
-            if ($request['amount'] >= $priceFinal) {
-                return back()->withErrors([
-                    'amount' => 'Nominal DP tidak boleh menyamai atau melebihi total harga produk. Gunakan opsi Lunas Langsung.'
-                ]);
+            if ($request->amount >= $grandTotal) {
+                return back()->withErrors(['amount' => 'Nominal DP tidak boleh lunas. Gunakan opsi Lunas Langsung.']);
             }
         }
+
         try {
-            // 3. Gunakan DB Transaction untuk keamanan data
-            $transaction = DB::transaction(function () use ($request, $priceFinal) {
+            $transaction = DB::transaction(function () use ($request, $grandTotal) {
+                // A. Header Transaksi
                 $transaction = TransactionModel::create([
                     'created_by'       => auth()->id(),
-                    'invoice'          => $request['invoice'],
+                    'invoice'          => $request->invoice,
                     'transaction_date' => now(),
-                    'customer_id'      => $request['customer_id'],
-                    'product_id'       => $request['product_id'],
-                    'price_original'   => $request['price_original'],
-                    'price_discount'   => $request['price_discount'] ?? 0,
-                    'price_final'      => $priceFinal,
-                    'status'           => $request['payment_type'] === 'repayment' ? 'repayment' : 'payment',
+                    'customer_id'      => $request->customer_id,
+                    'status'           => $request->payment_type === 'repayment' ? 'repayment' : 'payment',
+                    'grand_total'      => $grandTotal,
                 ]);
 
-                // Simpan Detail Pembayaran Pertama
+                // B. Simpan Detail Item (Looping Insert)
+                // Kita mapping dulu agar sesuai nama kolom di DB transaction_items
+                $itemsData = [];
+                foreach ($request->items as $item) {
+                    $itemsData[] = [
+                        'created_by'      => auth()->id(),
+                        'product_id'      => $item['product_id'],
+                        'quantity'        => $item['quantity'],
+                        'price_unit'      => $item['price_original'], // Harga Manual
+                        'discount_amount' => $item['price_discount'] ?? 0,
+                        'subtotal'        => ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0),
+                    ];
+                }
+                $transaction->items()->createMany($itemsData);
+                // C. Simpan Pembayaran
+                $payAmount = $request->payment_type === 'repayment' ? $grandTotal : $request->amount;
+
                 $transaction->payments()->create([
                     'created_by'     => auth()->id(),
                     'payment_date'   => now(),
-                    'amount'         => $request['payment_type'] === 'repayment' ? $priceFinal : $request['amount'],
-                    'payment_type'   => $request['payment_type'] === 'repayment' ? 'repayment' : 'payment',
-                    'payment_method' => $request['payment_method'],
+                    'amount'         => $payAmount,
+                    'payment_type'   => $request->payment_type === 'repayment' ? 'repayment' : 'payment',
+                    'payment_method' => $request->payment_method,
                 ]);
 
-                return $transaction->load(['creator', 'customer', 'product', 'payments']);
+                return $transaction->load(['creator', 'items.product', 'customer', 'payments']);
             });
 
-            // 4. Manajemen Cache & Response
+            // D. Manajemen Cache & Response
             $message = 'Transaksi berhasil dibuat untuk pelanggan ' . $transaction->customer->customer_name;
             $this->transactionRepository->clearCache(auth()->id());
             app(DashboardRepository::class)->clearCache(auth()->id());
-            return redirect()->route('transaction')->with('message', $message);
+            return redirect()->route('customers')->with('message', $message);
         } catch (\Exception $error) {
             return back()->withErrors(['message' => 'Terjadi kesalahan sistem: ' . $error->getMessage()]);
         }
@@ -142,7 +164,13 @@ class TransactionController extends Controller
     public function show(TransactionModel $transactionModel, string $id)
     {
         $this->authorize('edit', TransactionModel::class);
-        $transaction = $transactionModel::with(['customer', 'product', 'payments'])->findOrFail($id);
+        $transaction = $transaction = $transactionModel::with([
+            'creator',
+            'customer',
+            'payments',
+            'items.product'
+        ])
+            ->find($id);
         $this->transactionRepository->clearCache(auth()->id());
         return Inertia::render('Transaction/Form/RepaymentForm', [
             'transaction' => $transaction
@@ -151,20 +179,7 @@ class TransactionController extends Controller
     public function settle(Request $request, TransactionModel $transactionModel, string $id)
     {
         $this->authorize('edit', TransactionModel::class);
-        $transaction = $transactionModel::with([
-            'creator',
-            'customer',
-            'product',
-            'payments' => function ($query) {
-                $query->orderBy('payment_date', 'asc');
-            }
-        ])->findOrFail($id);
-        // 1. Cegah pelunasan ganda
-        if ($transaction->status === 'repayment') {
-            return back()->withErrors(['message' => 'Transaksi sudah lunas.']);
-        }
-
-        // 2. Validasi input
+        // Validasi input
         $validated = $request->validate([
             'payment_method' => 'required|in:cash,transfer,debit,qris',
         ], [
@@ -172,15 +187,30 @@ class TransactionController extends Controller
             'payment_method.in' => 'Metode pembayaran tidak valid.',
         ]);
 
-        // 3. Hitung total yang sudah dibayar
+        $transaction = $transactionModel::with([
+            'creator:id,name',
+            'customer:customer_id,customer_name,number_phone_customer',
+            'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount'
+        ])
+            ->with(['items.product'])
+            ->findOrFail($id);
+        // 1. Cegah pelunasan ganda
+        if ($transaction->status === 'repayment') {
+            return back()->withErrors(['message' => 'Transaksi sudah lunas.']);
+        }
+
+
+        // Hitung total yang sudah dibayar
         $totalPaid = (int) $transaction->payments()->sum('amount');
-        // 4. Hitung sisa pembayaran
-        $remainingPayment = $transaction->price_final - $totalPaid;
+
+        // Hitung sisa pembayaran
+        $remainingPayment = $transaction->grand_total - $totalPaid;
 
         // // 5. Validasi pembayaran
         if ($remainingPayment <= 0) {
             return back()->withErrors(['message' => 'Sisa tagihan adalah 0. Tidak perlu pelunasan.']);
         }
+
         try {
             DB::transaction(function () use ($transaction, $remainingPayment, $validated) {
                 // 5. Simpan pembayaran pelunasan
@@ -196,7 +226,8 @@ class TransactionController extends Controller
             $transaction->update([
                 'status' => 'repayment',
             ]);
-            $transaction->load(['creator', 'customer', 'product', 'payments']);
+
+            $transaction->load(['creator', 'items.product', 'customer', 'payments']);
             $this->transactionRepository->clearCache(auth()->id());
             app(DashboardRepository::class)->clearCache(auth()->id());
             $message = "Pelunasan transaksi {$transaction->invoice} (An. {$transaction->customer->customer_name}) berhasil diproses.";
@@ -212,16 +243,13 @@ class TransactionController extends Controller
     public function edit(TransactionModel $transactionModel, string $id)
     {
         $this->authorize('edit', TransactionModel::class);
-
-        $customer = CustomerModel::select('customer_id', 'customer_name')->get();
-        $product = ProductModel::select('product_id', 'name')->get();
-
         $transaction = $transactionModel::with([
             'creator:id,name',
             'customer:customer_id,customer_name,number_phone_customer',
-            'product:product_id,name',
             'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount'
-        ])->findOrFail($id);
+        ])
+            ->with(['items.product'])
+            ->findOrFail($id);
 
         if (in_array($transaction->status, ['cancelled', 'repayment'])) {
             $status = $transaction->status === 'cancelled' ? 'dibatalkan' : 'lunas ';
@@ -235,8 +263,8 @@ class TransactionController extends Controller
         app(DashboardRepository::class)->clearCache(auth()->id());
         return Inertia::render('Transaction/Form/pageForm', [
             'transaction' => $transaction,
-            'customer' => $customer,
-            'product' => $product
+            'customer' => CustomerModel::select('customer_id', 'customer_name')->get(),
+            'product' => ProductModel::select('product_id', 'name')->get()
         ]);
     }
 
@@ -246,9 +274,22 @@ class TransactionController extends Controller
     public function update(Request $request, TransactionModel $transactionModel, string $id)
     {
         $this->authorize('edit', TransactionModel::class);
-        $this->validationText($request->all(), $id);
 
-        $transaction = $transactionModel::with(['creator', 'customer', 'product', 'payments'])->findOrFail($id);
+        $request->validate([
+            'invoice' => 'required|max:25',
+            'customer_id' => 'required',
+            'items' => 'required|array|min:1', // Wajib array dan minimal 1
+            'items.*.product_id' => 'required',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price_original' => 'required|numeric|min:0', // Harga Manual
+            'items.*.price_discount' => 'nullable|numeric|min:0', // Diskon Manual
+
+            'payment_type' => 'required|in:payment,repayment',
+            'payment_method' => 'required|in:cash,transfer,debit,qris',
+            'amount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
+        ]);
+
+        $transaction = $transactionModel::with(['creator', 'customer', 'items.product', 'payments'])->findOrFail($id);
 
         if (in_array($transaction->status, ['cancelled', 'repayment'])) {
             $status = $transaction->status === 'cancelled' ? 'dibatalkan' : 'lunas ';
@@ -257,53 +298,76 @@ class TransactionController extends Controller
                 ->with('message', 'Transaksi dengan status ' . $status . ' tidak dapat diubah.');
         }
 
-        // Hitung Harga Final
-        $priceFinal = (int) $request['price_original'] - ($request['price_discount'] ?? 0);
-
-        // Hitung total bayar (kecuali pembayaran pertama yang sedang diedit)
-        $firstPayment = $transaction->payments()->first();
-        $totalPaidOthers = $transaction->payments()->where('payment_id', '!=', $firstPayment->payment_id)->sum('amount');
-        $newTotalPaid = $totalPaidOthers + (int) $request['amount'];
-
-        // logic opsional
-        if ($request['payment_type'] === 'payment') {
-            $dpMin = $priceFinal * 0.5;
-            if ($request['amount'] < $dpMin || $request['amount'] > $priceFinal) {
-                return back()->withErrors([
-                    'amount' => 'Minimal pembayaran Dana pertama adalah Rp ' . number_format($dpMin, 0, ',', '.')
-                ]);
-            }
+        // Hitung Grand Total Baru (Server Side Calculation)
+        $newGrandTotal = 0;
+        foreach ($request->items as $item) {
+            $subtotal = ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0);
+            $newGrandTotal += $subtotal;
         }
 
-        // Cek Validasi Bisnis
-        if ($priceFinal < $newTotalPaid) {
+        // Validasi Bisnis (Aturan DP 50%)
+        // Karena item berubah, Grand Total berubah, maka syarat Min DP juga berubah.
+        $dpMin = $newGrandTotal * 0.5;
+        $inputDP = $request->amount;
+
+
+        // Cek Min 50%
+        if ($inputDP < $dpMin) {
             return back()->withErrors([
-                'price_original' => 'Harga akhir tidak boleh lebih kecil dari total yang sudah dibayar.'
+                'amount' => 'Karena total belanja berubah menjadi Rp ' . number_format($newGrandTotal) . ', maka Minimal DP (50%) adalah Rp ' . number_format($dpMin)
             ]);
         }
 
+        // Cek Maksimal (Tidak boleh lunas di sini)
+        // Karena kalau lunas, harusnya lewat menu pelunasan
+        if ($inputDP >= $newGrandTotal) {
+            return back()->withErrors([
+                'amount' => 'Nominal DP tidak boleh menyamai/melebihi Total Tagihan. Jika ingin melunasi, silakan simpan dulu lalu masuk ke menu Pelunasan.'
+            ]);
+        }
+
+
         try {
-            DB::transaction(function () use ($request, $transaction, $priceFinal, $firstPayment) {
+            DB::transaction(function () use ($request, $transaction, $newGrandTotal, $dpMin, $inputDP) {
                 // Update Header
                 $transaction->update([
                     'invoice'        => $request['invoice'],
                     'customer_id'    => $request['customer_id'],
-                    'product_id'     => $request['product_id'],
-                    'price_original' => $request['price_original'],
-                    'price_discount' => $request['price_discount'] ?? 0,
-                    'price_final'    => $priceFinal,
+                    'grand_total'    => $newGrandTotal,
+                    'status'           => 'payment',
                 ]);
 
-                // Update HANYA pembayaran pertama (DP)
-                if ($firstPayment) {
-                    $firstPayment->update([
-                        'amount'         => $request['amount'],
-                        'payment_method' => $request['payment_method'],
-                    ]);
+                // B. RESET ITEMS (Wipe & Replace)
+                $transaction->items()->delete(); // Update HANYA pembayaran pertama (DP)
+
+                $itemsData = [];
+                foreach ($request->items as $item) {
+                    $itemsData[] = [
+                        'created_by'      => auth()->id(),
+                        'product_id'      => $item['product_id'],
+                        'quantity'        => $item['quantity'],
+                        'price_unit'      => $item['price_original'],
+                        'discount_amount' => $item['price_discount'] ?? 0,
+                        'subtotal'        => ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0),
+                    ];
                 }
+                $transaction->items()->createMany($itemsData);
+
+                // C. UPDATE PEMBAYARAN
+                // Update satu-satunya record payment yang ada (DP) dengan nominal baru
+                $transaction->payments()->updateOrCreate(
+                    ['transaction_id' => $transaction->transaction_id],
+                    [
+                        'created_by'     => auth()->id(),
+                        'payment_date'   => now(), // Update tanggal bayar ke saat diedit (opsional)
+                        'amount'         => $inputDP, // Nominal DP Baru yang sudah divalidasi
+                        'payment_type'   => 'payment', // Tetap payment
+                        'payment_method' => $request->payment_method,
+                    ]
+                );
             });
 
-            $transaction->load(['creator', 'customer', 'product', 'payments']);
+            $transaction->load(['creator', 'customer', 'items.product', 'payments']);
 
             $this->transactionRepository->clearCache(auth()->id());
             app(DashboardRepository::class)->clearCache(auth()->id());
@@ -324,11 +388,16 @@ class TransactionController extends Controller
     {
         $this->authorize('delete', TransactionModel::class);
         $transaction = $transactionModel::with(['creator', 'customer', 'product', 'payments'])->findOrFail($id);
-        // Cegah edit transaksi lunas
-        if ($transaction->status === 'repayment' || $transaction->status === 'payment' || $transaction->status === 'cancelled') {
+        if ($transaction->status === 'payment') {
             return redirect()
                 ->route('transaction')
-                ->with('warning', 'Transaksi ini tidak dapat dihapus untuk menjaga konsistensi data.');
+                ->with('warning', 'Transaksi ini sedang berjalan tidak dapat dihapus');
+        }
+
+        if (in_array($transaction->status, ['cancelled', 'repayment'])) {
+            return redirect()
+                ->route('transaction')
+                ->with($transaction->status === 'cancelled' ? 'warning' : 'info', 'Transaksi yang sudah ' . ucwords($transaction->status === 'cancelled' ? 'dibatalkan' : 'lunas') . ' tidak dapat dihapus');
         }
 
         $transaction->delete();
@@ -384,8 +453,8 @@ class TransactionController extends Controller
         $transaction = $transactionModel::with([
             'creator:id,name',
             'customer:customer_id,customer_name,number_phone_customer',
-            'product:product_id,name',
-            'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount'
+            'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount',
+            'items.product'
         ])->findOrFail($id);
 
         $this->transactionRepository->clearCache(auth()->id());
@@ -410,16 +479,16 @@ class TransactionController extends Controller
         $transaction = $transactionModel::with([
             'creator',
             'customer',
-            'product',
+            'items.product',
             'payments'
         ])->findOrFail($id);
 
-        // if (in_array($transaction->status, ['cancelled', 'repayment'])) {
-        //     $status = $transaction->status === 'cancelled' ? 'dibatalkan' : 'lunas ';
-        //     return redirect()
-        //         ->route('transaction')
-        //         ->with('message', 'Transaksi dengan status ' . $status . ' tidak dapat diubah.');
-        // }
+        if ($transaction->status === 'cancelled') {
+            $status = $transaction->status === 'cancelled' ? 'Dibatalkan' : 'Lunas ';
+            return redirect()
+                ->route('transaction')
+                ->with('message', 'Transaksi dengan status ' . $status . ' tidak dapat diubah.');
+        }
 
         try {
             DB::transaction(function () use ($request, $transaction) {
@@ -431,7 +500,7 @@ class TransactionController extends Controller
                     'cancelled_by' => auth()->id()
                 ]);
             });
-            $transaction->load(['creator', 'customer', 'product', 'payments']);
+            $transaction->load(['creator', 'customer', 'items.product', 'payments']);
             // 4. Manajemen Cache & Redirect
             $this->transactionRepository->clearCache(auth()->id());
             app(DashboardRepository::class)->clearCache(auth()->id());

@@ -142,6 +142,9 @@ const visibleHeaders = computed(() => props.headers.filter(col => col.visible !=
     background: #e2e8f0;
     border-radius: 10px;
 }
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: #d1d7e4;
+}
 
 /* Row Selected State */
 .row-selected {
@@ -152,7 +155,7 @@ const visibleHeaders = computed(() => props.headers.filter(col => col.visible !=
 
 /* Custom Table Styling */
 .custom-table thead th {
-    letter-spacing: 0.5px;
+    letter-spacing: 0.9px;
     background-color: #f7f7f8;
     /* border-bottom: 1px solid #e9ecef; */
 }

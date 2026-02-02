@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
-import { Head, usePage, router } from '@inertiajs/vue3';
+import { Head, usePage, router, Link } from '@inertiajs/vue3';
 import { debounce } from "lodash";
 const props = defineProps({
     stats: Object,
@@ -12,7 +12,7 @@ const selectedMonth = ref(props.filters?.month || new Date().getMonth() + 1);
 const selectedYear = ref(props.filters?.year || new Date().getFullYear());
 const isLoading = ref(false);
 
-console.log(props.top_products);
+console.log(usePage().props.auth);
 
 // List bulan untuk dropdown
 const months = [
@@ -70,6 +70,26 @@ const reset = () => {
         <template #content>
 
             <callout />
+            <div v-if="$page.props.pending_request_count > 0" class="col-12 mb-4">
+                <div class="alert alert-warning border-warning border-opacity-25 d-flex align-items-center shadow-sm rounded-4"
+                    role="alert">
+                    <div class="bg-warning bg-opacity-25 text-warning rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
+                        style="width: 45px; height: 45px;">
+                        <i class="fas fa-bell fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold text-dark mb-1">Ada Permintaan Baru!</h6>
+                        <p class="mb-0 small text-dark text-opacity-75">
+                            Terdapat <strong>{{ $page.props.pending_request_count }}</strong> permintaan harga/stok
+                            dari cabang yang menunggu persetujuan Anda.
+                        </p>
+                    </div>
+                    <Link :href="route('admin.request.index')" class="btn btn-warning btn-sm fw-bold px-3 ms-3">
+                        Cek Sekarang <i class="fas fa-arrow-right ms-1"></i>
+                    </Link>
+                </div>
+            </div>
+
             <div class="py-4">
                 <div class="p-4 bg-light mb-3 rounded-4 border shadow">
                     <div
@@ -101,12 +121,12 @@ const reset = () => {
                                 class="form-select form-select-sm border-0 focus-none fw-semibold">
                                 <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
                             </select>
-                            <button type="button" title="Apply" class="btn btn-primary btn-sm rounded-4 px-3 ms-1"
+                            <button type="button" title="Apply" class="btn btn-primary btn-sm rounded-3 px-3 ms-1"
                                 @click.prevent="applyFilter">
                                 <i class="bi bi-filter"></i>
                             </button>
                             <div class="vr my-1"></div>
-                            <button type="button" title="Segarkan" class="btn btn-success btn-sm rounded-4 px-3 ms-1"
+                            <button type="button" title="Segarkan" class="btn btn-success btn-sm rounded-3 px-3 ms-1"
                                 @click.prevent="reset">
                                 <i class="bi bi-arrow-clockwise fw-bold"></i>
                             </button>
@@ -157,8 +177,6 @@ const reset = () => {
                                 </div>
                             </div>
 
-
-
                             <div class="col-md-12 col-xl-4 col-12">
                                 <div class="card border shadow-sm overflow-hidden rounded-4 h-100">
                                     <div class="card-body p-4 position-relative text-bg-white">
@@ -176,8 +194,9 @@ const reset = () => {
                                                         formatCurrency(stats.remaining_payment) }}</h5>
                                                     <span
                                                         class="mb-1 badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill">
-                                                        {{ props.stats.pending_count
-                                                            ?? 0 }} Unit</span>
+                                                        {{ props.stats.products_sold_dp
+                                                            ?? 0 }} Unit dari {{ props.stats.transactions_count_dp_inv
+                                                        }} Invoice</span>
                                                     <p class="text-muted small mb-0"
                                                         title="Terhitung dari transaksi yang melakukan pembayaran dengan DP (Down Payment)">
                                                         <i class="bi bi-info-circle me-1"></i>
@@ -201,14 +220,15 @@ const reset = () => {
                                                     <i class="bi bi-cash-coin fs-1"></i>
                                                 </div>
                                                 <div>
-                                                    <h6 class="text-muted small fw-bold text-uppercase mb-1">Trabsaksi
+                                                    <h6 class="text-muted small fw-bold text-uppercase mb-1">Transaksi
                                                         Lunas</h6>
                                                     <h5 class="fw-extrabold mb-1">{{
                                                         formatCurrency(stats.sales_volume) }}</h5>
                                                     <span
                                                         class="mb-1 badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill">
                                                         {{ stats.products_sold
-                                                            ?? 0 }} Unit</span>
+                                                            ?? 0 }} Unit dari {{ props.stats.transactions_count_inv
+                                                        }} Invoice </span>
                                                     <p class="text-muted small mb-0"
                                                         title="Terhitung dari transaksi yang sudah lunas atau yang sudah melunasi transaksi pembayaran">
                                                         <i class="bi bi-info-circle me-1"></i>

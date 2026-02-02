@@ -335,96 +335,83 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($products as $index => $product)
+            @forelse($products as $index => $productPrice)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>
-                        <div class="font-bold">{{ $product->name }}</div>
+                        <div class="font-bold">{{ $productPrice->product->name }}</div>
                         <span style="font-size: 9px; color: #7f8c8d;">ID:
-                            {{ substr(str_replace('-', '', $product->product_id), 0, 11) }}</span>
-                    </td>
-                    <td style="text-align: center">{{ ucwords(str_replace('-', ' ', $product->category)) }}</td>
-                    <td class="text-center">
-                        {{-- Class dinamis berdasarkan value (new, used, dll) --}}
-                        <span class="badge {{ strtolower($product->item_condition) }}">
-                            {{ strtoupper($product->item_condition) }}
-                        </span>
-                    </td>
-                    <td>
-                        @forelse($product->prices as $price)
-                            <div class="price-box">
-                                {{-- Nama Cabang --}}
-                                <span class="branch-name">
-                                    {{ $price->branch->name ?? 'Pusat' }}
-                                </span>
-
-                                {{-- Baris Harga --}}
-                                <div class="price-row">
-                                    @if ($price->price_type == 'discount' && $price->discount_price < $price->base_price)
-                                        {{-- Hitung Diskon --}}
-                                        @php
-                                            $discountPercent = 0;
-                                            if ($price->base_price > 0) {
-                                                $discountPercent = round(
-                                                    (($price->base_price - $price->discount_price) /
-                                                        $price->base_price) *
-                                                        100,
-                                                );
-                                            }
-                                        @endphp
-
-                                        {{-- Harga Coret --}}
-                                        <span class="base-price-strike">
-                                           Rp {{ number_format($price->base_price, 0, ',', '.') }}
-                                        </span>
-
-                                        {{-- Harga Akhir --}}
-                                        <span class="final-price">
-                                            Rp {{ number_format($price->discount_price, 0, ',', '.') }}
-                                        </span>
-
-                                        {{-- Badge Persen --}}
-                                        <span class="discount-badge">
-                                            -{{ $discountPercent }}%
-                                        </span>
-                                    @else
-                                        {{-- Harga Normal --}}
-                                        <span class="final-price">
-                                            Rp {{ number_format($price->base_price, 0, ',', '.') }}
-                                        </span>
-                                    @endif
-                                </div>
-                                <span class="period-info">
-                                    {{-- Logika Tampilan Tanggal Mulai --}}
-                                    @if ($price->valid_from)
-                                        {{ 'Berlaku mulai ' . \Carbon\Carbon::parse($price->valid_from)->format('d M y') }}
-                                    @else
-                                        <span style="font-style:italic;">Efektif</span>
-                                    @endif
-
-                                    {{-- Logika Tampilan Tanggal Berakhir --}}
-                                    @if ($price->valid_until)
-                                        s/d {{ \Carbon\Carbon::parse($price->valid_until)->format('d M y') }}
-                                    @else
-                                        {{-- Jika null, berarti berlaku selamanya --}}
-                                        &#8594; Seterusnya
-                                    @endif
-                                </span>
-
-                            @empty
-                                <div style="color: #bdc3c7; font-style: italic; font-size:9px;">
-                                    Belum ada harga diatur.
-                                </div>
-                        @endforelse
+                            {{ substr(str_replace('-', '', $productPrice->product->product_id), 0, 11) }}</span>
                     </td>
                     <td style="text-align: center">
-                        @forelse ($product->prices as $pr)
-                            <span class="badge {{ strtolower($pr->status) }}">
-                                {{ $pr->status === 'published' ? 'Publish' : 'Draft' }}
+                        {{ ucwords(str_replace('-', ' ', $productPrice->product->category)) }}</td>
+                    <td class="text-center">
+                        {{-- Class dinamis berdasarkan value (new, used, dll) --}}
+                        <span class="badge {{ strtolower($productPrice->product->item_condition) }}">
+                            {{ strtoupper($productPrice->product->item_condition) }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="price-box">
+                            <span class="branch-name">
+                                {{ $productPrice->branch->name ?? 'Pusat' }}
                             </span>
-                        @empty
-                            <span style="color: #bdc3c7; font-style: italic; font-size:9px;">-</span>
-                        @endforelse
+                            <div class="price-row">
+                                @if ($productPrice->price_type == 'discount' && $productPrice->discount_price < $productPrice->base_price)
+                                    @php
+                                        $discountPercent = 0;
+                                        if ($productPrice->base_price > 0) {
+                                            $discountPercent = round(
+                                                (($productPrice->base_price - $productPrice->discount_price) /
+                                                    $productPrice->base_price) *
+                                                    100,
+                                            );
+                                        }
+                                    @endphp
+                                    <span class="base-price-strike">
+                                        Rp {{ number_format($productPrice->base_price, 0, ',', '.') }}
+                                    </span>
+
+                                    {{-- Harga Akhir --}}
+                                    <span class="final-price">
+                                        Rp {{ number_format($productPrice->discount_price, 0, ',', '.') }}
+                                    </span>
+
+                                    {{-- Badge Persen --}}
+                                    <span class="discount-badge">
+                                        -{{ $discountPercent }}%
+                                    </span>
+                                @else
+                                    {{-- Harga Normal --}}
+                                    <span class="final-price">
+                                        Rp {{ number_format($productPrice->base_price, 0, ',', '.') }}
+                                    </span>
+                                @endif
+                            </div>
+                            <span class="period-info">
+                                {{-- Logika Tampilan Tanggal Mulai --}}
+                                @if ($productPrice->valid_from)
+                                    {{ 'Berlaku mulai ' . \Carbon\Carbon::parse($productPrice->valid_from)->format('d M y') }}
+                                @else
+                                    <span style="font-style:italic;">Efektif</span>
+                                @endif
+
+                                {{-- Logika Tampilan Tanggal Berakhir --}}
+                                @if ($productPrice->valid_until)
+                                    s/d {{ \Carbon\Carbon::parse($productPrice->valid_until)->format('d M y') }}
+                                @else
+                                    {{-- Jika null, berarti berlaku selamanya --}}
+                                    &#8594; Seterusnya
+                                @endif
+                            </span>
+                        </div>
+                    </td>
+
+                    <td style="text-align: center">
+                        <span class="badge {{ strtolower($productPrice->status) }}">
+                            {{ $productPrice->status === 'published' ? 'Publish' : 'Draft' }}
+                        </span>
                     </td>
                 </tr>
             @empty
