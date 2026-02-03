@@ -62,26 +62,12 @@ class ProductController extends Controller
         $category = ProductModel::select('category')->distinct()->get();
         $branch = BranchesModel::select('branches_id', 'name')->get();
 
-        $baseProduct = ProductModel::with(['prices' => function ($q) {
-            $q->select('base_price', 'product_id');
-        }])
-            ->select('product_id', 'name')
-            ->get();
-
-        $productRequest = ProductRequestUserModel::query()
-            ->with(['user.profile.branch', 'product'])
-            ->where('user_id', auth()->id())
-            ->orderByRaw("FIELD('status', 'pending', 'approved', 'rejected')")
-            ->latest()
-            ->get();
 
         return Inertia::render('Product/Index', [
             'product' => $products,
             'filters' => $filters,
             'category' => $category,
             'branch' => $branch,
-            'baseProduct' => $baseProduct,
-            'productRequest' => $productRequest
 
         ]);
     }

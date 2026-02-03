@@ -16,92 +16,17 @@ const textToUppercase = (text) => {
 }
 
 const loaderActive = ref(null);
-const logout = () => {
-    loaderActive.value?.show("Keluar Aplikasi...");
-    router.get(route('logout'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const storyReport = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('story_report'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const dailyReport = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('daily_report'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const product = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('product'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const dashboard = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('home'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const job_title = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('job_title'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const branches = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('branch'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const getDetailProfile = (id) => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('profile.detail', id), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const customers = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('customers'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const transaction = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('transaction'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const goRoles = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('roles'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const goPermissions = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('permissions'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const userHandle = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('users'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
-const helpdesk = () => {
-    loaderActive.value?.show("Sedang membuka...");
-    router.get(route('helpdesk.index'), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
 
-
+const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
+    loaderActive.value?.show(message);
+    router.get(route(routeName, params), {}, {
+        onFinish: () => loaderActive.value?.hide(),
+        onError: () => loaderActive.value?.hide(),
+        preserveScroll: true,
+        replace: true,
+        preserveState: true,
+    });
+}
 const imageSource = computed(() => {
     const users = page.props.auth.user
     if (users.profile.images != null) {
@@ -123,7 +48,7 @@ const jobTitle = page.props.auth.user.profile.job_title;
                             <img :src="imageSource" class="profile-image-sidebar" alt="User Image">
                         </div>
                         <div class="user-info-text">
-                            <Link @click.prevent="getDetailProfile(page.props.auth.user.id)"
+                            <Link @click.prevent="navigateTo('profile.detail', (page.props.auth.user.id))"
                                 :href="route('profile.detail', page.props.auth.user.id)" class="user-name-link"
                                 :class="{ 'active-link-prf': is('profile*') }">
                                 {{ page.props.auth.user.name }}
@@ -134,7 +59,7 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         </div>
                     </div>
                     <div class="sb-sidenav-menu-heading">Home</div>
-                    <Link @click.prevent="dashboard" class="nav-link"
+                    <Link @click.prevent="navigateTo('home')" class="nav-link"
                         :class="{ 'active active-link': is('dashboard*') }" :href="route('home')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-tachometer-alt"></i>
@@ -143,10 +68,10 @@ const jobTitle = page.props.auth.user.profile.job_title;
                     </Link>
 
 
-                    <div class="sb-sidenav-menu-heading">Produk
+                    <div class="sb-sidenav-menu-heading" v-if="hasPermission('product.view')">Produk
                     </div>
 
-                    <Link @click.prevent="product" :href="route('product')" class="nav-link"
+                    <Link v-if="hasPermission('product.view')" @click.prevent="navigateTo('product')" :href="route('product')" class="nav-link"
                         :class="{ 'active active-link': is('product*') }">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-tags"></i>
@@ -154,22 +79,12 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         Daftar Produk
                     </Link>
 
-                    <Link @click.prevent="product" :href="route('product')" class="nav-link d-flex align-items-center"
-                        :class="{ 'active active-link': route().current('request.*') }">
-                        <div class="sb-nav-link-icon">
-                            <i class="fas fa-user-tag"></i>
-                        </div>
-                        Permintaan
-                        <span v-if="$page.props.pending_request_count"
-                            class="badge bg-danger shadow-sm animate-pulse ms-5">
-                            {{ $page.props.pending_request_count }}
-                        </span>
-                    </Link>
 
-                    <div class="sb-sidenav-menu-heading">Laporan
+
+                    <div class="sb-sidenav-menu-heading" v-if="hasPermission('transaction.view')">Laporan
                     </div>
 
-                    <Link v-if="hasPermission('transaction.view')" @click.prevent="transaction"
+                    <Link v-if="hasPermission('transaction.view')" @click.prevent="navigateTo('transaction')"
                         :href="route('transaction')" class="nav-link"
                         :class="{ 'active active-link': is('transaction*') }">
                         <div class="sb-nav-link-icon">
@@ -178,24 +93,26 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         Transaksi
                     </Link>
 
-                    <Link @click.prevent="customers" v-if="hasPermission('customers.view')" :href="route('customers')"
-                        class="nav-link" :class="{ 'active active-link': is('customers*') }">
+                    <Link @click.prevent="navigateTo('customers')" v-if="hasPermission('customers.view')"
+                        :href="route('customers')" class="nav-link" :class="{ 'active active-link': is('customers*') }">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-user-tag"></i>
                         </div>
                         Daftar Pelanggan
                     </Link>
 
-                    <Link v-if="hasPermission('daily.report.leads.view')" @click.prevent="dailyReport" class="nav-link"
-                        :class="{ 'active active-link': is('daily_report*') }" :href="route('daily_report')">
+                    <Link v-if="hasPermission('daily.report.leads.view')" @click.prevent="navigateTo('daily_report')"
+                        class="nav-link" :class="{ 'active active-link': is('daily_report*') }"
+                        :href="route('daily_report')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-clipboard"></i>
                         </div>
                         Laporan Leads
                     </Link>
 
-                    <Link v-if="hasPermission('status.report.view')" @click.prevent="storyReport" class="nav-link"
-                        :class="{ 'active active-link': is('story_report*') }" :href="route('story_report')">
+                    <Link v-if="hasPermission('status.report.view')" @click.prevent="navigateTo('story_report')"
+                        class="nav-link" :class="{ 'active active-link': is('story_report*') }"
+                        :href="route('story_report')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-sticky-note"></i>
                         </div>
@@ -206,7 +123,7 @@ const jobTitle = page.props.auth.user.profile.job_title;
                     <div v-if="hasRole(['developer', 'admin'])" class="sb-sidenav-menu-heading">Manajemen
                     </div>
 
-                    <Link @click.prevent="job_title"
+                    <Link @click.prevent="navigateTo('job_title')"
                         v-if="hasRole(['developer', 'admin']) && hasPermission('job.title.view')" class="nav-link"
                         :class="{ 'active active-link': is('job_title*') }" :href="route('job_title')">
                         <div class="sb-nav-link-icon">
@@ -215,7 +132,7 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         Daftar Jabatan
                     </Link>
 
-                    <Link @click.prevent="branches"
+                    <Link @click.prevent="navigateTo('branch')"
                         v-if="hasRole(['developer', 'admin']) && hasPermission('branches.view')" class="nav-link"
                         :class="{ 'active active-link': is('branch*') }" :href="route('branch')">
                         <div class="sb-nav-link-icon">
@@ -227,7 +144,7 @@ const jobTitle = page.props.auth.user.profile.job_title;
                     <div v-if="hasRole('developer')" class="sb-sidenav-menu-heading">Otorisasi
                     </div>
 
-                    <Link @click.prevent="goRoles" v-if="hasRole('developer')" class="nav-link"
+                    <Link @click.prevent="navigateTo('roles')" v-if="hasRole('developer')" class="nav-link"
                         :class="{ 'active active-link': is('authorization/roles*') }" :href="route('roles')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-briefcase"></i>
@@ -235,7 +152,7 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         Peran
                     </Link>
 
-                    <Link @click.prevent="goPermissions" v-if="hasRole('developer')" class="nav-link"
+                    <Link @click.prevent="navigateTo('permissions')" v-if="hasRole('developer')" class="nav-link"
                         :class="{ 'active active-link': is('authorization/permissions*') }"
                         :href="route('permissions')">
                         <div class="sb-nav-link-icon">
@@ -244,7 +161,7 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         Izin Akses
                     </Link>
 
-                    <Link @click.prevent="userHandle" v-if="hasRole('developer')" class="nav-link"
+                    <Link @click.prevent="navigateTo('users')" v-if="hasRole('developer')" class="nav-link"
                         :class="{ 'active active-link': is('authorization/users*') }" :href="route('users')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-user-cog"></i>
@@ -252,19 +169,10 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         Izin Pengguna
                     </Link>
 
-                    <div class="sb-sidenav-menu-heading">Akun
-                    </div>
-
-                    <Link @click.prevent="helpdesk" class="nav-link" :class="{ 'active active-link': is('helpdesk*') }"
-                        :href="route('helpdesk.index')">
-                        <div class="sb-nav-link-icon">
-                            <i class="fas fa-headset"></i>
-                        </div>
-                        Helpdesk
-                    </Link>
 
 
-                    <Link @click.prevent="logout" class="nav-link" :href="route('logout')">
+
+                    <Link @click.prevent="navigateTo('logout')" class="nav-link" :href="route('logout')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-sign-out-alt"></i>
                         </div>

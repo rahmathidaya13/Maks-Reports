@@ -18,10 +18,7 @@ const props = defineProps({
     filters: Object,
     category: Array,
     branch: Array,
-    baseProduct: Array,
-    productRequest: Array
 })
-console.log(props.productRequest)
 const filters = reactive({
     keyword: props.filters.keyword ?? "",
     category: props.filters.category ?? null,
@@ -487,13 +484,6 @@ const toolbarActions = computed(() => [
         click: create
     },
     {
-        label: 'Buat Permintaan',
-        icon: 'fas fa-plus-circle',
-        isPrimary: true, // Prioritas Utama
-        show: hasRole(['admin', 'developer']),
-        click: openModalFormRequest
-    },
-    {
         label: 'Segarkan',
         icon: 'fas fa-redo-alt',
         iconColor: 'text-primary',
@@ -693,8 +683,6 @@ const toolbarActions = computed(() => [
             <ModalExport :product="product" :show="showModalExport" @update:show="showModalExport = $event"
                 :branches="branch" :categories="category" />
 
-            <ModalFormRequest :productRequest="productRequest" :products="baseProduct" :show="modalFormRequest"
-                @update:show="modalFormRequest = $event" />
         </template>
     </app-layout>
 </template>

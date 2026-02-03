@@ -215,16 +215,6 @@ function formatCurrency(value) {
         <template #content>
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-
-            <div v-if="Object.keys(form.errors).length > 0" class="alert alert-danger m-4">
-                <strong>Waduh! Ada Error Validasi:</strong>
-                <ul class="mb-0 mt-2">
-                    <li v-for="(error, key) in form.errors" :key="key">
-                        {{ key }}: {{ error }}
-                    </li>
-                </ul>
-            </div>
-
             <div class="row g-2 pb-3">
 
                 <div class="col-12">

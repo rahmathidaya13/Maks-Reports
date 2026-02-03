@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignUuid('created_by')->constrained('users', 'id')->cascadeOnDelete(); // User Cabang
             $table->string('subject'); // Judul Masalah
             $table->enum('category', ['general', 'technical', 'billing'])->default('general');
+            $table->enum('priority', ['low', 'medium', 'high']);
             $table->enum('status', ['open', 'answered', 'closed'])->default('open');
             $table->timestamps();
         });

@@ -20,6 +20,8 @@ class TicketMessageModel extends Model
         'created_by',
         'ticket_id',
         'message',
+        'is_admin_reply',
+        'attachment'
     ];
 
     public function creator()

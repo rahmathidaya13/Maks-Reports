@@ -45,6 +45,11 @@ const branch = computed(() => [
     }))
 ]);
 
+const disabledButton = ref(true)
+const countProduct = computed(() => {
+    const totalData = props.product?.total ?? 0;
+    return totalData > 500;
+})
 const download = (format, ignoreFilters = false) => {
     // Siapkan parameter
     const params = {};
@@ -77,7 +82,7 @@ watch(filter, async () => {
             }
         });
         totalProductFilter.value = response.data.total
-
+        disabledButton.value = (response.data.total > 500 || response.data.total === 0) ? countProduct.value : false
     } catch (error) {
         totalProductFilter.value = 0
     } finally {
@@ -162,8 +167,8 @@ const close = () => {
                             </div>
 
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-danger shadow-sm rounded-pill"
-                                    @click="download('pdf')">
+                                <button :disabled="disabledButton" type="button"
+                                    class="btn btn-danger shadow-sm rounded-pill" @click="download('pdf')">
                                     <i class="fas fa-file-pdf me-2"></i>PDF
                                 </button>
                                 <button type="button" class="btn btn-success shadow-sm rounded-pill"

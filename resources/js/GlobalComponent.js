@@ -46,6 +46,7 @@ import DropdownAction from "./components/DropdownAction.vue";
 import Filters from "./components/Filters.vue";
 import LoadingOverlay from "./components/LoadingOverlay.vue";
 import ActionToolbar from "./components/ActionToolbar.vue";
+import AlertErrorAll from "./components/AlertErrorAll.vue";
 export default {
     install(app) {
         app.component("loader-overlay", LoaderOverlay);
@@ -53,6 +54,7 @@ export default {
         app.component("loader-page", LoaderPerPage);
         app.component("loading-overlay", LoadingOverlay);
         app.component("alert", Alert);
+        app.component("alert-error", AlertErrorAll);
         app.component("drop-down", DropDown);
         app.component("modal", Modal);
         app.component("toast-notification", ToastNotification);

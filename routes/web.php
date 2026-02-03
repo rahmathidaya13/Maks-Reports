@@ -167,18 +167,13 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
 
         Route::delete('/product/delete/image-gallery/{id}', 'deletedGalleryImage')->name('product.deleted.gallery.image');
     });
-    Route::controller(ProductRequestUserController::class)->group(function () {
-        Route::get('/product/create-product-requests', 'create')->name('product.request.create');
-        Route::post('/product/store/product-requests', 'store')->name('product.request.store');
-        Route::put('/product/update/product-requests/{id}', 'update')->name('product.request.update');
-    });
 
     // khusus hanya untuk permintaan produk
-    Route::controller(AdminController::class)->group(function () {
-        Route::get('/product/request/list', 'index')->name('admin.request.index');
-        Route::put('/product/update/{id}', 'update')->name('admin.request.update');
-        Route::get('/product/reset', 'reset')->name('admin.request.reset');
-    });
+    // Route::controller(AdminController::class)->group(function () {
+    //     Route::get('/product/request/list', 'index')->name('admin.request.index');
+    //     Route::put('/product/update/{id}', 'update')->name('admin.request.update');
+    //     Route::get('/product/reset', 'reset')->name('admin.request.reset');
+    // });
 
     // cetak laporan
     Route::controller(ProductExportController::class)->group(function () {
@@ -202,11 +197,19 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     });
 
 
-    Route::controller(HelpdeskController::class)->group(function () {
-        Route::get('/helpdesk/info', 'index')->name('helpdesk.index');
-        Route::post('/helpdesk/store', 'store')->name('helpdesk.store');
-        Route::get('/helpdesk/messages/{id}', 'show')->name('helpdesk.show');
-    });
+    // next update
+    // Route::controller(HelpdeskController::class)->group(function () {
+    //     Route::get('/helpdesk/info', 'index')->name('helpdesk.index');
+    //     Route::post('/helpdesk/store', 'store')->name('helpdesk.store');
+    //     Route::get('/helpdesk/messages/{id}', 'show')->name('helpdesk.show');
+    //     Route::post('/helpdesk/reply/{id}', 'reply')->name('helpdesk.reply');
+    // });
+    //  Route::controller(ProductRequestUserController::class)->group(function () {
+    //     Route::get('/product/create-product-requests', 'create')->name('product.request.create');
+    //     Route::post('/product/store/product-requests', 'store')->name('product.request.store');
+    //     Route::put('/product/update/product-requests/{id}', 'update')->name('product.request.update');
+    // });
+
 });
 
 Route::middleware('auth')->group(function () {

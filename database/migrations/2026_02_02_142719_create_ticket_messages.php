@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignUuid('created_by')->constrained('users', 'id')->cascadeOnDelete(); // Siapa yang ngetik (User atau Admin)
             $table->foreignUuid('ticket_id')->constrained('tickets', 'ticket_id')->onDelete('cascade');
             $table->text('message');
+            $table->boolean('is_admin_reply')->default(false); // Penanda biar gampang styling (Kiri/Kanan)
+            $table->string('attachment')->nullable(); // Foto bukti jika ada
             $table->timestamps();
         });
     }

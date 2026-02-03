@@ -81,6 +81,7 @@ const submitTicket = () => {
                     </div>
                     <div class="list-group list-group-flush">
                         <Link v-for="ticket in tickets?.data" :key="ticket.ticket_id"
+                            :href="route('helpdesk.show', ticket.ticket_id)"
                             class="list-group-item list-group-item-action p-3 d-flex align-items-center">
 
                             <div class="bg-light rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"

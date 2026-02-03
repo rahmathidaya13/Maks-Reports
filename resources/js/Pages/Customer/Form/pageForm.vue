@@ -88,7 +88,7 @@ onMounted(() => {
                             <h4 class="fw-bold text-dark mb-1">Input Pelanggan</h4>
                             <p class="text-muted small mb-0">Isi data pelanggan Anda dengan lengkap.</p>
                         </div>
-                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm hover-scale">
+                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm">
                             <i class="fas fa-arrow-left me-2"></i>Kembali
                         </Link>
                     </div>
@@ -132,7 +132,7 @@ onMounted(() => {
                                     <div class="col-md-6">
                                         <input-label class="fw-bold small" for="national_id" value="NIK / Nomor KTP" />
                                         <div class="position-relative">
-                                            <i class="fas fa-fingerprint text-muted input-icon-left"></i>
+                                            <i class="fas fa-id-card text-muted input-icon-left"></i>
                                             <text-input ref="inputRef" placeholder="Cth: 1234567890..."
                                                 class="input-fixed-height" v-model="form.national_id"
                                                 name="national_id" />
@@ -147,7 +147,7 @@ onMounted(() => {
                                         <input-label class="fw-bold small" for="customer_name" value="Nama Lengkap" />
                                         <div class="position-relative">
                                             <i class="fas fa-user text-muted input-icon-left"></i>
-                                            <text-input placeholder="Contoh: Bpk/Ibu, Abc" class="input-fixed-height"
+                                            <text-input placeholder="Contoh: jhon doe" class="input-fixed-height"
                                                 v-model="form.customer_name" name="customer_name" />
                                         </div>
                                         <input-error :message="form.errors.customer_name" />
@@ -220,7 +220,7 @@ onMounted(() => {
                                     </button>
 
                                     <base-button :loading="form.processing"
-                                        class="btn-save-custom rounded-3 shadow-sm px-4 btn-height-1 fw-bold" :icon="props.customers?.customer_id ? 'fas fa-save' : 'fas fa-paper-plane'
+                                        class="rounded-3 shadow-sm px-4 btn-height-1 fw-bold" :icon="props.customers?.customer_id ? 'fas fa-save' : 'fas fa-paper-plane'
                                             " :variant="props.customers?.customer_id ? 'success' : 'primary'"
                                         type="submit" :label="props.customers?.customer_id ? 'Simpan Perubahan' : 'Simpan Data'
                                             " />

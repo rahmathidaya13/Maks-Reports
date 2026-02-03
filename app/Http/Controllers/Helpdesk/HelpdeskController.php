@@ -20,6 +20,7 @@ class HelpdeskController extends Controller
     public function index()
     {
         $user = auth()->user()->id;
+
         $tickets = TicketModel::where('created_by', $user)
             ->with(['creator', 'messages', 'latestMessage'])
             ->orderBy('updated_at', 'desc')
@@ -75,5 +76,24 @@ class HelpdeskController extends Controller
         return Inertia::render('Helpdesk/ChatRoom', [
             'ticket' => $ticket
         ]);
+    }
+
+    public function reply(Request $request, $id)
+    {
+        // KIRIM BALASAN
+        $request->validate(['message' => 'required']);
+
+        TicketMessageModel::create([
+            'ticket_id' => $id,
+            'created_by' => auth()->id(),
+            'message' => $request->message
+        ]);
+
+        // Update timestamp tiket agar naik ke atas di list
+        $ticket = TicketModel::findOrFail($id);
+        $ticket->touch();
+        $ticket->update(['status' => 'open']); // Set open lagi karena user membalas
+
+        return back(); // Stay di chat room
     }
 }

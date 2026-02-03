@@ -78,9 +78,9 @@ const goBack = () => {
             <loader-page ref="loaderActive" />
             <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
             <div class="row pb-3">
-                <div class="col-xl-12 col-lg-10 col-12">
+                <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        
+
                         <div
                             class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">

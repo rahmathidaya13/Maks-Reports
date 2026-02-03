@@ -19,6 +19,7 @@ class TicketModel extends Model
         'created_by',
         'subject',
         'category',
+        'priority',
         'status',
     ];
 
@@ -32,6 +33,6 @@ class TicketModel extends Model
     }
     public function latestMessage()
     {
-        return $this->hasOne(TicketMessageModel::class, 'ticket_id', 'ticket_id')->latestOfMany();
+        return $this->hasOne(TicketMessageModel::class, 'ticket_id', 'ticket_id')->latestOfMany('ticket_id', 'ticket_id');
     }
 }
