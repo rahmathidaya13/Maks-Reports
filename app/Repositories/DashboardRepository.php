@@ -44,14 +44,14 @@ class DashboardRepository extends BaseCacheRepository
         $endDate   = (clone $startDate)->endOfMonth();
 
         $lastMonthStart = (clone $startDate)->subMonth();
-        $lastMonthEnd   = (clone $endDate)->subMonth();
+        $lastMonthEnd   = (clone $lastMonthStart)->endOfMonth();
         /**
          * ======================================================
          * TRANSAKSI LUNAS (HANYA 2 BULAN TERKAIT)
          * ======================================================
          */
         $transactions = TransactionModel::query()
-            ->with(['items','customer','creator','payments'])
+            ->with(['items.product', 'customer', 'creator', 'payments'])
             ->where('created_by', $userId)
             ->where('status', '!=', 'cancelled')
             ->whereNull('cancelled_at')
@@ -102,9 +102,11 @@ class DashboardRepository extends BaseCacheRepository
         $lastMonthSales = $completedLastMonth->sum('grand_total');
 
         // hitung GROWTH
-        $growth = $lastMonthSales > 0
-            ? (($totalSales - $lastMonthSales) / $lastMonthSales) * 100
-            : 0;
+        if ($lastMonthSales > 0) {
+            $growth = (($totalSales - $lastMonthSales) / $lastMonthSales) * 100;
+        } else {
+            $growth = $totalSales > 0 ? 100 : 0;
+        }
 
         // Hitung Total Item Terjual yang lunas dan masih dp atau belum lunas (Quantity)
         $productsSoldQty = $completedThisMonth->sum(function ($trx) {
@@ -120,7 +122,7 @@ class DashboardRepository extends BaseCacheRepository
          * ======================================================
          */
         $dailyStats = TransactionModel::query()
-            ->with(['items','customer','creator','payments'])
+            ->with(['items.product', 'customer', 'creator', 'payments'])
             ->where('created_by', $userId)
             ->whereBetween('transaction_date', [$startDate, $endDate])
             ->where('status', '!=', 'cancelled')

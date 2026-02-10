@@ -3,7 +3,7 @@ import { onMounted } from "vue";
 import Navbar from "./Navbar.vue";
 import Sidebar from "./Sidebar.vue";
 import Footer from "./Footer.vue";
-import { useConfirm } from "@/helpers/useConfirm.js"
+import { useConfirm } from "@/helpers/useConfirm"
 const toggleSidebar = () => {
     document.body.classList.toggle("sb-sidenav-toggled");
     localStorage.setItem(

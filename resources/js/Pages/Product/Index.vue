@@ -9,9 +9,9 @@ import moment from "moment";
 moment.locale('id');
 
 import { useConfirm } from "@/helpers/useConfirm.js"
-import ModalExport from "./ModalExport.vue";
-import ModalFormRequest from "./ModalFormRequest.vue";
 const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
+
+import ModalExport from "./ModalExport.vue";
 
 const props = defineProps({
     product: Object,
@@ -44,11 +44,7 @@ const liveSearch = debounce(() => {
 }, 500);
 const reset = () => {
     isLoading.value = true
-    router.get(route("product.reset"), {}, {
-        preserveScroll: false,
-        replace: true,
-        onFinish: () => isLoading.value = false
-    });
+    navigateTo("product.reset", {}, false);
 }
 const branchOptions = computed(() => [
     { label: "Semua Cabang", value: null },
@@ -57,9 +53,6 @@ const branchOptions = computed(() => [
         value: br.name,
     }))
 ]);
-
-
-
 
 watch(
     () => [
@@ -81,20 +74,14 @@ watch(
 
 // CRUD OPERATION
 const loaderActive = ref(null)
-const create = () => {
-    loaderActive.value?.show("Memproses...");
-    router.get(route("product.create"), {}, {
-        onFinish: () => {
-            loaderActive.value?.hide()
-        }
+const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
+    if (message) loaderActive.value?.show(message);
+    router.get(route(routeName, params), {}, {
+        onFinish: () => message && loaderActive.value?.hide(),
+        preserveScroll: false,
+        replace: true,
     });
-}
 
-const edit = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(route("product.edit", id), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
 }
 
 const deleted = async (data) => {
@@ -439,24 +426,16 @@ const header = [
     },
 ];
 // modal untuk tampilkan export to
-const showModalExport = ref(false)
-const openModalExport = () => {
-    showModalExport.value = true
+const modals = reactive({
+    export: false,
+});
+const openModal = (type, data) => {
+    if (type === 'export') modals.export = true;
 }
 // end modal untuk tampilkan export to
 
-const modalFormRequest = ref(false)
-const openModalFormRequest = () => {
-    modalFormRequest.value = true
-}
-const requestProduct = () => {
-    loaderActive.value?.show("Memproses...");
-    router.get(route("product.request.create"), {}, {
-        onFinish: () => {
-            loaderActive.value?.hide()
-        }
-    });
-}
+
+
 const toolbarActions = computed(() => [
 
     {
@@ -466,14 +445,14 @@ const toolbarActions = computed(() => [
         labelColor: 'text-danger',
         disabled: !selectedRow.value.length > 0,
         show: hasRole(['admin', 'developer']),
-        click: deleteSelected
+        click: () => deleteSelected()
     },
     {
         label: 'Unduh',
         icon: 'fas fa-download',
-        iconColor: 'text-success', // Warna ikon spesifik
+        iconColor: 'text-success',
         show: hasRole(['admin', 'developer']),
-        click: openModalExport
+        click: () => openModal('export')
     },
 
     {
@@ -481,14 +460,14 @@ const toolbarActions = computed(() => [
         icon: 'fas fa-plus-circle',
         isPrimary: true, // Prioritas Utama
         show: hasRole(['admin', 'developer']),
-        click: create
+        click: () => navigateTo("product.create")
     },
     {
         label: 'Segarkan',
         icon: 'fas fa-redo-alt',
         iconColor: 'text-primary',
         loading: isLoading.value,
-        click: reset
+        click: () => reset()
     }
 ]);
 </script>
@@ -498,7 +477,8 @@ const toolbarActions = computed(() => [
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :home="false" icon="fas fa-tags" title="Daftar Produk" :items="[{ text: 'Daftar Produk' }]" />
+            <bread-crumbs :home="false" icon="fas fa-box-open" title="Daftar Produk"
+                :items="[{ text: 'Daftar Produk' }]" />
             <callout />
 
             <div class="row pb-5">
@@ -507,6 +487,7 @@ const toolbarActions = computed(() => [
                     <base-filters :roles="['admin', 'developer']" title="Filter Produk" v-model="filters"
                         :fields="filterFields" />
                 </div>
+                
 
                 <div class="col-12">
                     <div class="card card-modern border-0 rounded-4 overflow-hidden">
@@ -523,7 +504,7 @@ const toolbarActions = computed(() => [
                                 </div>
                             </div>
 
-                            <action-toolbar v-if="hasRole(['admin', 'developer'])" :actions="toolbarActions" />
+                            <action-toolbar :actions="toolbarActions" />
 
                         </div>
 
@@ -647,7 +628,8 @@ const toolbarActions = computed(() => [
                                                 action: 'delete',
                                                 permission: 'product.delete'
                                             }
-                                        ]" @edit="edit(item.product_price_id)" @delete="deleted(item)" />
+                                        ]" @edit="navigateTo('product.edit', item.product_price_id)"
+                                            @delete="deleted(item)" />
                                     </td>
 
 
@@ -680,7 +662,7 @@ const toolbarActions = computed(() => [
                     </div>
                 </div>
             </div>
-            <ModalExport :product="product" :show="showModalExport" @update:show="showModalExport = $event"
+            <ModalExport :product="product" :show="modals.export" @update:show="modals.export = $event"
                 :branches="branch" :categories="category" />
 
         </template>

@@ -1,21 +1,23 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from "vue";
+import { computed, ref, reactive, watch } from "vue";
 const props = defineProps({
     show: Boolean,
-    form: Object,
-    information: Object
 });
 const emit = defineEmits(["update:show"]);
 
+const form = reactive({
+    start_date_dw: '',
+    end_date_dw: '',
+})
 const isDisableBtnDownload = computed(() => {
-    return !(props.form.start_date_dw && props.form.end_date_dw);
+    return !(form.start_date_dw && form.end_date_dw);
 })
 
 function downloadPdf() {
     window.open(
         route('story_report.print_to_pdf', {
-            start_date: props.form.start_date_dw,
-            end_date: props.form.end_date_dw
+            start_date: form.start_date_dw,
+            end_date: form.end_date_dw
         }),
         '_blank'
     )
@@ -23,20 +25,39 @@ function downloadPdf() {
 function downloadExcel() {
     window.open(
         route('story_report.print_to_excel', {
-            start_date: props.form.start_date_dw,
-            end_date: props.form.end_date_dw
+            start_date: form.start_date_dw,
+            end_date: form.end_date_dw
         }),
         '_self'
     )
 }
 const resetField = () => {
-    props.form.start_date_dw = '';
-    props.form.end_date_dw = '';
+    form.start_date_dw = '';
+    form.end_date_dw = '';
 }
 const close = () => {
     resetField();
     emit("update:show", false);
 }
+
+
+const information = ref(null);
+watch(() => [form.start_date_dw, form.end_date_dw],
+    async ([start_date, end_date]) => {
+        if (!start_date || !end_date) {
+            information.value = null;
+            return;
+        }
+        const { data } = await axios.get(route('story_report.information'), {
+            params: {
+                start_date: start_date,
+                end_date: end_date
+            }
+        })
+        if (data.status) {
+            information.value = data;
+        }
+    })
 </script>
 <template>
     <div class="row" v-if="props.show">
@@ -94,7 +115,7 @@ const close = () => {
                         </div>
                     </div>
 
-                    <div v-if="props.information" class="animate__fadeIn">
+                    <div v-if="information" class="animate__fadeIn">
                         <div class="d-flex align-items-center mb-3">
                             <span class="small fw-bold text-uppercase text-muted">Preview Data Laporan</span>
                             <div class="flex-grow-1 ms-3 border-bottom opacity-25"></div>
@@ -106,32 +127,32 @@ const close = () => {
                                     class="p-3 rounded-4 border bg-white d-flex justify-content-between align-items-center">
                                     <span class="small text-muted"><i class="fas fa-clock me-2"></i>Periode
                                         Terpilih</span>
-                                    <span class="fw-bold">{{ props.information.first_date }} — {{
-                                        props.information.last_date
-                                        }}</span>
+                                    <span class="fw-bold">{{ information.first_date }} — {{
+                                        information.last_date
+                                    }}</span>
                                 </div>
                             </div>
                             <div class="col-md-4 col-6">
                                 <div class="p-3 rounded-4 border bg-white text-center shadow-sm">
                                     <div class="small text-muted mb-1">Baris Data</div>
-                                    <div class="h5 fw-bold mb-0">{{ props.information.total_rows }}</div>
+                                    <div class="h5 fw-bold mb-0">{{ information.total_rows }}</div>
                                 </div>
                             </div>
                             <div class="col-md-4 col-6">
                                 <div class="p-3 rounded-4 border bg-white text-center shadow-sm">
                                     <div class="small text-muted mb-1">Total Status</div>
-                                    <div class="h5 fw-bold mb-0">{{ props.information.total_status }}</div>
+                                    <div class="h5 fw-bold mb-0">{{ information.total_status }}</div>
                                 </div>
                             </div>
                             <div class="col-md-4 col-12">
                                 <div class="p-3 rounded-4 border bg-white text-center shadow-sm">
                                     <div class="small text-muted mb-1">Minggu Ke</div>
                                     <div class="h5 fw-bold mb-0">
-                                        {{ props.information.week_start }}
-                                        <span v-if="props.information.week_start !== props.information.week_end"
+                                        {{ information.week_start }}
+                                        <span v-if="information.week_start !== information.week_end"
                                             class="mx-1 text-muted small">s/d</span>
-                                        {{ props.information.week_start !== props.information.week_end ?
-                                            props.information.week_end : ''
+                                        {{ information.week_start !== information.week_end ?
+                                            information.week_end : ''
                                         }}
                                     </div>
                                 </div>

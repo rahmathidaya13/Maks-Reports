@@ -14,6 +14,8 @@ class DailyReportPrintOut extends Controller
 {
     public function printToExcel(Request $request)
     {
+        $this->authorize('export', DailyReportModel::class);
+
         $start_date = $request->input('start_date');
         $end_date = $request->input('end_date');
 
@@ -22,6 +24,8 @@ class DailyReportPrintOut extends Controller
     }
     public function printToPdf(Request $request)
     {
+        $this->authorize('export', DailyReportModel::class);
+
         $request->validate([
             'start_date_dw' => 'date',
             'end_date_dw' => 'date',

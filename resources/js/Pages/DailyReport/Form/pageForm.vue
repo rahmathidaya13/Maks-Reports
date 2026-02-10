@@ -19,64 +19,49 @@ const form = useForm({
     engage_old_customer: props.dailyReport?.engage_old_customer ?? '',
     engage_closing: props.dailyReport?.engage_closing ?? '',
 });
+const isEditMode = computed(() => !!props.dailyReport?.daily_report_id);
 const isSubmit = () => {
-    if (props.dailyReport?.daily_report_id) {
-        form.put(route('daily_report.update', props.dailyReport.daily_report_id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset();
-            },
-        })
-    } else {
-        // Create
-        form.post(route('daily_report.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset();
-            }
-        });
-    }
-};
-const title = ref("");
-const icon = ref("");
-const url = ref("")
-const inputLeadsRef = ref(null);
-onMounted(() => {
-    if (props.dailyReport && props.dailyReport?.daily_report_id) {
-        title.value = "Ubah Data Laporan Harian"
-        icon.value = "fas fa-edit"
-        url.value = route('daily_report')
-    } else {
-        title.value = "Buat Laporan Harian"
-        icon.value = "fas fa-plus-square"
-        url.value = route('daily_report')
-    }
-    nextTick(() => {
-        if (inputLeadsRef.value?.$el) {
-            inputLeadsRef.value.$el.focus()
-        } else if (inputLeadsRef.value?.focus) {
-            inputLeadsRef.value.focus()
-        }
+    const method = isEditMode.value ? 'put' : 'post';
+    const url = isEditMode.value
+        ? route('daily_report.update', props.dailyReport.daily_report_id)
+        : route('daily_report.store');
+
+    form[method](url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset();
+        },
     })
-})
-const breadcrumbItems = computed(() => {
-    if (props.dailyReport && props.dailyReport?.daily_report_id) {
-        return [
-            { text: "Daftar Laporan Harian", url: route("daily_report") },
-            { text: "Buat Laporan Harian", url: route("daily_report.create") },
-            { text: title.value }
-        ]
+};
+const pageMeta = computed(() => {
+    if (isEditMode.value) {
+        return {
+            title: "Ubah Data Laporan Harian",
+            url: route("daily_report"),
+            icon: "fas fa-edit"
+        }
     }
-    return [
-        { text: "Daftar Laporan Harian", url: route("daily_report") },
-        { text: title.value }
-    ]
+    return {
+        title: "Buat Laporan Harian",
+        url: route("daily_report"),
+        icon: "fas fa-plus-square"
+    }
+})
+
+
+const breadcrumbItems = computed(() => {
+    const items = [{ text: "Daftar Laporan Harian", url: route("daily_report") }];
+    items.push({
+        text: pageMeta.value.title,
+        url: null,
+    })
+    return items;
 })
 // override button kembali
 const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
-    router.get(url.value, {}, {
+    router.get(pageMeta.value.url, {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
@@ -94,15 +79,21 @@ function daysOnlyConvert(dayValue) {
     const dateFormat = moment(dayValue).format('DD-MM-YYYY');
     return dayConvert[dayName] + ", " + dateFormat ?? dayName;
 }
+
+// autofocus input
+const inputLeadsRef = ref(null);
+onMounted(() => {
+    inputLeadsRef.value.focus();
+})
 </script>
 <template>
 
-    <Head :title="title" />
+    <Head :title="pageMeta.title" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
 
-            <bread-crumbs :home="false" :icon="icon" :title="title" :items="breadcrumbItems" />
+            <bread-crumbs :home="false" :icon="pageMeta.icon" :title="pageMeta.title" :items="breadcrumbItems" />
 
             <div class="row pb-3">
                 <div class="col-12">
@@ -112,7 +103,7 @@ function daysOnlyConvert(dayValue) {
                             <h4 class="fw-bold text-dark mb-1">Input Laporan</h4>
                             <p class="text-muted small mb-0">Isi data aktivitas harian Anda dengan lengkap.</p>
                         </div>
-                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm">
+                        <Link @click.prevent="goBack" :href="pageMeta.url" class="btn btn-danger border shadow-sm">
                             <i class="fas fa-arrow-left me-2"></i>Kembali
                         </Link>
                     </div>
@@ -150,15 +141,11 @@ function daysOnlyConvert(dayValue) {
                                     <h5 class="fw-bold text-dark mb-0">{{ daysOnlyConvert(form.date) }}</h5>
                                 </div>
                             </div>
-
-                            <div v-if="form.processing">
-                                <span class="badge bg-warning text-dark animate-pulse p-3">
-                                    <i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...
-                                </span>
-                            </div>
                         </div>
 
-                        <div class="card-body p-4" :class="['blur-area', form.processing ? 'is-blurred' : '']">
+                        <div class="card-body p-4 position-relative">
+                            <loading-overlay :show="form.processing"
+                                :text="props.dailyReport?.daily_report_id ? 'Memperbarui Laporan Leads Harian...' : 'Menyimpan Laporan Leads Harian...'" />
                             <form-wrapper @submit="isSubmit">
 
                                 <div class="section-group mb-4">
@@ -166,8 +153,7 @@ function daysOnlyConvert(dayValue) {
                                         Utama Hari Ini</h6>
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <div
-                                                class="stat-box p-3 rounded-3 bg-primary-subtle border border-primary-subtle">
+                                            <div class="p-3 rounded-3 bg-primary-subtle border border-primary-subtle">
 
                                                 <input-label class="fw-bold text-primary-dark mb-1" for="leads"
                                                     value="Total Leads Masuk" />
@@ -183,8 +169,7 @@ function daysOnlyConvert(dayValue) {
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div
-                                                class="stat-box p-3 rounded-3 bg-success-subtle border border-success-subtle">
+                                            <div class=" p-3 rounded-3 bg-success-subtle border border-success-subtle">
                                                 <input-label class="fw-bold text-success-dark mb-1" for="closing"
                                                     value="Total Closing Langsung" />
 
@@ -323,17 +308,6 @@ function daysOnlyConvert(dayValue) {
 
 </template>
 <style scoped>
-.blur-area {
-    transition: all 0.3s ease;
-}
-
-.blur-area.is-blurred {
-    filter: blur(3px);
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.6;
-}
-
 /* Styling Kartu Utama */
 .report-card {
     background: #ffffff;

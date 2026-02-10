@@ -19,7 +19,7 @@ const totalPaid = computed(() => {
     return props.transaction.payments?.reduce((sum, p) => sum + p.amount, 0) ?? 0
 
 })
-
+console.log("Total Paid:", totalPaid.value);
 const remaining = computed(() => {
     return Math.max(props.transaction.grand_total - totalPaid.value, 0)
 })

@@ -15,14 +15,6 @@ const props = defineProps({
 const form = useForm({
     invoice: props.transaction?.invoice ?? '',
     customer_id: props.transaction?.customer?.customer_id ?? '',
-    // product_id: props.transaction?.product?.product_id ?? '',
-    // price_original: props.transaction?.price_original ?? 0,
-    // price_discount: props.transaction?.price_discount ?? 0,
-    // payment_type: props.transaction?.payments[0].payment_type ?? null,
-    // payment_method: props.transaction?.payments[0].payment_method ?? null,
-    // amount: props.transaction?.payments[0].amount ?? 0,
-    // quantity: props.transaction?.quantity ?? '',
-
     items: props.transaction?.items?.map((item) => ({
         product_id: item.product_id,
         price_original: Number(item.price_unit),
@@ -64,7 +56,6 @@ const addItem = () => {
     }
 
     const existingIndex = form.items.findIndex(i => i.product_id === tempItem.product_id);
-    console.log(existingIndex)
     if (existingIndex !== -1) {
         form.items[existingIndex].quantity += parseInt(tempItem.quantity);
         form.items[existingIndex].price_original = tempItem.price_original;
@@ -98,20 +89,13 @@ const grandTotal = computed(() => {
     }, 0);
 });
 
-// const subtotal = computed(() => {
-//     const original = Number(form.price_original || 0)
-//     const qty = Number(form.quantity || 1)
-//     return original * qty
-// })
-// const priceFinal = computed(() => {
-//     const discount = Number(form.price_discount || 0)
-//     // Math.max agar tidak minus
-//     return Math.max(subtotal.value - discount, 0)
-// })
 // minimal dana pertama
 const dpAmount = computed(() => {
     return grandTotal.value * 0.5
 })
+const isEditMode = computed(() => {
+    return !!props.transaction?.transaction_id;
+});
 const isSubmit = async () => {
     const isEdit = !!props.transaction?.transaction_id; // mode edit
     const isGoToRepayment = form.payment_type === 'repayment';  // jika dipilih lunas
@@ -156,33 +140,31 @@ const productOptions = computed(() => {
 })
 // end form fields
 
-// breandcrumb fields
-const title = ref("");
-const icon = ref("");
-const url = ref("")
-onMounted(() => {
-    if (props.transaction && props.transaction?.transaction_id) {
-        title.value = "Ubah Data Transaksi - " + props.transaction?.customer.customer_name
-        icon.value = "fas fa-edit"
-        url.value = route('transaction')
+const pageMeta = computed(() => {
+    if (isEditMode.value) {
+        return {
+            title: "Ubah Data Transaksi - " + props.transaction?.customer.customer_name,
+            icon: "fas fa-edit",
+            url: route('transaction')
+        }
     } else {
-        title.value = "Buat Transaksi Baru"
-        icon.value = "fas fa-plus-square"
-        url.value = route('transaction')
+        return {
+            title: "Buat Transaksi Baru",
+            icon: "fas fa-plus-square",
+            url: route('transaction')
+        }
     }
 })
 const breadcrumbItems = computed(() => {
-    if (props.transaction && props.transaction?.transaction_id) {
-        return [
-            { text: "Daftar Transaksi", url: route("transaction") },
-            { text: "Buat Transaksi Baru", url: route("transaction.create") },
-            { text: title.value }
-        ]
-    }
-    return [
+    const items = [
         { text: "Daftar Transaksi", url: route("transaction") },
-        { text: title.value }
-    ]
+        { text: "Buat Transaksi Baru", url: route("transaction.create") }
+    ];
+    items.push({
+        text: pageMeta.value.title,
+        url: null
+    })
+    return items;
 })
 // breadcrumb fields edn
 
@@ -190,7 +172,7 @@ const breadcrumbItems = computed(() => {
 const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
-    router.get(url.value, {}, {
+    router.get(pageMeta.value.url, {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
@@ -210,11 +192,11 @@ function formatCurrency(value) {
 </script>
 <template>
 
-    <Head :title="title" />
+    <Head :title="pageMeta.title" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
+            <bread-crumbs :icon="pageMeta.icon" :title="pageMeta.title" :items="breadcrumbItems" />
             <div class="row g-2 pb-3">
 
                 <div class="col-12">
@@ -231,7 +213,7 @@ function formatCurrency(value) {
                                     <small class="text-muted">Isi detail transaksi pelanggan di bawah ini</small>
                                 </div>
                             </div>
-                            <Link @click.prevent="goBack" :href="url" class="btn btn-sm btn-danger mb-3">
+                            <Link @click.prevent="goBack" :href="pageMeta.url" class="btn btn-sm btn-danger mb-3">
                                 <i class="fas fa-arrow-left"></i>
                                 Kembali
                             </Link>
@@ -239,7 +221,7 @@ function formatCurrency(value) {
 
                         <div class="card-body p-4 position-relative">
                             <loading-overlay :show="form.processing"
-                                :text="props.transaction?.transaction_id ? 'Memperbarui Transaksi...' : 'Menyimpan Transaksi...'" />
+                                :text="isEditMode ? 'Memperbarui Transaksi...' : 'Menyimpan Transaksi...'" />
 
                             <form-wrapper @submit="isSubmit">
 
@@ -258,11 +240,12 @@ function formatCurrency(value) {
                                         <input-error :message="form.errors.invoice" />
                                     </div>
                                     <div class="col-md-6">
-                                        <input-label class="fw-bold small" for="customer_name" value="Pelanggan" />
-                                        <select-2
-                                            :settings="{ width: '100%', placeholder: 'Cari Pelanggan...', allowClear: true }"
-                                            name="customer_name" :options="customerOptions"
-                                            v-model="form.customer_id" />
+                                        <input-label class="fw-bold small" for="customer_id" value="Pelanggan" />
+                                        <select-2 :settings="{
+                                            width: '100%',
+                                            placeholder: 'Cari Pelanggan...',
+                                            allowClear: true,
+                                        }" name="customer_id" :options="customerOptions" v-model="form.customer_id" />
                                         <input-error :message="form.errors.customer_id" />
                                     </div>
                                 </div>
@@ -461,17 +444,17 @@ function formatCurrency(value) {
                                     </div>
                                 </div>
 
-                                <div class="d-grid gap-2">
+                                <div class="d-xl-flex d-grid align-items-center justify-content-xl-end gap-2">
+                                    <button @click.prevent="goBack" type="button"
+                                        class="btn btn-link text-decoration-none text-muted btn-sm order-last order-xl-0">
+                                        Batal & Kembali
+                                    </button>
                                     <base-button :loading="form.processing" waiting="Memproses..."
-                                        class="rounded-3 btn-height-1 fw-bold shadow-sm"
+                                        class="rounded-3 btn-height-1 px-3 fw-bold shadow-sm"
                                         :class="props.transaction?.transaction_id ? 'btn-success' : 'btn-primary'"
                                         type="button" @click="isSubmit"
                                         :label="props.transaction?.transaction_id ? 'Simpan Perubahan' : 'Proses Transaksi'" />
 
-                                    <button @click.prevent="goBack" type="button"
-                                        class="btn btn-link text-decoration-none text-muted btn-sm">
-                                        Batal & Kembali
-                                    </button>
                                 </div>
                             </div>
                         </div>

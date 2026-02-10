@@ -6,6 +6,7 @@ const props = defineProps({
     storyReport: Object,
     date: String
 })
+
 // array form dinamis
 const forms = ref([
     {
@@ -44,38 +45,32 @@ watch(forms, () => {
     deep: true
 })
 
-
+const isEditMode = computed(() => !!props.storyReport?.story_status_id);
 const isSubmit = () => {
-    if (props.storyReport?.story_status_id) {
-        form.put(route('story_report.update', props.storyReport.story_status_id), {
-            onSuccess: () => {
-                form.reset();
-            },
-        })
-    } else {
-        // Create
-        form.post(route('story_report.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset();
-            }
-        });
-    }
+    const method = props.storyReport?.story_status_id ? "put" : "post";
+    const url = props.storyReport?.story_status_id
+        ? route('story_report.update', props.storyReport.story_status_id)
+        : route('story_report.store');
+
+    form[method](url, {
+        onSuccess: () => {
+            form.reset();
+        },
+    })
 };
 
-const title = ref("");
-const icon = ref("");
-const url = ref("");
-onMounted(() => {
-    if (props.storyReport && props.storyReport?.story_status_id) {
-        title.value = "Ubah Laporan Update Status"
-        icon.value = "fas fa-edit"
-        url.value = route('story_report')
-
-    } else {
-        title.value = "Buat Laporan Update Status"
-        icon.value = "fas fa-plus-square"
-        url.value = route('story_report')
+const pageMeta = computed(() => {
+    if (isEditMode.value) {
+        return {
+            title: "Ubah Laporan Update Status",
+            icon: "fas fa-edit",
+            url: route('story_report')
+        }
+    }
+    return {
+        title: "Buat Laporan Update Status",
+        icon: "fas fa-plus-square",
+        url: route('story_report')
     }
 })
 
@@ -83,23 +78,20 @@ onMounted(() => {
 const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
-    router.get(url.value, {}, {
+    router.get(pageMeta.value.url, {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
 
 const breadcrumbItems = computed(() => {
-    if (props.storyReport && props.storyReport?.story_status_id) {
-        return [
-            { text: "Daftar Laporan Update Status", url: route("story_report") },
-            { text: "Buat Laporan Update Status", url: route("story_report.create") },
-            { text: title.value }
-        ]
-    }
-    return [
+    const items = [
         { text: "Daftar Laporan Update Status", url: route("story_report") },
-        { text: title.value }
-    ]
+    ];
+    items.push({
+        text: pageMeta.value.title,
+        url: null
+    })
+    return items;
 })
 function daysOnlyConvert(dayValue) {
     const dayConvert = {
@@ -119,12 +111,11 @@ function daysOnlyConvert(dayValue) {
 </script>
 <template>
 
-    <Head :title="title" />
+    <Head :title="pageMeta.title" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-
+            <bread-crumbs :icon="pageMeta.icon" :title="pageMeta.title" :items="breadcrumbItems" />
             <div class="row pb-3">
                 <div class="col-xl-12 col-12">
 
@@ -134,7 +125,7 @@ function daysOnlyConvert(dayValue) {
                             <p class="text-muted small mb-0">Isi data aktivitas harian Anda dengan lengkap pada form di
                                 bawah.</p>
                         </div>
-                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm">
+                        <Link @click.prevent="goBack" :href="pageMeta.url" class="btn btn-danger border shadow-sm">
                             <i class="fas fa-arrow-left me-2"></i>Kembali
                         </Link>
                     </div>
@@ -221,7 +212,8 @@ function daysOnlyConvert(dayValue) {
                         </div>
 
                         <div class="card-body p-4 position-relative">
-                            <loading-overlay :show="form.processing" />
+                            <loading-overlay :show="form.processing"
+                                :text="isEditMode ? 'Memperbarui Laporan Update Status...' : 'Menyimpan Laporan Update Status...'" />
                             <form-wrapper @submit="isSubmit">
 
                                 <div class="position-relative ps-1">
@@ -290,30 +282,30 @@ function daysOnlyConvert(dayValue) {
                                     </div>
                                 </div>
 
-                                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                                    <div class="d-none d-md-block">
-                                        <small class="text-muted text-uppercase fw-bold"
-                                            style="font-size: 0.7rem;">Total Sesi</small>
-                                        <div class="h5 mb-0 fw-bold text-dark">{{ forms.length }} <span
-                                                class="small fw-normal text-muted">Entri</span></div>
-                                    </div>
-
-                                    <div class="d-flex align-items-center gap-2">
-                                        <Link @click.prevent="goBack" :href="url"
-                                            class="btn btn-light border-0 text-muted">
-                                            Batal & Kembali
-                                        </Link>
-                                        <base-button @click="isSubmit" waiting="Menyimpan..." :loading="form.processing"
-                                            class="rounded-3 shadow px-4 fw-bold"
-                                            :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-save' : 'fas fa-paper-plane'"
-                                            :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
-                                            type="submit"
-                                            :name="props.storyReport && props.storyReport?.story_status_id ? 'ubah' : 'simpan'"
-                                            :label="props.storyReport && props.storyReport?.story_status_id ? 'Simpan Perubahan' : 'Simpan Laporan'" />
-                                    </div>
-                                </div>
 
                             </form-wrapper>
+                            <div class="d-xl-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                <div class="d-none d-md-block">
+                                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total
+                                        Sesi</small>
+                                    <div class="h5 mb-0 fw-bold text-dark">{{ forms.length }} <span
+                                            class="small fw-normal text-muted">Entri</span></div>
+                                </div>
+
+                                <div class="d-xl-flex d-grid gap-1">
+                                    <Link @click.prevent="goBack" :href="pageMeta.url"
+                                        class="btn btn-link text-decoration-none border-0 text-muted order-last order-xl-0">
+                                        Batal & Kembali
+                                    </Link>
+                                    <base-button @click="isSubmit" waiting="Menyimpan..." :loading="form.processing"
+                                        class="rounded-3 shadow px-4 fw-bold"
+                                        :icon="props.storyReport && props.storyReport?.story_status_id ? 'fas fa-save' : 'fas fa-paper-plane'"
+                                        :variant="props.storyReport && props.storyReport?.story_status_id ? 'success' : 'primary'"
+                                        type="submit"
+                                        :name="props.storyReport && props.storyReport?.story_status_id ? 'ubah' : 'simpan'"
+                                        :label="props.storyReport && props.storyReport?.story_status_id ? 'Simpan Perubahan' : 'Simpan Laporan'" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

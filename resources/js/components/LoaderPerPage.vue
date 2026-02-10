@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
-defineProps({
+const props = defineProps({
     show: Boolean,
     text: {
         type: String,
@@ -12,6 +12,21 @@ defineProps({
 const visible = ref(false)
 const text = ref("Loading")
 
+// Loader akan muncul jika: Props 'show' TRUE -ATAU- visible TRUE
+const isVisible = ref(false);
+const displayText = ref('');
+
+watch(() => [props.show, props.text, visible.value, text.value], () => {
+    if (props.show) {
+        isVisible.value = true;
+        displayText.value = props.text;
+    } else if (visible.value) {
+        isVisible.value = true;
+        displayText.value = text.value;
+    } else {
+        isVisible.value = false;
+    }
+}, { immediate: true });
 const show = (message = 'memuat halaman...') => {
     visible.value = true
     text.value = message
@@ -23,10 +38,10 @@ const hide = () => {
 defineExpose({ show, hide })
 </script>
 <template>
-    <div v-if="visible" class="loader-overlay d-flex flex-column align-items-center justify-content-center fade-in ">
+    <div v-if="isVisible" class="loader-overlay d-flex flex-column align-items-center justify-content-center fade-in ">
         <span class="loader mb-2 "></span>
         <div class="text-white fw-semibold fs-5">
-            {{ text }}
+            {{ displayText }}
         </div>
     </div>
 </template>

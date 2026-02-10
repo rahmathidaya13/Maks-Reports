@@ -87,16 +87,23 @@ const goToBack = (id) => {
 
             <div class="row pb-4">
                 <div class="col-12">
-
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="icon-square-lg bg-primary text-white rounded-circle shadow-sm me-3">
-                            <i class="fas fa-user-circle fs-3"></i>
+                    <div
+                        class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-square-lg bg-primary text-white rounded-circle shadow-sm me-3">
+                                <i class="fas fa-user-circle fs-3"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold text-dark mb-1 ls-tight">Profil Saya</h4>
+                                <p class="text-muted small mb-0">Kelola informasi pribadi dan data kepegawaian Anda.</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="fw-bold text-dark mb-0">Profil Saya</h4>
-                            <p class="text-muted small mb-0">Kelola informasi pribadi dan data kepegawaian Anda.</p>
-                        </div>
+                        <Link @click.prevent="goToBack(props.profile?.users_id)" :href="props.profile?.users_id"
+                            class="btn btn-danger btn-sm ms-auto px-3 fw-bold">
+                            <i class="fas fa-arrow-left me-2"></i> Kembali
+                        </Link>
                     </div>
+
                     <div v-if="form.processing"
                         class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
                         style="z-index: 10;">
@@ -128,7 +135,7 @@ const goToBack = (id) => {
                                     </div>
                                     <div class="card-footer bg-light p-3 border-0">
                                         <small class="text-muted fst-italic">
-                                            <i class="fas fa-info-circle me-1"></i>Pastikan foto wajah terlihat jelas.
+                                            <i class="fas fa-info-circle me-1"></i>Pastikan foto/gambar terlihat jelas.
                                         </small>
                                     </div>
                                 </div>
@@ -231,12 +238,16 @@ const goToBack = (id) => {
                                                         value="JENJANG" />
                                                     <select-input text="-- Pilih Jenjang --" name="education"
                                                         v-model="form.education" :options="[
-                                                            { value: 'SD', label: 'SD' },
-                                                            { value: 'SMP', label: 'SMP/MTS' },
-                                                            { value: 'SMA', label: 'SMA/SMK' },
-                                                            { value: 'S1/Sarjana', label: 'S1/Sarjana' },
-                                                            { value: 'S2/Magister', label: 'S2/Magister' },
-                                                            { value: 'S3/Doktor', label: 'S3/Doktor' },
+                                                            { value: 'SD', label: 'SD/Sederajat' },
+                                                            { value: 'SMP', label: 'SMP/Sederajat' },
+                                                            { value: 'SMA', label: 'SMA/SMK/Sederajat' },
+                                                            { value: 'D1/Diploma', label: 'D1 - Diploma' },
+                                                            { value: 'D2/Diploma', label: 'D2 - Diploma' },
+                                                            { value: 'D3/Diploma', label: 'D3 - Diploma' },
+                                                            { value: 'D4/Diploma', label: 'D4 - Diploma' },
+                                                            { value: 'S1/Sarjana', label: 'S1 - Sarjana' },
+                                                            { value: 'S2/Magister', label: 'S2 - Magister' },
+                                                            { value: 'S3/Doktor', label: 'S3 - Doktor' },
                                                         ]" />
                                                     <input-error :message="form.errors.education" />
                                                 </div>
@@ -326,8 +337,8 @@ const goToBack = (id) => {
 
                                         <div class="d-flex justify-content-end mt-5 pt-3">
                                             <base-button waiting="Menyimpan..." :loading="form.processing"
-                                                button-class="rounded-3 px-3 btn-height-1 shadow"
-                                                type="submit" icon="fas fa-save" name="submit" label="Simpan Perubahan"
+                                                button-class="rounded-3 px-3 btn-height-1 shadow" type="submit"
+                                                icon="fas fa-save" name="submit" label="Simpan Perubahan"
                                                 variant="primary" />
                                         </div>
 

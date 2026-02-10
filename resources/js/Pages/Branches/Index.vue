@@ -4,7 +4,7 @@ import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import { highlight } from "@/helpers/highlight";
 import { formatText } from "@/helpers/formatText";
-import {hasRole, hasPermission} from "@/composables/useAuth";
+import { hasRole, hasPermission } from "@/composables/useAuth";
 import { useConfirm } from "@/helpers/useConfirm.js"
 const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
 
@@ -122,21 +122,6 @@ watch(
 
 // CRUD OPERATION
 const loaderActive = ref(null)
-const create = () => {
-    loaderActive.value?.show("Memproses...");
-    router.get(route("branch.create"), {}, {
-        onFinish: () => {
-            loaderActive.value?.hide()
-        }
-    });
-}
-
-const edit = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(route("branch.edit", id), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
 const deleted = async (nameRoute, data) => {
     const setConfirm = await confirm.ask({
         title: 'Hapus',
@@ -263,15 +248,20 @@ const filterFields = computed(() => [
         ]
     },
 ]);
-const reset = () => {
-    isLoading.value = true
-    router.get(route("branch.reset"), {}, {
+
+const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
+    if (message) loaderActive.value?.show(message);
+    router.get(route(routeName, params), {}, {
+        onFinish: () => message && loaderActive.value?.hide(),
         preserveScroll: false,
         replace: true,
-        onFinish: () => isLoading.value = false
     });
-}
 
+}
+const reset = () => {
+    isLoading.value = true
+    navigateTo("branch.reset", {}, false);
+}
 const toolbarActions = computed(() => [
 
     {
@@ -281,7 +271,7 @@ const toolbarActions = computed(() => [
         labelColor: 'text-danger',
         disabled: !selectedRow.value.length > 0,
         show: hasPermission('branches.delete'),
-        click: deleteSelected
+        click: () => deleteSelected()
     },
 
     {
@@ -289,14 +279,14 @@ const toolbarActions = computed(() => [
         icon: 'fas fa-plus-circle',
         isPrimary: true, // Prioritas Utama
         show: hasPermission('branches.create'),
-        click: create
+        click: () => navigateTo('branch.create', {}, "Sedang membuka form...")
     },
     {
         label: 'Segarkan',
         icon: 'fas fa-redo-alt',
         iconColor: 'text-primary',
         loading: isLoading.value,
-        click: reset
+        click: () => reset()
     }
 ]);
 </script>
@@ -419,7 +409,8 @@ const toolbarActions = computed(() => [
                                                 permission: 'branches.delete'
 
                                             }
-                                        ]" @edit="edit(item.branches_id)" @delete="deleted('branch.deleted', item)" />
+                                        ]" @edit="navigateTo('branch.edit', { id: item.branches_id }, 'Sedang membuka form edit...')"
+                                            @delete="deleted('branch.deleted', item)" />
                                     </td>
                                 </template>
                             </base-table>

@@ -2,11 +2,12 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { debounce } from "lodash";
-import moment from "moment";
 import { hasRole, hasPermission } from "@/composables/useAuth";
 import { highlight } from "@/helpers/highlight";
 import axios from "axios";
 import ModalExport from "./ModalExport.vue";
+
+import moment from "moment";
 moment.locale('id');
 
 import { useConfirm } from "@/helpers/useConfirm.js"
@@ -89,12 +90,13 @@ const applyDateRange = () => {
 }
 
 const handleReset = () => {
-    filters.keyword = ''
-    filters.limit = null
-    filters.order_by = null
-    filters.start_date = null
-    filters.end_date = null
-
+    Object.assign(filters, {
+        keyword: "",
+        limit: null,
+        order_by: null,
+        start_date: null,
+        end_date: null
+    });
     // Langsung cari data bersih
     applyDateRange()
 }
@@ -171,53 +173,27 @@ watch(selected, (val) => {
         isVisibleButton.value = false
     }
 })
-const loaderActive = ref(null)
-const createReport = () => {
-    loaderActive.value?.show("Memproses...");
-    router.get(route("story_report.create"), {}, {
-        onFinish: () => {
-            loaderActive.value?.hide()
-        }
-    });
-}
 
-const goEdit = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(route("story_report.edit", id), {}, {
-        onFinish: () => loaderActive.value?.hide()
+const loaderActive = ref(null)
+const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
+    if (message) loaderActive.value?.show(message);
+    router.get(route(routeName, params), {}, {
+        onFinish: () => message && loaderActive.value?.hide(),
+        preserveScroll: false,
+        replace: true,
     });
+
 }
 
 
 // =========Tampilkan Modal========== //
-const showModal = ref(false);
-function openModal() {
-    showModal.value = true
+const modals = reactive({
+    export: false,
+})
+const openModal = (type, data) => {
+    if (type === 'export') modals.export = true;
 }
 
-// form untuk kirim berdasarkan tanggal
-const form = reactive({
-    start_date_dw: '',
-    end_date_dw: '',
-})
-
-const information = ref(null);
-watch(() => [form.start_date_dw, form.end_date_dw],
-    async ([start_date, end_date]) => {
-        if (!start_date || !end_date) {
-            information.value = null;
-            return;
-        }
-        const { data } = await axios.get(route('story_report.information'), {
-            params: {
-                start_date: start_date,
-                end_date: end_date
-            }
-        })
-        if (data.status) {
-            information.value = data;
-        }
-    })
 // =========Batas Fungsi untuk Tampilkan Modal========== //
 
 
@@ -230,12 +206,69 @@ const hasActiveFilter = computed(() => {
         filters.order_by !== null
     )
 })
-
+const header = [
+    {
+        label: "No",
+        key: "__index",
+        attrs: {
+            class: "text-center",
+            style: "width:50px",
+        },
+    },
+    {
+        label: "ID Report",
+        key: "status_report_id",
+        attrs: {
+            class: "text-center",
+        },
+    },
+    {
+        label: "Tanggal & Info",
+        key: "report_date",
+        attrs: {
+            class: "text-center",
+        },
+    },
+    {
+        label: "Jam",
+        key: "report_time",
+        attrs: {
+            class: "text-center",
+        },
+    },
+    {
+        label: "Jumlah Status",
+        key: "count_status",
+        attrs: {
+            class: "text-center",
+        },
+    },
+    {
+        label: "Dibuat",
+        key: "created_at",
+        attrs: {
+            class: "text-center",
+        },
+    },
+    {
+        label: "Diperbarui",
+        key: "updated_at",
+        attrs: {
+            class: "text-center",
+        },
+    },
+    {
+        label: "Aksi",
+        key: "action",
+        attrs: {
+            class: "text-center",
+        },
+    },
+];
 const filterFields = computed(() => [
     {
         key: 'keyword',
         label: 'Pencarian',
-        type: 'text',
         col: 'col-xl-8 col-12',
         type: 'search',
         icon: 'fas fa-search',
@@ -331,72 +364,9 @@ const filterFields = computed(() => [
 
 const reset = () => {
     isLoading.value = true
-    router.get(route("story_report.reset"), {}, {
-        preserveScroll: true,
-        replace: true,
-        onFinish: () => isLoading.value = false
-    });
+    navigateTo('story_report.reset', {}, false);
 }
 
-const header = [
-    {
-        label: "No",
-        key: "__index",
-        attrs: {
-            class: "text-center",
-            style: "width:50px"
-        }
-    },
-    {
-        label: "ID Report",
-        key: "status_report_id",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Tanggal & Info",
-        key: "report_date",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Jam",
-        key: "report_time",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Jumlah Status",
-        key: "count_status",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Dibuat",
-        key: "created_at",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Diperbarui",
-        key: "updated_at",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Aksi",
-        key: "action",
-        attrs: {
-            class: "text-center",
-        }
-    },
-];
 
 const toolbarActions = computed(() => [
 
@@ -414,21 +384,21 @@ const toolbarActions = computed(() => [
         icon: 'fas fa-download',
         iconColor: 'text-success',
         show: hasPermission('status.report.export'),
-        click: openModal
+        click: () => openModal('export')
     },
     {
         label: 'Buat Laporan',
         icon: 'fas fa-plus-circle',
         isPrimary: true, // Prioritas Utama
         show: hasPermission('status.report.create'),
-        click: createReport
+        click: () => navigateTo('story_report.create')
     },
     {
         label: 'Segarkan',
         icon: 'fas fa-redo-alt',
         iconColor: 'text-primary',
         loading: isLoading.value,
-        click: reset
+        click: () => reset()
     }
 ]);
 </script>
@@ -551,7 +521,7 @@ const toolbarActions = computed(() => [
                                                 action: 'delete',
                                                 permission: 'status.report.delete'
                                             }
-                                        ]" @edit="goEdit(item.story_status_id)"
+                                        ]" @edit="navigateTo('story_report.edit', item.story_status_id)"
                                             @delete="deleted('story_report.deleted', item)" />
                                     </td>
                                 </template>
@@ -591,12 +561,7 @@ const toolbarActions = computed(() => [
                     </div>
                 </div>
             </div>
-
-            <!-- <ModalExport :form="form" :information="information" :show="showModal" @update:show="showModal = $event" /> -->
-            <ModalExport :information="information" :form="form" :show="showModal" @update:show="showModal = $event" />
-
-
-
+            <ModalExport :show="modals.export" @update:show="modals.export = $event" />
         </template>
     </app-layout>
 </template>

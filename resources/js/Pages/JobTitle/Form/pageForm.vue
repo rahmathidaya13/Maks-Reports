@@ -11,6 +11,7 @@ const props = defineProps({
         default: ""
     },
 })
+const isEditMode = computed(() => !!props.jobTitle?.job_title_id);
 const form = useForm({
     job_title_code: props.jobTitle?.job_title_code ?? props.uniqCode,
     title: props.jobTitle?.title ?? '',
@@ -18,73 +19,65 @@ const form = useForm({
     description: props.jobTitle?.description ?? '',
 });
 const isSubmit = () => {
-    if (props.jobTitle?.job_title_id) {
-        form.put(route('job_title.update', props.jobTitle.job_title_id), {
-            onSuccess: () => {
-                form.reset();
-            },
-        })
-    } else {
-        // Create
-        form.post(route('job_title.store'), {
-            onSuccess: () => {
-                form.reset();
-            }
-        });
-    }
+    const method = isEditMode.value ? 'put' : 'post';
+    const url = isEditMode.value
+        ? route('job_title.update', props.jobTitle.job_title_id)
+        : route('job_title.store');
+    form[method](url, {
+        onSuccess: () => {
+            form.reset();
+        },
+    })
 };
-const title = ref("");
-const icon = ref("");
-const url = ref("")
-onMounted(() => {
-    if (props.jobTitle && props.jobTitle?.job_title_id) {
-        title.value = "Ubah Data Jabatan " + props.jobTitle?.title
-        icon.value = "fas fa-edit"
-        url.value = route('job_title')
-    } else {
-        title.value = "Buat Jabatan Baru"
-        icon.value = "fas fa-plus-square"
-        url.value = route('job_title')
+const pageMeta = computed(() => {
+    if (isEditMode.value) {
+        return {
+            title: "Ubah Data Jabatan " + props.jobTitle?.title,
+            icon: "fas fa-edit",
+            url: route('job_title')
+        }
+    }
+    return {
+        title: "Buat Jabatan Baru",
+        icon: "fas fa-plus-square",
+        url: route('job_title')
     }
 })
 const breadcrumbItems = computed(() => {
-    if (props.jobTitle && props.jobTitle?.job_title_id) {
-        return [
-            { text: "Daftar Jabatan", url: route("job_title") },
-            { text: "Buat Jabatan Baru", url: route("job_title.create") },
-            { text: title.value }
-        ]
-    }
-    return [
-        { text: "Daftar Jabatan", url: route("job_title") },
-        { text: title.value }
-    ]
+    const items = [{ text: "Daftar Jabatan", url: route("job_title") }];
+    items.push({
+        text: pageMeta.value.title,
+        url: null,
+    })
+    return items;
 })
 
 const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
-    router.get(url.value, {}, {
+    router.get(pageMeta.value.url, {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
-
+const inputTitle = ref(null);
+onMounted(() => {
+    inputTitle.value?.focus();
+});
 
 </script>
 <template>
 
-    <Head :title="title" />
+    <Head :title="pageMeta.title" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
+            <bread-crumbs :icon="pageMeta.icon" :title="pageMeta.title" :items="breadcrumbItems" />
             <div class="row pb-3">
                 <div class="col-xl-12 col-sm-12 ">
                     <div class="card form-card border-0 shadow-lg rounded-4 overflow-hidden">
-                        <div
-                            class="card-header bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                        <div class="card-header bg-white p-4 d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                <div class="icon-square-lg bg-success bg-opacity-10 text-success rounded-3 me-3">
+                                <div class="icon-square-lg bg-primary bg-opacity-10 text-primary rounded-3 me-3">
                                     <i class="fas fa-building fs-4"></i>
                                 </div>
                                 <div>
@@ -92,25 +85,18 @@ const goBack = () => {
                                     <p class="text-muted small mb-0">Kelola informasi Jabatan.</p>
                                 </div>
                             </div>
-                            <Link @click.prevent="goBack" :href="url" class="btn btn-danger fw-bold border px-3">
+                            <Link @click.prevent="goBack" :href="pageMeta.url"
+                                class="btn btn-danger fw-bold border px-3">
                                 <i class="fas fa-arrow-left me-2"></i> Kembali
                             </Link>
                         </div>
 
-
-
-                        <div v-if="form.processing"
-                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                            style="z-index: 10;">
-                            <loader-horizontal
-                                :message="props.jobTitle?.job_title_id ? 'Memperbarui Data Jabatan...' : 'Mendaftarkan Jabatan Baru...'" />
-                        </div>
-
-
-                        <div class="card-body p-4" :class="['blur-area', form.processing ? 'is-blurred' : '']">
+                        <div class="card-body p-4 position-relative">
+                            <loading-overlay :show="form.processing"
+                                :text="props.jobTitle?.job_title_id ? 'Memperbarui Data Jabatan...' : 'Menyimpan Data Jabatan...'" />
                             <form-wrapper @submit="isSubmit">
 
-                                <div class="row g-4">
+                                <div class="row g-3">
                                     <div class="col-12">
                                         <label class="form-label-custom text-muted mb-2">KODE JABATAN (AUTO)</label>
                                         <div class="input-group">
@@ -122,15 +108,15 @@ const goBack = () => {
                                         </div>
                                     </div>
 
-                                    <div class="col-md-8">
+                                    <div class="col-md-6">
                                         <input-label class="form-label-custom mb-2" for="title" value="NAMA JABATAN" />
-                                        <text-input autofocus v-model="form.title" name="title"
+                                        <text-input ref="inputTitle" v-model="form.title" name="title"
                                             placeholder="Contoh: Staff Administrasi"
                                             input-class="form-control-lg fs-6" />
                                         <input-error :message="form.errors.title" />
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <input-label class="form-label-custom mb-2" for="title_alias"
                                             value="SINGKATAN" />
                                         <text-input v-model="form.title_alias" name="title_alias"
@@ -150,7 +136,7 @@ const goBack = () => {
                                     </div>
                                 </div>
 
-                                <div class="d-flex justify-content-end mt-4 pt-3 gap-2 border-top">
+                                <div class="d-flex justify-content-end mt-4 pt-3 gap-2">
                                     <button @click.prevent="goBack" class="btn btn-outline-secondary px-4">Batal &
                                         Kembali</button>
                                     <base-button :loading="form.processing"
@@ -218,15 +204,10 @@ const goBack = () => {
 
 .quill-wrapper:focus-within {
     border-color: #86b7fe !important;
-    box-shadow: 0 0 0 0.20rem rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 0.20rem rgba(13, 109, 253, 0.089);
 }
 
-/* Input Focus Effect yang lebih lembut */
-.form-control-lg:focus {
-    background-color: #fff;
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
-}
+
 
 /* Read-Only Input Styling */
 input:disabled {

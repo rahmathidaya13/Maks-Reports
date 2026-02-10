@@ -136,6 +136,6 @@ class CustomerController extends Controller
     public function reset()
     {
         $this->customerRepository->clearCache(auth()->id());
-        return redirect()->route('customers')->with('message', 'Data berhasil disegarkan.');
+        return redirect()->route('customers')->with('message', 'Data Pelanggan berhasil diperbarui.');
     }
 }

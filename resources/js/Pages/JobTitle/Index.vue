@@ -229,7 +229,6 @@ const fileterFields = computed(() => [
     {
         key: 'keyword',
         label: 'Pencarian',
-        type: 'text',
         col: 'col-xl-8 col-12',
         type: 'search',
         icon: 'fas fa-search',

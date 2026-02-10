@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import $ from 'jquery';
 import 'select2';
 import 'select2/dist/css/select2.css';
@@ -21,6 +22,7 @@ const props = defineProps({
     }
 });
 
+const page = usePage();
 const emit = defineEmits(['update:modelValue', 'change']);
 
 // 2. Referensi DOM
@@ -75,13 +77,17 @@ onUnmounted(() => {
         $select.select2('destroy'); // Hancurkan instance Select2
     }
 });
+
+const hasError = computed(() => {
+    return page.props.errors && page.props.errors[props.name];
+});
 </script>
 
 <template>
     <select :class="[{
-        'is-invalid': $page.props.errors[props.name],
-        'is-valid': modelValue && !$page.props.errors[props.name]
-    }]" class="select2-hidden-accessible form-select" ref="selectElement" :id="name + '_ids'" :name="name">
+        'is-invalid': hasError,
+        'is-valid': modelValue && !hasError
+    }]" class="select2-hidden-accessible form-select" ref="selectElement" :id="props.name + '_ids'" :name="props.name">
         <slot></slot>
     </select>
 </template>
@@ -141,7 +147,7 @@ onUnmounted(() => {
 }
 
 .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field:focus {
-    border-color: #000000;
+    border-color: #86b7fe;
     box-shadow: 0 0 0 0 rgba(13, 110, 253, .25);
 }
 
@@ -150,4 +156,6 @@ onUnmounted(() => {
     border-color: #86b7fe;
     box-shadow: 0 0 0 0 rgba(13, 110, 253, .25);
 }
+
+
 </style>

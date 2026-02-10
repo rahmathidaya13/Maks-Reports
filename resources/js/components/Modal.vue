@@ -108,7 +108,7 @@ watch(() => props.show, async (v) => {
                     <slot name="body" />
                 </div>
 
-                <div v-if="footer" class="modal-footer text-bg-grey">
+                <div v-if="footer" class="modal-footer border-0">
                     <slot name="footer" />
                 </div>
 

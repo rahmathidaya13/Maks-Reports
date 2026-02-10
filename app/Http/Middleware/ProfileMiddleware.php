@@ -21,7 +21,7 @@ class ProfileMiddleware
             // Cegah akses ke halaman lain kecuali halaman profile jika belum lengkap
             if (!$request->routeIs('profile', 'profile.update')) {
                 return redirect()->route('profile')
-                    ->with('message', 'Lengkapi profil Anda terlebih dahulu sebelum melanjutkan.');
+                    ->with('info', 'Lengkapi profil Anda terlebih dahulu sebelum melanjutkan.');
             }
         }
         return $next($request);

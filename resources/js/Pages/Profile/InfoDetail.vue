@@ -57,7 +57,7 @@ function daysTranslate(dayValue) {
 
                 <div class="col-xl-4 col-lg-5">
                     <div class="card card-profile border-0 shadow-sm rounded-4 overflow-hidden position-sticky"
-                        style="top:80px">
+                        style="top:100px">
 
                         <div class="card-header-banner bg-gradient-primary"></div>
 
@@ -78,18 +78,9 @@ function daysTranslate(dayValue) {
                                 {{ props.detail?.employee_id_number ?? 'No ID' }}
                             </div>
 
-                            <div class="d-flex justify-content-center gap-2 mb-4">
-                                <a :href="'mailto:' + props.detail?.user.email"
-                                    class="btn btn-light btn-sm rounded-circle shadow-sm" title="Email">
-                                    <i class="fas fa-envelope text-danger"></i>
-                                </a>
-                                <a href="#" class="btn btn-light btn-sm rounded-circle shadow-sm" title="Telepon">
-                                    <i class="fas fa-phone text-success"></i>
-                                </a>
-                            </div>
 
                             <button @click="goToEditProfile(props.detail?.users_id)"
-                                class="btn btn-primary w-100 rounded-3 shadow-sm">
+                                class="btn btn-primary w-100 rounded-pill shadow-sm">
                                 <i class="fas fa-user-edit me-2"></i> Perbarui Profil
                             </button>
                         </div>

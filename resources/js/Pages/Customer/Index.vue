@@ -115,21 +115,17 @@ const handleReset = () => {
 
 // CRUD OPERATION
 const loaderActive = ref(null)
-const create = () => {
-    loaderActive.value?.show("Memproses...");
-    router.get(route("customers.create"), {}, {
-        onFinish: () => {
-            loaderActive.value?.hide()
-        }
+
+const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
+    if (message) loaderActive.value?.show(message);
+    router.get(route(routeName, params), {}, {
+        onFinish: () => message && loaderActive.value?.hide(),
+        preserveScroll: false,
+        replace: true,
     });
+
 }
 
-const edit = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(route("customers.edit", id), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
-}
 
 const deleted = async (nameRoute, data) => {
     const setConfirm = await confirm.ask({
@@ -202,7 +198,6 @@ const fileterFields = computed(() => [
     {
         key: 'keyword',
         label: 'Pencarian',
-        type: 'text',
         col: 'col-xl-8 col-12',
         type: 'search',
         icon: 'fas fa-search',
@@ -292,7 +287,38 @@ const reset = () => {
         }
     });
 }
+const download = async (format) => {
+    // Cek apakah melebihi batas maksimal
+    if (selectedRow.value.length > 500) {
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Data terlalu banyak untuk format ' + format.toUpperCase() + ' (>500). Silakan kurangi data yang akan diexport.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
+    }
 
+    // Cek apakah ada data yang dipilih
+    if (!selectedRow.value.length) {
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk diexport.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
+    }
+
+    // Siapkan URL dan dxport data yang terpilih
+    const url = route('customer.export', {
+        format: format,
+        all_id: selectedRow.value.length > 0 ? selectedRow.value : null
+    });
+
+    // Buka di tab baru
+    window.open(url, '_blank');
+}
 const toolbarActions = computed(() => [
     {
         label: `Hapus (${selectedRow.value.length})`,
@@ -301,21 +327,39 @@ const toolbarActions = computed(() => [
         labelColor: 'text-danger',
         disabled: !selectedRow.value.length > 0,
         show: hasPermission('customers.delete'),
-        click: deleteSelected
+        click: () => deleteSelected()
+    },
+    {
+        label: `PDF (${selectedRow.value.length})`,
+        icon: 'fas fa-file-pdf',
+        iconColor: 'text-danger',
+        labelColor: 'text-danger',
+        disabled: !selectedRow.value.length > 0,
+        show: hasPermission('customers.export'),
+        click: () => download('pdf')
+    },
+    {
+        label: `Excel (${selectedRow.value.length})`,
+        icon: 'fas fa-file-excel',
+        iconColor: 'text-success',
+        labelColor: 'text-success',
+        disabled: !selectedRow.value.length > 0,
+        show: hasPermission('customers.export'),
+        click: () => download('excel')
     },
     {
         label: 'Pelanggan Baru',
         icon: 'fas fa-plus-circle',
         isPrimary: true, // Prioritas Utama
         show: hasPermission('customers.create'),
-        click: create
+        click: () => navigateTo('customers.create')
     },
     {
         label: 'Segarkan',
         icon: 'fas fa-redo-alt',
         iconColor: 'text-primary',
         loading: isLoading.value,
-        click: reset
+        click: () => reset()
     },
 ]);
 </script>
@@ -337,7 +381,7 @@ const toolbarActions = computed(() => [
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
 
                         <div
-                            class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            class="card-header bg-white py-3 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
 
                             <div class="d-flex align-items-center">
                                 <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
@@ -444,14 +488,14 @@ const toolbarActions = computed(() => [
                                                 permission: 'customers.delete'
 
                                             }
-                                        ]" @edit="edit(item.customer_id)"
+                                        ]" @edit="navigateTo('customers.edit', item.customer_id)"
                                             @delete="deleted('customers.deleted', item)" />
                                     </td>
                                 </template>
                             </base-table>
                         </div>
 
-                        <div class="card-footer bg-white border-top py-3" v-if="customers?.data.length">
+                        <div class="card-footer bg-white border-top py-3">
                             <div class="d-flex flex-wrap justify-content-between align-items-center">
                                 <div class="text-muted small mb-2 mb-md-0">
                                     Menampilkan <strong>{{ props.customers?.from ?? 0 }}</strong> -

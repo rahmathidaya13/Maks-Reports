@@ -24,11 +24,14 @@ class TransactionRepository extends BaseCacheRepository
             ->withCount('items')
             ->withSum('payments as total_paid', 'amount')
             ->where('created_by', auth()->id())
-            ->when(
-                isset($filters['status']) && $filters['status'] !== null,
-                fn($q) => $q->where('status', $filters['status']),
-                fn($q) => $q->whereIn('status', ['payment', 'repayment'])
-            )
+            ->when($filters['status'] ?? null, function ($q, $status) {
+                if ($status === 'all') {
+                    return $q;
+                }
+                return $q->where('status', $status);
+            }, function ($q) {
+                return $q->whereIn('status', ['payment', 'repayment']);
+            })
             ->when(
                 isset($filters['date_filter']) && $filters['date_filter'] !== null,
                 fn($q) => $q->whereDate('transaction_date', $filters['date_filter'])

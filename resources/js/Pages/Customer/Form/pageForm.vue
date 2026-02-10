@@ -7,6 +7,9 @@ const props = defineProps({
         default: () => [{}],
     },
 });
+
+// jika kondisi sedang edit data
+const isEditMode = computed(() => !!props.customers?.customer_id);
 const form = useForm({
     national_id: props.customers?.national_id_number ?? "",
     customer_name: props.customers?.customer_name ?? "",
@@ -17,51 +20,46 @@ const form = useForm({
     type_bussiness: props.customers?.type_bussiness ?? "",
 });
 const isSubmit = () => {
-    if (props.customers?.customer_id) {
-        form.put(route("customers.update", props.customers?.customer_id), {
-            onSuccess: () => {
-                form.reset();
-            },
-        });
-    } else {
-        // Create
-        form.post(route("customers.store"), {
-            onSuccess: () => {
-                form.reset();
-            },
-        });
-    }
+    const method = isEditMode.value ? "put" : "post";
+    const url = isEditMode.value
+        ? route("customers.update", props.customers?.customer_id)
+        : route("customers.store");
+    form[method](url, {
+        onSuccess: () => {
+            form.reset();
+        },
+    });
+
 };
-const title = ref("");
-const icon = ref("");
-const url = ref("");
-onMounted(() => {
-    if (props.customers && props.customers?.customer_id) {
-        title.value = "Ubah Data Pelanggan - " + props.customers?.customer_name;
-        icon.value = "fas fa-edit";
-        url.value = route("customers");
-    } else {
-        title.value = "Buat Pelanggan Baru";
-        icon.value = "fas fa-plus-square";
-        url.value = route("customers");
+
+const pageMeta = computed(() => {
+    if (isEditMode.value) {
+        return {
+            title: `Ubah Data Pelanggan - ${props.customers.customer_name}`,
+            icon: 'fas fa-edit',
+            url: route('customers')
+        };
+    }
+    return {
+        title: "Buat Pelanggan Baru",
+        icon: "fas fa-plus-square",
+        url: route("customers"),
     }
 });
 const breadcrumbItems = computed(() => {
-    if (props.customers && props.customers?.customer_id) {
-        return [
-            { text: "Daftar Pelanggan", url: route("customers") },
-            { text: "Buat Pelanggan Baru", url: route("customers.create") },
-            { text: title.value },
-        ];
-    }
-    return [{ text: "Daftar Pelanggan", url: route("customers") }, { text: title.value }];
+    const items = [{ text: "Daftar Pelanggan", url: route("customers") }];
+    items.push({
+        text: pageMeta.value.title,
+        url: null,
+    });
+    return items;
 });
 
 const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
     router.get(
-        url.value,
+        pageMeta.value.url,
         {},
         {
             onFinish: () => loaderActive.value?.hide(),
@@ -76,11 +74,11 @@ onMounted(() => {
 </script>
 <template>
 
-    <Head :title="title" />
+    <Head :title="pageMeta.title" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
+            <bread-crumbs :icon="pageMeta.icon" :title="pageMeta.title" :items="breadcrumbItems" />
             <div class="row pb-3">
                 <div class="col-xl-12 col-12">
                     <div class="d-block d-xl-flex justify-content-between align-items-center mb-4">
@@ -88,7 +86,7 @@ onMounted(() => {
                             <h4 class="fw-bold text-dark mb-1">Input Pelanggan</h4>
                             <p class="text-muted small mb-0">Isi data pelanggan Anda dengan lengkap.</p>
                         </div>
-                        <Link @click.prevent="goBack" :href="url" class="btn btn-danger border shadow-sm">
+                        <Link @click.prevent="goBack" :href="pageMeta.url" class="btn btn-danger border shadow-sm">
                             <i class="fas fa-arrow-left me-2"></i>Kembali
                         </Link>
                     </div>
@@ -112,17 +110,9 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
-
-                        <div v-if="form.processing"
-                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                            style="z-index: 10">
-                            <loader-horizontal :message="props.customers?.customer_id
-                                ? 'Menyimpan perubahan...'
-                                : 'Mendaftarkan Pelanggan Baru...'
-                                " />
-                        </div>
-
-                        <div class="card-body p-4" :class="['blur-area', form.processing ? 'is-blurred' : '']">
+                        <div class="card-body p-4 position-relative">
+                            <loading-overlay :show="form.processing"
+                                :text="props.customers?.customer_id ? 'Memperbarui Data Pelanggan...' : 'Menyimpan Data Pelanggan...'" />
                             <form-wrapper @submit="isSubmit">
                                 <h6 class="text-uppercase text-primary fw-bold small mb-3 letter-spacing-1">
                                     <i class="far fa-id-card me-2"></i> Identitas Diri
@@ -165,8 +155,7 @@ onMounted(() => {
                                         <input-error :message="form.errors.number_phone" />
                                     </div>
                                     <div class="col-md-6">
-                                        <input-label class="fw-bold small" for="type_bussines"
-                                            value="Jenis Usaha" />
+                                        <input-label class="fw-bold small" for="type_bussines" value="Jenis Usaha" />
                                         <div class="position-relative">
                                             <i class="fas fa-briefcase input-icon-left"></i>
                                             <text-input input-class="input-fixed-height"

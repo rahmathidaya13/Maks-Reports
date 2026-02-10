@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Products;
 
-use App\Models\ProductModel;
 use Illuminate\Http\Request;
 use App\Models\BranchesModel;
 use App\Exports\ProductExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductPriceModel;
 use App\Http\Controllers\Controller;
+use App\Models\ProductModel;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductExportController extends Controller
 {
     public function export(Request $request)
     {
+        $this->authorize('export', ProductModel::class);
         // PDF butuh RAM besar untuk merender tabel panjang.
         // Kita set ke 1GB (1024M) atau unlimited (-1) dan waktu eksekusi 5 menit.
         ini_set('memory_limit', '1024M');
@@ -65,6 +66,7 @@ class ProductExportController extends Controller
                 ->setWarnings(false)
                 ->stream('Daftar_Produk_' . now()->format('Ymd_His') . '.pdf');
         }
+        return back()->withErrors(['error' => 'Format export tidak valid.']);
     }
 
     public function information(Request $request)

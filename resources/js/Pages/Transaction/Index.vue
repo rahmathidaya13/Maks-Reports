@@ -6,6 +6,7 @@ import { highlight } from "@/helpers/highlight";
 import { formatText } from "@/helpers/formatText";
 import CancelledPreviewModal from "./Modal/CancelledPreviewModal.vue";
 import TransactionDetailModal from "./Modal/TransactionDetailModal.vue";
+import ModalExport from "./Modal/ModalExport.vue";
 import { hasRole, hasPermission } from "@/composables/useAuth";
 import moment from "moment";
 moment.locale("id");
@@ -47,11 +48,14 @@ const handleApply = () => {
     liveSearch();
 };
 const handleReset = () => {
-    filters.keyword = "";
-    filters.status = null;
-    filters.date_filter = null;
-    filters.limit = null;
-    filters.order_by = null;
+    // Reset object filters secara clean
+    Object.assign(filters, {
+        keyword: "",
+        status: null,
+        date_filter: null,
+        limit: null,
+        order_by: null
+    });
 
     // Langsung cari data bersih
     liveSearch();
@@ -68,7 +72,7 @@ const header = [
         }
     },
     {
-        label: "Invoice/Tanggal",
+        label: "Invoice",
         key: "invoice",
         attrs: {
             class: "text-center",
@@ -108,37 +112,21 @@ const header = [
         key: "-",
         attrs: {
             class: "text-center",
-            style: "width:100px"
         }
     }
 ];
 
 // CRUD OPERATION
 const loaderActive = ref(null);
-const create = () => {
-    loaderActive.value?.show("Memproses...");
-    router.get(
-        route("transaction.create"),
-        {},
-        {
-            onFinish: () => {
-                loaderActive.value?.hide();
-            },
-        }
-    );
-};
+const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
+    if (message) loaderActive.value?.show(message);
+    router.get(route(routeName, params), {}, {
+        onFinish: () => message && loaderActive.value?.hide(),
+        preserveScroll: false,
+        replace: true,
+    });
 
-const edit = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(
-        route("transaction.edit", id),
-        {},
-        {
-            onFinish: () => loaderActive.value?.hide(),
-        }
-    );
-};
-
+}
 const deleted = async (nameRoute, data) => {
     const setConfirm = await confirm.ask({
         title: 'Hapus',
@@ -163,8 +151,6 @@ const deleted = async (nameRoute, data) => {
 // MULTIPLE DELETE
 const selectedRow = ref([]);
 const isVisible = ref(false);
-
-
 const deleteSelected = async () => {
     // 1. Kondisi Tidak Ada Data (Berfungsi sebagai Alert)
     if (!selectedRow.value.length) {
@@ -211,26 +197,7 @@ watch(selectedRow, (val) => {
 });
 // END MULTIPLE DELETE
 
-const repayment = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(
-        route("transaction.show", id),
-        {},
-        {
-            onFinish: () => loaderActive.value?.hide(),
-        }
-    );
-};
-const cancelled = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(
-        route("transaction.cancelled", id),
-        {},
-        {
-            onFinish: () => loaderActive.value?.hide(),
-        }
-    );
-};
+
 function formatCurrency(value) {
     if (!value) return "0";
     return new Intl.NumberFormat("id-ID", {
@@ -282,9 +249,8 @@ const filterFields = computed(() => [
         icon: "fas fa-search",
         autofocus: true,
         props: {
-            placeholder: "Masukan Id,nama pelanggan dan produk...",
+            placeholder: "Masukan invoice dan nama pelanggan...",
             inputClass: "border-start-0 ps-2 shadow-none",
-            isValid: false,
         },
     },
     {
@@ -295,10 +261,10 @@ const filterFields = computed(() => [
         icon: "fas fa-filter",
         props: {
             selectClass: "border-start-0 ps-2 shadow-none",
-            isValid: false,
         },
         options: [
             { value: null, label: "Pilih Status Pembayaran" },
+            { value: "all", label: "Semua Pembayaran" },
             { value: "repayment", label: "Lunas" },
             { value: "payment", label: "Belum Lunas" },
             { value: "cancelled", label: "Dibatalkan" },
@@ -312,7 +278,6 @@ const filterFields = computed(() => [
         icon: "fas fa-calendar-alt",
         props: {
             inputClass: "border-start-0 ps-2 shadow-none",
-            isValid: false,
         },
     },
     {
@@ -323,7 +288,6 @@ const filterFields = computed(() => [
         icon: "fas fa-list-ul",
         props: {
             selectClass: "border-start-0 ps-2 shadow-none",
-            isValid: false,
         },
         options: [
             { value: null, label: "Pilih Batas Data" },
@@ -342,7 +306,6 @@ const filterFields = computed(() => [
         icon: "fas fa-sort",
         props: {
             selectClass: "border-start-0 ps-2 shadow-none",
-            isValid: false,
         },
         options: [
             { value: null, label: "Pilih Urutan" },
@@ -401,16 +364,18 @@ const status = (status) => {
 };
 
 const selectedData = ref(null);
-const showModalCancelInfo = ref(false);
-const showModaDetailInfo = ref(false);
-const openModalCancelled = (data) => {
+const modals = reactive({
+    cancelledPreview: false,
+    transactionDetail: false,
+    export: false,
+});
+const openModal = (type, data) => {
     selectedData.value = data;
-    showModalCancelInfo.value = true;
-};
-const openModalDetail = (data) => {
-    selectedData.value = data;
-    showModaDetailInfo.value = true;
+    if (type === 'cancelled') modals.cancelledPreview = true;
+    if (type === 'detail') modals.transactionDetail = true;
+    if (type === 'export') modals.export = true;
 }
+
 // function for sub string
 function subString(strValue, length) {
     const clean = strValue.replace(/-/g, "")
@@ -419,12 +384,8 @@ function subString(strValue, length) {
         : clean
 }
 const reset = () => {
-    isLoading.value = true
-    router.get(route("transaction.reset"), {}, {
-        preserveScroll: false,
-        replace: true,
-        onFinish: () => isLoading.value = false
-    });
+    isLoading.value = true;
+    navigateTo('transaction.reset', {}, false);
 }
 const customClassTable = (item) => {
     return {
@@ -433,27 +394,78 @@ const customClassTable = (item) => {
     }
 }
 
+
+const download = async (format) => {
+    // Cek apakah melebihi batas maksimal
+    if (selectedRow.value.length > 500) {
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Data terlalu banyak untuk format ' + format.toUpperCase() + ' (>500). Silakan kurangi data yang akan diexport.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
+    }
+
+    // Cek apakah ada data yang dipilih
+    if (!selectedRow.value.length) {
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk diexport.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
+    }
+
+    // Siapkan URL
+    const url = route('transaction.export', {
+        format: format,
+        all_id: selectedRow.value.length > 0 ? selectedRow.value : null
+    });
+
+    // Buka di tab baru
+    window.open(url, '_blank');
+}
 const toolbarActions = computed(() => [
     {
         label: `Hapus(${selectedRow.value.length})`,
         icon: 'fas fa-trash-alt',
         iconColor: 'text-danger',
-        show: hasPermission('transaction.delete') && selectedRow.value.length > 0,
+        show: hasPermission('transaction.delete') && selectedRow.value.length > 0 && hasRole(['developer']),
         click: deleteSelected
+    },
+    {
+        label: `PDF (${selectedRow.value.length})`,
+        icon: 'fas fa-file-pdf',
+        iconColor: 'text-danger',
+        labelColor: 'text-danger',
+        show: hasPermission('transaction.export'),
+        disabled: !selectedRow.value.length,
+        click: () => download('pdf')
+    },
+    {
+        label: `Excel (${selectedRow.value.length})`,
+        icon: 'fas fa-file-excel',
+        iconColor: 'text-success',
+        labelColor: 'text-success',
+        show: hasPermission('transaction.export'),
+        disabled: !selectedRow.value.length,
+        click: () => download('excel')
     },
     {
         label: 'Transaksi Baru',
         icon: 'fas fa-plus-circle',
         isPrimary: true, // Prioritas Utama
         show: hasPermission('transaction.create'),
-        click: create
+        click: () => navigateTo('transaction.create')
     },
     {
         label: 'Segarkan',
         icon: 'fas fa-redo-alt',
         iconColor: 'text-primary',
         loading: isLoading.value,
-        click: reset
+        click: () => reset()
     },
 ]);
 </script>
@@ -494,8 +506,9 @@ const toolbarActions = computed(() => [
                         </div>
 
                         <div class="card-body p-0 position-relative">
-                            <base-table :loader="isLoading" loaderText="Sedang memuat data..." :headers="header"
-                                :items="transaction.data" row-key="transaction_id" :row-class="customClassTable">
+                            <base-table :markAll="true" :loader="isLoading" loaderText="Sedang memuat data..."
+                                :headers="header" :items="transaction.data" row-key="transaction_id"
+                                :row-class="customClassTable" @update:selected="(val) => selectedRow = val">
 
                                 <template #empty>
                                     <i class="fas fa-inbox fa-3x text-muted opacity-25 mb-3"></i>
@@ -513,11 +526,11 @@ const toolbarActions = computed(() => [
                                     <td class="text-center">
                                         <div class="fw-bold text-primary">
                                             <a v-if="item.status === 'cancelled'" :href="'invoice/' + item.invoice"
-                                                @click.prevent="openModalCancelled(item)">
+                                                @click.prevent="openModal('cancelled', item)">
                                                 <span v-html="highlight(item.invoice, filters.keyword)"></span>
                                             </a>
                                             <a v-else-if="item.status !== 'cancelled'" :href="'invoice/' + item.invoice"
-                                                @click.prevent="openModalDetail(item)">
+                                                @click.prevent="openModal('detail', item)">
                                                 <span v-html="highlight(item.invoice, filters.keyword)"></span>
                                             </a>
                                         </div>
@@ -613,17 +626,17 @@ const toolbarActions = computed(() => [
                                                 action: 'delete',
                                                 permission: 'transaction.delete',
                                             },
-                                        ]" @edit="edit(item.transaction_id)"
+                                        ]" @edit="navigateTo('transaction.edit', item.transaction_id)"
                                             @delete="deleted('transaction.deleted', item)"
-                                            @repayment="repayment(item.transaction_id)"
-                                            @cancelled="cancelled(item.transaction_id)" />
+                                            @repayment="navigateTo('transaction.show', item.transaction_id)"
+                                            @cancelled="navigateTo('transaction.cancelled', item.transaction_id)" />
                                     </td>
                                 </template>
                             </base-table>
 
                         </div>
 
-                        <div class="card-footer bg-white border-top py-3" v-if="transaction?.data.length">
+                        <div class="card-footer bg-white border-top py-3">
                             <div class="d-flex flex-wrap justify-content-between align-items-center">
                                 <div class="text-muted mb-2 mb-md-0">
                                     Menampilkan <strong>{{ props.transaction?.from ?? 0 }}</strong> -
@@ -643,11 +656,13 @@ const toolbarActions = computed(() => [
                     </div>
                 </div>
             </div>
-            <TransactionDetailModal :show="showModaDetailInfo" :transaction="selectedData"
-                @update:show="showModaDetailInfo = $event" />
+            <TransactionDetailModal :show="modals.transactionDetail" :transaction="selectedData"
+                @update:show="modals.transactionDetail = $event" />
 
-            <CancelledPreviewModal :show="showModalCancelInfo" :transaction="selectedData"
-                @update:show="showModalCancelInfo = $event" />
+            <CancelledPreviewModal :show="modals.cancelledPreview" :transaction="selectedData"
+                @update:show="modals.cancelledPreview = $event" />
+
+            <ModalExport :transaction="transaction?.data" :show="modals.export" @update:show="modals.export = $event" />
         </template>
     </app-layout>
 </template>

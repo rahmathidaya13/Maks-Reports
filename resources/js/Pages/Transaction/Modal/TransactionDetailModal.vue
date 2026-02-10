@@ -79,7 +79,7 @@ const themeColor = computed(() => {
 <template>
     <div class="row" v-if="props.show">
         <div class="col-xl-12 col-sm-12">
-            <modal size="modal-lg" :footer="false" icon="fas fa-info-circle" :show="props.show" title="Detail Transaksi"
+            <modal width="900px" size="modal-lg" :footer="false" icon="fas fa-info-circle" :show="props.show" title="Detail Transaksi"
                 @closed="close">
                 <template #body>
                     <div v-if="transaction">

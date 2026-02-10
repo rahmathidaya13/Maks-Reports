@@ -9,46 +9,43 @@ trait TransactionValidation
     public function validationText($request, $id = null)
     {
         return Validator::make($request, [
-            'customer_id' => 'required|exists:customers,customer_id',
-            'product_id'  => 'required|exists:products,product_id',
+            'invoice' => 'required|max:25',
+            'customer_id' => 'required',
+            'items' => 'required|array|min:1', // Wajib array dan minimal 1
+            'items.*.product_id' => 'required',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price_original' => 'required|numeric|min:0', // Harga Manual
+            'items.*.price_discount' => 'nullable|numeric|min:0', // Diskon Manual
 
-            'invoice' => 'required|max:25|unique:transactions,invoice,' . $id . ',transaction_id',
-            'quantity' => 'required|integer|min:1',
-            'price_original' => 'required|numeric|min:0',
-            'price_discount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
             'payment_type' => 'required|in:payment,repayment',
             'payment_method' => 'required|in:cash,transfer,debit,qris',
             'amount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
         ], [
-            'customer_id.required' => 'Customer wajib dipilih.',
-            'customer_id.exists' => 'Customer tidak ditemukan.',
+            'customer_id.required' => 'Pelanggan harus dipilih.',
+            'invoice.required' => 'Nomor invoice harus diisi.',
+            'invoice.max' => 'Nomor invoice tidak boleh lebih dari 25 karakter.',
 
-            'product_id.required' => 'Produk wajib dipilih.',
-            'product_id.exists' => 'Produk tidak ditemukan.',
+            'items.required' => 'Produk harus diisi.',
+            'items.array' => 'Produk tidak valid.',
+            'items.min' => 'Minimal satu Produk harus dipilih.',
 
-            'invoice.required' => 'Nomor faktur wajib diisi.',
-            'invoice.max' => 'Nomor faktur tidak boleh lebih dari 25 karakter.',
-            'invoice.unique' => 'Nomor faktur sudah digunakan.',
-
-            'price_original.required' => 'Harga barang wajib diisi.',
-            'price_original.numeric' => 'Harga barang harus berupa angka.',
-
-            'price_discount.required_if' => 'Diskon wajib diisi.',
-            'price_discount.numeric' => 'Diskon harus berupa angka.',
-            'price_discount.min' => 'Diskon minimal Rp 0.',
-
-            'payment_type.required' => 'Jenis pembayaran wajib dipilih.',
-            'payment_type.in' => 'Jenis pembayaran tidak valid.',
-
-            'payment_method.required' => 'Metode pembayaran wajib dipilih.',
+            'items.*.product_id.required' => 'Produk harus dipilih.',
+            'items.*.quantity.required' => 'Jumlah Produk harus diisi.',
+            'items.*.quantity.integer' => 'Jumlah Produk harus berupa angka.',
+            'items.*.quantity.min' => 'Jumlah Produk minimal 1.',
+            'items.*.price_original.required' => 'Harga Produk harus diisi.',
+            'items.*.price_original.numeric' => 'Harga Produk harus berupa angka.',
+            'items.*.price_original.min' => 'Harga Produk tidak boleh kurang dari 0.',
+            'items.*.price_discount.numeric' => 'Diskon harus berupa angka.',
+            'items.*.price_discount.min' => 'Diskon tidak boleh kurang dari 0.',
+            'payment_type.required' => 'Tipe pembayaran harus dipilih.',
+            'payment_type.in' => 'Tipe pembayaran tidak valid.',
+            'payment_method.required' => 'Metode pembayaran harus dipilih.',
             'payment_method.in' => 'Metode pembayaran tidak valid.',
 
-            'amount.required_if' => 'Nominal DP wajib diisi.',
+            'amount.required_if' => 'Nominal DP harus diisi ketika tipe pembayaran adalah DP.',
             'amount.numeric' => 'Nominal DP harus berupa angka.',
-
-            'quantity.required' => 'Jumlah barang wajib diisi.',
-            'quantity.integer' => 'Jumlah barang harus berupa angka.',
-            'quantity.min' => 'Jumlah barang minimal 1.',
+            'amount.min' => 'Nominal DP tidak boleh kurang dari 0.',
         ])->validate();
     }
 }

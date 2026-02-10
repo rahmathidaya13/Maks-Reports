@@ -32,7 +32,7 @@ class TransactionController extends Controller
             'keyword' => 'nullable|string|max:100',
             'limit' => 'nullable|in:10,20,30,50,100',
             'order_by' => 'nullable|in:desc,asc',
-            'status' => 'nullable|in:payment,repayment,cancelled',
+            'status' => 'nullable|in:all,payment,repayment,cancelled',
             'date_filter' => 'nullable|date',
             'page' => 'nullable|integer|min:1',
         ]);
@@ -60,7 +60,8 @@ class TransactionController extends Controller
         $this->authorize('create', TransactionModel::class);
 
         $customer = CustomerModel::select(['customer_id', 'customer_name'])
-            ->where('created_by', auth()->id())->get();
+            ->where('created_by', auth()->id())
+            ->get();
 
         $product = ProductModel::select('product_id', 'name')->get();
         $this->transactionRepository->clearCache(auth()->id());
@@ -76,21 +77,9 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
-        // $this->authorize('create', TransactionModel::class);
-        $request->validate([
-            'invoice' => 'required|max:25',
-            'customer_id' => 'required',
-            'items' => 'required|array|min:1', // Wajib array dan minimal 1
-            'items.*.product_id' => 'required',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price_original' => 'required|numeric|min:0', // Harga Manual
-            'items.*.price_discount' => 'nullable|numeric|min:0', // Diskon Manual
+        $this->authorize('create', TransactionModel::class);
 
-            'payment_type' => 'required|in:payment,repayment',
-            'payment_method' => 'required|in:cash,transfer,debit,qris',
-            'amount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
-        ]);
+        $this->validationText($request->all());
 
         // Hitung Grand Total (Looping Server Side)
         // Jangan percaya total dari frontend, hitung ulang di backend demi keamanan
@@ -155,7 +144,7 @@ class TransactionController extends Controller
             $message = 'Transaksi berhasil dibuat untuk pelanggan ' . $transaction->customer->customer_name;
             $this->transactionRepository->clearCache(auth()->id());
             app(DashboardRepository::class)->clearCache(auth()->id());
-            return redirect()->route('customers')->with('message', $message);
+            return redirect()->route('transaction')->with('message', $message);
         } catch (\Exception $error) {
             return back()->withErrors(['message' => 'Terjadi kesalahan sistem: ' . $error->getMessage()]);
         }
@@ -170,6 +159,7 @@ class TransactionController extends Controller
             'payments',
             'items.product'
         ])
+            ->where('created_by', auth()->id())
             ->find($id);
         $this->transactionRepository->clearCache(auth()->id());
         return Inertia::render('Transaction/Form/RepaymentForm', [
@@ -193,6 +183,7 @@ class TransactionController extends Controller
             'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount'
         ])
             ->with(['items.product'])
+            ->where('created_by', auth()->id())
             ->findOrFail($id);
         // 1. Cegah pelunasan ganda
         if ($transaction->status === 'repayment') {
@@ -249,6 +240,7 @@ class TransactionController extends Controller
             'payments:payment_id,transaction_id,payment_date,payment_type,payment_method,amount'
         ])
             ->with(['items.product'])
+            ->where('created_by', auth()->id())
             ->findOrFail($id);
 
         if (in_array($transaction->status, ['cancelled', 'repayment'])) {
@@ -274,22 +266,12 @@ class TransactionController extends Controller
     public function update(Request $request, TransactionModel $transactionModel, string $id)
     {
         $this->authorize('edit', TransactionModel::class);
+        $this->validationText($request->all());
 
-        $request->validate([
-            'invoice' => 'required|max:25',
-            'customer_id' => 'required',
-            'items' => 'required|array|min:1', // Wajib array dan minimal 1
-            'items.*.product_id' => 'required',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price_original' => 'required|numeric|min:0', // Harga Manual
-            'items.*.price_discount' => 'nullable|numeric|min:0', // Diskon Manual
 
-            'payment_type' => 'required|in:payment,repayment',
-            'payment_method' => 'required|in:cash,transfer,debit,qris',
-            'amount' => 'required_if:payment_type,payment|nullable|numeric|min:0',
-        ]);
-
-        $transaction = $transactionModel::with(['creator', 'customer', 'items.product', 'payments'])->findOrFail($id);
+        $transaction = $transactionModel::with(['creator', 'customer', 'items.product', 'payments'])
+            ->where('created_by', auth()->id())
+            ->findOrFail($id);
 
         if (in_array($transaction->status, ['cancelled', 'repayment'])) {
             $status = $transaction->status === 'cancelled' ? 'dibatalkan' : 'lunas ';
@@ -387,24 +369,34 @@ class TransactionController extends Controller
     public function destroy(TransactionModel $transactionModel, string $id)
     {
         $this->authorize('delete', TransactionModel::class);
-        $transaction = $transactionModel::with(['creator', 'customer', 'product', 'payments'])->findOrFail($id);
-        if ($transaction->status === 'payment') {
-            return redirect()
-                ->route('transaction')
-                ->with('warning', 'Transaksi ini sedang berjalan tidak dapat dihapus');
-        }
+        $transaction = $transactionModel::with(['creator', 'customer', 'items.product', 'payments'])
+            ->where('created_by', auth()->id())
+            ->findOrFail($id);
 
-        if (in_array($transaction->status, ['cancelled', 'repayment'])) {
-            return redirect()
-                ->route('transaction')
-                ->with($transaction->status === 'cancelled' ? 'warning' : 'info', 'Transaksi yang sudah ' . ucwords($transaction->status === 'cancelled' ? 'dibatalkan' : 'lunas') . ' tidak dapat dihapus');
-        }
+        $isDeveloper = auth()->user()->hasRole('developer');
+        if (!$isDeveloper) {
+            if ($transaction->status === 'payment') {
+                return redirect()
+                    ->route('transaction')
+                    ->with('warning', 'Transaksi ini sedang berjalan tidak dapat dihapus');
+            }
 
+            if (in_array($transaction->status, ['cancelled', 'repayment'])) {
+                return redirect()
+                    ->route('transaction')
+                    ->with($transaction->status === 'cancelled' ? 'warning' : 'info', 'Transaksi yang sudah ' . ucwords($transaction->status === 'cancelled' ? 'Dibatalkan' : 'Lunas') . ' tidak dapat dihapus');
+            }
+        }
+        // hanya developer yang dapat menghapus
         $transaction->delete();
 
         $message = 'Transaksi tanggal ' . Carbon::parse($transaction->transaction_date)->format('d/m/Y') . ' pelanggan ' . $transaction->customer->customer_name . ' telah dihapus.';
         $this->transactionRepository->clearCache(auth()->id());
         app(DashboardRepository::class)->clearCache(auth()->id());
+
+        if ($isDeveloper) {
+            $message .= " (Dihapus paksa oleh Pengembang)";
+        }
 
         return redirect()
             ->route('transaction')
@@ -413,6 +405,7 @@ class TransactionController extends Controller
 
     public function destroy_all(Request $request)
     {
+        $this->authorize('delete', TransactionModel::class);
         $all_id = $request->input('all_id', []);
         if (!count($all_id)) {
             return redirect()
@@ -420,14 +413,18 @@ class TransactionController extends Controller
                 ->with('warning', 'Tidak ada data yang dipilih.');
         }
 
-        $transaction = TransactionModel::whereIn('transaction_id', $all_id)
-            ->where('created_by', auth()->id())
-            ->withCount('payments')
-            ->get();
+        $isDeveloper = auth()->user()->hasRole('developer');
+        if (!$isDeveloper) {
+            // Optimasi: Cek langsung di database apakah ada salah satu transaksi 
+            // yang dipilih punya relasi ke payments
+            $hasRestrictedTransaction = TransactionModel::query()
+                ->with(['creator', 'customer', 'items.product', 'payments'])
+                ->whereIn('transaction_id', $all_id)
+                ->where('created_by', auth()->id()) // Pastikan hanya cek milik sendiri
+                ->whereHas('payments') // Cek apakah punya pembayaran
+                ->exists(); // Return true/false (Sangat Cepat)
 
-        // Cek apakah ada transaksi yang sudah punya payment
-        foreach ($transaction as $trx) {
-            if ($trx->payments_count > 0) {
+            if ($hasRestrictedTransaction) {
                 return redirect()
                     ->route('transaction')
                     ->with('warning', 'Sebagian transaksi sudah memiliki pembayaran dan tidak dapat dihapus.');
@@ -435,16 +432,24 @@ class TransactionController extends Controller
         }
 
         // Hapus semua transaksi aman
-        TransactionModel::where('created_by', auth()->id())
-            ->whereIn('transaction_id', $all_id)
-            ->delete();
+        $query = TransactionModel::with(['creator', 'customer', 'items.product', 'payments'])
+            ->where('created_by', auth()->id())
+            ->whereIn('transaction_id', $all_id);
+
+
+        $deletedCount = $query->delete();
 
         $this->transactionRepository->clearCache(auth()->id());
         app(DashboardRepository::class)->clearCache(auth()->id());
 
+        $message = $deletedCount . ' transaksi berhasil dihapus.';
+
+        if ($isDeveloper && $deletedCount > 0) {
+            $message .= ' (Mode Developer)';
+        }
         return redirect()
             ->route('transaction')
-            ->with('message', count($all_id) . ' transaksi berhasil dihapus.');
+            ->with('message', $message);
     }
 
     public function cancelled(TransactionModel $transactionModel, string $id)

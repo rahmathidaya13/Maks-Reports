@@ -456,7 +456,7 @@ const toolbarActions = computed((e) => [
                         </div>
                     </div>
 
-                    <div class="row g-2">
+                    <div class="row g-2 gap-3">
 
                         <div class="col-12" :id="row.daily_report_id" v-for="(row, rowIndex) in dailyReport.data"
                             :key="rowIndex">

@@ -1,35 +1,37 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Auth\ConfirmPasswordController;
-use App\Http\Controllers\Daily\DailyReportPrintOut;
-use App\Http\Controllers\Sales\SalesRecordsController;
-use App\Http\Controllers\Scraped\ScrapedController;
-use App\Http\Controllers\StoryReport\StatusReportPrintOut;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Job\JobTitleController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Daily\DailyReportPrintOut;
+use App\Http\Controllers\Profile\ProfileController;
+use App\Http\Controllers\Scraped\ScrapedController;
+use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\Auth\VerificationController;
-use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\AuthGoogle\GoogleAuthController;
-use App\Http\Controllers\Authority\AuthorityController;
-use App\Http\Controllers\Authorization\PermissionController;
-use App\Http\Controllers\Authorization\RoleController;
-use App\Http\Controllers\Authorization\UsersController;
 use App\Http\Controllers\Branches\BranchesController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Daily\DailyReportController;
 use App\Http\Controllers\Helpdesk\HelpdeskController;
-use App\Http\Controllers\Home\HomeController;
-use App\Http\Controllers\Job\JobTitleController;
-use App\Http\Controllers\Products\ProductController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Authorization\RoleController;
+use App\Http\Controllers\Sales\SalesRecordsController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Authority\AuthorityController;
+use App\Http\Controllers\Authorization\UsersController;
+use App\Http\Controllers\Auth\ConfirmPasswordController;
+use App\Http\Controllers\AuthGoogle\GoogleAuthController;
 use App\Http\Controllers\Products\ProductExportController;
-use App\Http\Controllers\Products\ProductRequestUserController;
-use App\Http\Controllers\Profile\ProfileController;
-use App\Http\Controllers\StoryReport\StoryStatusReportController;
+use App\Http\Controllers\StoryReport\StatusReportPrintOut;
+use App\Http\Controllers\Customer\CustomerExportController;
 use App\Http\Controllers\Transaction\TransactionController;
+use App\Http\Controllers\Authorization\PermissionController;
+use App\Http\Controllers\Products\ProductRequestUserController;
+use App\Http\Controllers\StoryReport\StoryStatusReportController;
+use App\Http\Controllers\Transaction\TransactionExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -179,6 +181,14 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     Route::controller(ProductExportController::class)->group(function () {
         Route::get('/product/export', 'export')->name('product.export');
         Route::get('/product/information/details', 'information')->name('product.information');
+    });
+
+    Route::controller(TransactionExportController::class)->group(function () {
+        Route::get('/transaction/export', 'export')->name('transaction.export');
+    });
+
+    Route::controller(CustomerExportController::class)->group(function () {
+        Route::get('/customer/export', 'export')->name('customer.export');
     });
 
     Route::controller(StatusReportPrintOut::class)->group(function () {

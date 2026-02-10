@@ -45,7 +45,7 @@ const remainingBalance = computed(() => {
 <template>
     <div class="row" v-if="props.show">
         <div class="col-xl-12 col-sm-12">
-            <modal size="modal-lg" :footer="false" icon="fas fa-info-circle" :show="props.show"
+            <modal width="900px" size="modal-lg" :footer="false" icon="fas fa-info-circle" :show="props.show"
                 title="Detail Transaksi Pembatalan" @closed="close">
                 <template #body>
                     <div v-if="transaction">
@@ -185,7 +185,7 @@ const remainingBalance = computed(() => {
                                                     </span>
                                                     <span class="text-xs text-muted">{{
                                                         formatDate(pay.payment_date)
-                                                    }}</span>
+                                                        }}</span>
                                                 </td>
                                                 <td class="py-3">
                                                     <span class="text-sm text-dark text-capitalize">

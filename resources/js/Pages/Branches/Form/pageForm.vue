@@ -97,8 +97,7 @@ const removePhone = (index) => {
 
                     <div class="card form-card border-0 shadow-lg rounded-4 overflow-hidden">
 
-                        <div
-                            class="card-header bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                        <div class="card-header bg-white p-3 border d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 <div class="icon-square-lg bg-success bg-opacity-10 text-success rounded-3 me-3">
                                     <i class="fas fa-building fs-4"></i>
@@ -109,21 +108,14 @@ const removePhone = (index) => {
                                 </div>
                             </div>
                             <Link @click.prevent="goBack" :href="url"
-                                class="btn btn-danger fw-bold border hover-scale px-3">
+                                class="btn btn-danger fw-bold border px-3">
                                 <i class="fas fa-arrow-left me-2"></i> Kembali
                             </Link>
                         </div>
 
-                        <div v-if="form.processing"
-                            class="position-absolute w-100 h-100 bg-white opacity-75 d-flex align-items-center justify-content-center"
-                            style="z-index: 10">
-                            <loader-horizontal :message="props.branch?.branches_id
-                                ? 'Menyimpan perubahan...'
-                                : 'Mendaftarkan Cabang Baru...'
-                                " />
-                        </div>
-
-                        <div class="card-body p-4" :class="['blur-area', form.processing ? 'is-blurred' : '']">
+                        <div class="card-body p-4 position-relative">
+                            <loading-overlay :show="form.processing"
+                                :text="props.branch?.branches_id ? 'Memperbarui Data Cabang...' : 'Menyimpan Data Cabang...'" />
                             <form-wrapper @submit="isSubmit">
 
                                 <div class="row g-4">
@@ -221,11 +213,13 @@ const removePhone = (index) => {
 
                                 </div>
 
-                                <div class="d-flex justify-content-end mt-4 pt-3 border-top gap-2">
+                                <div class="d-xl-flex d-grid justify-content-xl-end mt-4 pt-3 border-top gap-2">
                                     <button type="button" @click.prevent="goBack"
-                                        class="btn btn-outline-secondary btn-height-1 border px-3">Batal</button>
+                                        class="btn btn-link btn-height-1 text-muted text-decoration-none px-3 order-last order-xl-0 ">
+                                        Batal & Kembali
+                                    </button>
                                     <base-button :loading="form.processing"
-                                        class="btn btn-height-1 rounded-3 px-3 shadow-sm btn-save-animate"
+                                        class="btn btn-height-1 rounded-3 px-3 shadow-sm"
                                         :icon="props.branch?.branches_id ? 'fas fa-check-circle' : 'fas fa-save'"
                                         :variant="props.branch?.branches_id ? 'success' : 'primary'" type="submit"
                                         :name="props.branch?.branches_id ? 'ubah' : 'simpan'"

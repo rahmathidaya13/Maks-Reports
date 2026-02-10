@@ -7,7 +7,7 @@ defineProps({
 });
 </script>
 <template>
-    <div class="action-toolbar d-flex align-items-center bg-white px-3 p-2 rounded-4 shadow-sm border">
+    <div class="action-toolbar d-flex align-items-center bg-white px-2 p-2 rounded-pill border ">
 
         <div class="btn-group gap-1">
             <template v-for="(btn, i) in actions" :key="i">
@@ -36,7 +36,7 @@ defineProps({
 .btn-action-soft,
 .btn-action-primary {
     border: none;
-    padding: 6px 10px;
+    padding: 6px 9px;
     font-size: 0.875rem;
     font-weight: 600;
     display: flex;

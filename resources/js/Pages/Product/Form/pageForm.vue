@@ -40,51 +40,49 @@ const branchSelected = computed(() => {
     }
     return props.branch;
 });
+
+
 const isSubmit = () => {
-    if (props.product?.product_price_id) {
-        form.post(route("product.update", props.product.product_price_id), {
-            forceFormData: true,
-            _method: "put",
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset();
-            },
-        });
-    } else {
-        // Create
-        form.post(route("product.store"), {
-            forceFormData: true,
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset();
-            },
-        });
-    }
+    const method = isEditMode.value ? "put" : "";
+    const url = isEditMode.value
+        ? route("product.update", props.product.product_price_id)
+        : route("product.store");
+
+    form.post(url, {
+        forceFormData: true,
+        _method: method,
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset();
+        },
+    });
 };
 
-const title = ref("");
-const icon = ref("");
-const url = ref("");
-onMounted(() => {
-    if (props.product && props.product?.product_price_id) {
-        title.value = "Ubah Produk " + props.product?.product?.name;
-        icon.value = "fas fa-edit";
-        url.value = route("product");
+const pageMeta = computed(() => {
+    if (isEditMode.value) {
+        return {
+            title: "Ubah Produk " + props.product?.product?.name,
+            icon: "fas fa-edit",
+            url: route("product"),
+        };
     } else {
-        title.value = "Produk Baru";
-        icon.value = "fas fa-plus-square";
-        url.value = route("product");
+        return {
+            title: "Produk Baru",
+            icon: "fas fa-plus-square",
+            url: route("product"),
+        };
     }
-});
+})
 const breadcrumbItems = computed(() => {
-    if (props.product && props.product?.product_price_id) {
-        return [
-            { text: "Daftar Produk", url: route("product") },
-            { text: "Produk Baru", url: route("product.create") },
-            { text: title.value },
-        ];
-    }
-    return [{ text: "Daftar Produk", url: route("product") }, { text: title.value }];
+    const items = [
+        { text: "Daftar Produk", url: route("product") },
+    ];
+    items.push({
+        text: pageMeta.value.title,
+        url: null,
+    })
+    return items;
+
 });
 
 const loaderActive = ref(null);
@@ -92,7 +90,7 @@ const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
     router.get(
-        url.value,
+        pageMeta.value.url,
         {},
         {
             onFinish: () => loaderActive.value?.hide(),
@@ -160,12 +158,11 @@ function formatCategory(cat = '') {
 </script>
 <template>
 
-    <Head :title="title" />
+    <Head :title="pageMeta.title" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
-
+            <bread-crumbs :icon="pageMeta.icon" :title="pageMeta.title" :items="breadcrumbItems" />
             <div class="row pb-5">
                 <div class="col-12">
 
