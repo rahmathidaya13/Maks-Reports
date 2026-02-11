@@ -91,7 +91,7 @@ const reset = () => {
                 </div>
             </div>
 
-            <div class="row pb-3">
+            <div class="row pb-5">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                         <div class="card-body p-4">

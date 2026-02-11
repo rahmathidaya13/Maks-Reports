@@ -56,8 +56,7 @@ function daysTranslate(dayValue) {
             <div class="row g-4 pb-4">
 
                 <div class="col-xl-4 col-lg-5">
-                    <div class="card card-profile border-0 shadow-sm rounded-4 overflow-hidden position-sticky"
-                        style="top:100px">
+                    <div class="card card-profile border-0 shadow-sm rounded-4 overflow-hidden">
 
                         <div class="card-header-banner bg-gradient-primary"></div>
 

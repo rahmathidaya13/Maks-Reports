@@ -10,7 +10,6 @@ const emit = defineEmits(["update:show"]);
 const close = () => {
     emit("update:show", false);
 }
-console.log(props.transaction);
 const filters = reactive({
     start_date: null,
     end_date: null,

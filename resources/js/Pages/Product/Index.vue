@@ -470,6 +470,8 @@ const toolbarActions = computed(() => [
         click: () => reset()
     }
 ]);
+
+console.log(props.product.total);
 </script>
 <template>
 
@@ -481,13 +483,27 @@ const toolbarActions = computed(() => [
                 :items="[{ text: 'Daftar Produk' }]" />
             <callout />
 
+            <div v-if="!props.product.total"
+                class="alert alert-info border-0 shadow-sm rounded-4 d-flex align-items-start p-3 mb-4">
+                <i class="fas fa-map-marker-alt fa-lg me-3 mt-1"></i>
+
+                <div>
+                    <h6 class="fw-bold mb-1">Lokasi Tidak Terjangkau</h6>
+                    <p class="small mb-0 opacity-75">
+                        Produk belum tersedia di lokasimu.
+                        <strong>Hubungi Admin</strong>
+                        untuk dapat menyesuaikan produk berdasarkan wilayahmu.
+                    </p>
+                </div>
+            </div>
+
             <div class="row pb-5">
 
                 <div class="col-12 mb-3">
                     <base-filters :roles="['admin', 'developer']" title="Filter Produk" v-model="filters"
                         :fields="filterFields" />
                 </div>
-                
+
 
                 <div class="col-12">
                     <div class="card card-modern border-0 rounded-4 overflow-hidden">

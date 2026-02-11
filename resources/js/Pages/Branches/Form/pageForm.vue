@@ -84,6 +84,10 @@ const removePhone = (index) => {
         form.number_phone.splice(index, 1)
     }
 }
+const inputRef = ref(null);
+onMounted(() => {
+    inputRef.value.focus();
+});
 </script>
 <template>
 
@@ -107,8 +111,7 @@ const removePhone = (index) => {
                                     <p class="text-muted small mb-0">Kelola informasi kantor cabang.</p>
                                 </div>
                             </div>
-                            <Link @click.prevent="goBack" :href="url"
-                                class="btn btn-danger fw-bold border px-3">
+                            <Link @click.prevent="goBack" :href="url" class="btn btn-danger fw-bold border px-3">
                                 <i class="fas fa-arrow-left me-2"></i> Kembali
                             </Link>
                         </div>
@@ -144,7 +147,7 @@ const removePhone = (index) => {
                                         <div class="mb-3">
                                             <input-label class="form-label-custom mb-2" for="name"
                                                 value="NAMA CABANG" />
-                                            <text-input autofocus v-model="form.name" name="name"
+                                            <text-input ref="inputRef" v-model="form.name" name="name"
                                                 placeholder="Contoh: Kantor Pusat Jakarta" />
                                             <input-error :message="form.errors.name" />
                                         </div>

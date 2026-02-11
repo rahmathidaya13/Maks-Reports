@@ -55,7 +55,7 @@ defineExpose({ focus: () => textarea.value.focus() });
 </script>
 
 <template>
-    <div class="textarea-wrapper text-bg-grey border rounded-3 p-2 transition" :class="{
+    <div class="textarea-wrapper  border rounded-3 p-2 transition" :class="{
         'border-danger': $page.props.errors[props.name],
         'border-success': model && !$page.props.errors[props.name],
     }">

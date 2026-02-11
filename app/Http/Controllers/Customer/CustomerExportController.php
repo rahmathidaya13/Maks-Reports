@@ -40,8 +40,9 @@ class CustomerExportController extends Controller
                 return back()->withErrors(['error' => 'Data terlalu banyak untuk format Excel (>500). Silakan kurangi data yang akan diexport.']);
             }
 
-            return Excel::download(new CustomerExport($query), 'Laporan_Pelanggan_' . now()->format('Ymd_His') . '.xlsx');
+            return Excel::download(new CustomerExport($query), 'Daftar_Pelanggan_' . now()->format('Ymd_His') . '.xlsx');
         }
+
         if ($request['format'] === 'pdf') {
             if ($query->count() > 500) {
                 return back()->withErrors(['error' => 'Data terlalu banyak untuk format PDF (>500). Silakan kurangi data yang akan diexport.']);
