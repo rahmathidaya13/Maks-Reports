@@ -6,13 +6,10 @@ use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Services\UserService;
-use App\Services\RecaptchaService;
 use Illuminate\Auth\Events\Lockout;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
-use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -47,7 +44,6 @@ class LoginController extends Controller
 
         $this->authenticate($request);
         $request->session()->regenerate();
-        // (new \App\Services\UserService())->checkAndBroadcastStatus();
         return redirect()->intended('/dashboard/analitics');
     }
 
@@ -101,7 +97,6 @@ class LoginController extends Controller
             $user->setRememberToken(null);
             $user->save();
         }
-        // (new \App\Services\UserService())->checkAndBroadcastStatus();
         Auth::guard('web')->logout();
 
         // Hapus sesi & regenerasi token CSRF

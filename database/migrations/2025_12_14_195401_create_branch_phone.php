@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignUuid('branches_id')
                 ->constrained('branches', 'branches_id')
                 ->cascadeOnDelete();
-            $table->string('phone', 13)->unique();
+            $table->string('phone', 13)->unique()->index();
             $table->timestamps();
         });
     }

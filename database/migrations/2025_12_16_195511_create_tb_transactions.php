@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('transaction_id')->primary();
-            $table->date('transaction_date'); // TANGGAL TRANSAKSI BISNIS
+            $table->date('transaction_date')->index(); // TANGGAL TRANSAKSI BISNIS
             $table->string('invoice', 25)->index();
 
             $table->foreignUuid('customer_id')
@@ -27,17 +27,6 @@ return new class extends Migration
                 ->constrained('users', 'id')
                 ->onDelete('cascade');
 
-            // $table->foreignUuid('product_id')
-            //     ->index()
-            //     ->constrained('products', 'product_id')
-            //     ->onDelete('cascade');
-
-            // Snapshot harga saat transaksi
-            // $table->unsignedBigInteger('price_original');
-            // $table->unsignedBigInteger('price_discount')->default(0);
-            // $table->unsignedBigInteger('price_final');
-            // $table->integer('quantity')->default(1);
-            // Status bisnis
             $table->enum('status', [
                 'payment',
                 'repayment',

@@ -25,7 +25,7 @@ return new class extends Migration {
             $table->integer('engage_old_customer')->default(0); // engage pelanggan lama
             $table->integer('engage_closing')->default(0); //closing-nya
             $table->softDeletes();
-            $table->index(['created_by', 'date', 'created_at']);
+            $table->index(['created_by', 'created_at']);
             $table->timestamps();
         });
     }
