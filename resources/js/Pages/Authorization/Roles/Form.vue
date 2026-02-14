@@ -4,10 +4,7 @@ import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { formatText } from "@/helpers/formatText";
 import { formatTextFromSlug } from "@/helpers/formatTextFromSlug";
 const props = defineProps({
-    permissions: {
-        type: Array,
-        default: () => [{}]
-    },
+    permissions: Array,
     role: Object
 })
 const form = useForm({
@@ -68,6 +65,18 @@ const goBack = () => {
     router.get(url.value, {}, {
         onFinish: () => loaderActive.value?.hide()
     });
+}
+
+const isAllSelected = computed(() => {
+    return form.permissions.length === props.permissions.length && props.permissions.length > 0
+})
+const toggleSelectAll = () => {
+console.log(form.permissions.length);
+    if (isAllSelected.value) {
+        form.permissions = []
+    } else {
+        form.permissions = props.permissions.map(p => p.name)
+    }
 }
 </script>
 <template>
@@ -139,6 +148,14 @@ const goBack = () => {
                                                 ini.</p>
                                         </div>
                                         <div class="col-md-8">
+                                            <div class="d-flex justify-content-end mb-3">
+                                                <button type="button" @click="toggleSelectAll"
+                                                    class="btn btn-light border" style="font-size: 0.9rem;">
+                                                    <i :class="isAllSelected ? 'fas fa-times-circle text-danger' : 'fas fa-check-double text-primary'"
+                                                        class="me-1"></i>
+                                                    {{ isAllSelected ? 'Batalkan Semua' : 'Pilih Semua' }}
+                                                </button>
+                                            </div>
                                             <div
                                                 class="permission-grid shadow-inner p-4 rounded-4 bg-light-subtle border border-light-subtle">
                                                 <div class="d-flex flex-wrap gap-2">
@@ -151,7 +168,7 @@ const goBack = () => {
                                                             <i :class="isChecked(perm.name) ? 'fas fa-check-circle' : 'far fa-circle'"
                                                                 class="me-2"></i>
                                                             <span class="fw-semibold">{{ formatTextFromSlug(perm.name)
-                                                                }}</span>
+                                                            }}</span>
                                                         </div>
                                                     </label>
                                                 </div>

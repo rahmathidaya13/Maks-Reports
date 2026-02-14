@@ -2,25 +2,26 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Models\ProductModel;
+use App\Models\SalesRecords;
 use App\Models\BranchesModel;
 use App\Models\CustomerModel;
-use App\Models\DailyReportModel;
 use App\Models\JobTitleModel;
-use App\Models\ProductPriceModel;
-use App\Models\SalesRecords;
-use App\Models\StoryStatusReportModel;
-use App\Models\TransactionModel;
-use App\Models\User;
 use App\Policies\BranchPolicy;
-use App\Policies\CustomerPolicy;
-use App\Policies\DailyReportLeadsPolicy;
-use App\Policies\JobTitlePolicy;
 use App\Policies\ProductPolicy;
-use App\Policies\SalesRecordPolicy;
-use App\Policies\StatusReportPolicy;
-use App\Policies\TransactionPolicy;
+use App\Models\DailyReportModel;
+use App\Models\TransactionModel;
+use App\Policies\CustomerPolicy;
+use App\Policies\JobTitlePolicy;
+use App\Models\ProductPriceModel;
 use App\Policies\TransactioPolicy;
+use App\Policies\SalesRecordPolicy;
+use App\Policies\TransactionPolicy;
+use App\Policies\StatusReportPolicy;
 use Illuminate\Support\Facades\Gate;
+use App\Models\StoryStatusReportModel;
+use App\Policies\DailyReportLeadsPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -38,7 +39,7 @@ class AuthServiceProvider extends ServiceProvider
         CustomerModel::class => CustomerPolicy::class,
         SalesRecords::class => SalesRecordPolicy::class,
         TransactionModel::class => TransactionPolicy::class,
-        ProductPriceModel::class => ProductPolicy::class,
+        ProductModel::class => ProductPolicy::class,
     ];
 
     /**

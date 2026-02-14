@@ -3,6 +3,10 @@ import { computed, ref, watch } from 'vue'
 const props = defineProps({
     headers: Array,
     items: Array,
+    modelValue: {
+        type: Array,
+        default: () => [],
+    },
     rowKey: {
         type: String,
         default: 'id',
@@ -43,15 +47,23 @@ const isAllSelected = computed(() => {
 
 // Fungsi untuk memilih semua baris
 const toggleAll = (evt) => {
-    selectedRow.value = evt.target.checked
-        ? rows.value.map(r => getRowId(r))
-        : [];
+    const isChecked = evt.target.checked;
+    // Ambil semua ID yang ada di HALAMAN INI saja
+    const currentPageIds = rows.value.map(r => getRowId(r));
+    // Copy array lama
+    let newSelection = [...selectedRow.value];
+    if (isChecked) {
+        // Gabungkan ID lama + ID halaman ini (Set biar gak duplikat)
+        newSelection = [...new Set([...newSelection, ...currentPageIds])];
+    } else {
+        // Hapus HANYA ID halaman ini, sisanya biarkan
+        newSelection = newSelection.filter(id => !currentPageIds.includes(id));
+    }
+
+    selectedRow.value = newSelection;
 }
 
-// Reset pilihan jika data item berubah (misal pindah halaman/filter)
-watch(() => props.items, () => {
-    selectedRow.value = [];
-}, { deep: false });
+
 
 
 // Emit perubahan ke parent
@@ -142,6 +154,7 @@ const visibleHeaders = computed(() => props.headers.filter(col => col.visible !=
     background: #e2e8f0;
     border-radius: 10px;
 }
+
 .custom-scroll::-webkit-scrollbar-thumb:hover {
     background: #d1d7e4;
 }

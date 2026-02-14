@@ -43,6 +43,16 @@ class LoginController extends Controller
         // }
 
         $this->authenticate($request);
+        if (Auth::user()->status === 'inactive') {
+            auth()->guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda dinonaktifkan. Akses ditolak.',
+            ]);
+        }
+
         $request->session()->regenerate();
         return redirect()->intended('/dashboard/analitics');
     }

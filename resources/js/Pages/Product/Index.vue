@@ -38,7 +38,7 @@ const liveSearch = debounce(() => {
         preserveScroll: true,
         replace: true,
         preserveState: true,
-        only: ["product", "filters"], // optional: lebih hemat bandwidth jika kamu pakai Inertia partial reload
+        only: ["product", "filters", "branch", "category"],
         onFinish: () => isLoading.value = false
     });
 }, 500);
@@ -434,6 +434,38 @@ const openModal = (type, data) => {
 }
 // end modal untuk tampilkan export to
 
+const download = async (format) => {
+    // Cek apakah melebihi batas maksimal
+    if (selectedRow.value.length > 500) {
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Data terlalu banyak untuk format ' + format.toUpperCase() + ' (>500). Silakan kurangi data yang akan diexport.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
+    }
+
+    // Cek apakah ada data yang dipilih
+    if (!selectedRow.value.length) {
+        return await confirm.ask({
+            title: 'Perhatian',
+            message: 'Silakan pilih minimal satu data untuk diexport.',
+            cancelText: 'Mengerti', // Ubah teks tombol tutup
+            showButtonConfirm: false,
+            variant: 'warning' // Gunakan warna kuning/orange untuk warning
+        });
+    }
+
+    // Siapkan URL dan dxport data yang terpilih
+    const url = route('product.export', {
+        format: format,
+        all_id: selectedRow.value.length > 0 ? selectedRow.value : null
+    });
+
+    // Buka di tab baru
+    window.open(url, '_blank');
+}
 
 
 const toolbarActions = computed(() => [
@@ -448,13 +480,23 @@ const toolbarActions = computed(() => [
         click: () => deleteSelected()
     },
     {
-        label: 'Unduh',
-        icon: 'fas fa-download',
-        iconColor: 'text-success',
-        show: hasRole(['admin', 'developer']),
-        click: () => openModal('export')
+        label: `PDF (${selectedRow.value.length})`,
+        icon: 'fas fa-file-pdf',
+        iconColor: 'text-danger',
+        labelColor: 'text-danger',
+        disabled: !selectedRow.value.length > 0,
+        show: hasPermission('product.export') && hasRole(['admin', 'developer']),
+        click: () => download('pdf')
     },
-
+    {
+        label: `Excel (${selectedRow.value.length})`,
+        icon: 'fas fa-file-excel',
+        iconColor: 'text-success',
+        labelColor: 'text-success',
+        disabled: !selectedRow.value.length > 0,
+        show: hasPermission('product.export') && hasRole(['admin', 'developer']),
+        click: () => download('excel')
+    },
     {
         label: 'Produk Baru',
         icon: 'fas fa-plus-circle',
@@ -471,7 +513,6 @@ const toolbarActions = computed(() => [
     }
 ]);
 
-console.log(props.product.total);
 </script>
 <template>
 

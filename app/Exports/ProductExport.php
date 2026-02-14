@@ -178,7 +178,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoS
                 $lastRow = $event->sheet->getHighestRow();
                 // dd($lastRow);
                 // 2. Jika baris cuma 1, berarti isinya cuma HEADER doang (Data Kosong)
-                if ($lastRow === 2) {
+                if ($lastRow === 1) {
 
                     // Ambil kolom terakhir (misal 'I' atau 'L')
                     $lastColumn = $event->sheet->getHighestColumn();

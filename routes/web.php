@@ -73,7 +73,7 @@ Route::middleware(['guest'])->group(function () {
 });
 
 // Akun yang sudah diverfikasi
-Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () {
+Route::middleware(['auth', 'verified', 'profile.completed', 'check.status.active'])->group(function () {
     Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::controller(HomeController::class)->group(function () {
@@ -180,7 +180,7 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
     // cetak laporan
     Route::controller(ProductExportController::class)->group(function () {
         Route::get('/product/export', 'export')->name('product.export');
-        Route::get('/product/information/details', 'information')->name('product.information');
+        // Route::get('/product/information/details', 'information')->name('product.information');
     });
 
     Route::controller(TransactionExportController::class)->group(function () {
@@ -222,7 +222,7 @@ Route::middleware(['auth', 'verified', 'profile.completed'])->group(function () 
 
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'check.status.active'])->group(function () {
     Route::controller(ProfileController::class)->group(function () {
         Route::get('/profile/uncompleted', 'edit')->name('profile')
             ->middleware('profile.uncompleted');
@@ -250,7 +250,7 @@ Route::controller(VerificationController::class)->group(function () {
     Route::post('/email/verification-notification', 'resend')->middleware(['throttle:6,1'])->name('verification.send');
 });
 
-Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed'])->prefix('authorization')->group(function () {
+Route::middleware(['auth', 'role:developer', 'verified', 'profile.completed', 'check.status.active'])->prefix('authorization')->group(function () {
     Route::controller(RoleController::class)->group(function () {
         Route::get('/roles/list', 'index')->name('roles');
         Route::get('/roles/create', 'create')->name('roles.create');

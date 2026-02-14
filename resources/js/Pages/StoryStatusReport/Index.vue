@@ -343,7 +343,7 @@ const filterFields = computed(() => [
         label: 'Bersihkan',
         type: 'button',
         name: 'reset',
-        icon: 'fas fa-undo',
+        icon: 'fas fa-sync',
         class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-outline-danger',
         disabled: !hasActiveFilter.value,
         handler: () => handleReset()
@@ -354,7 +354,7 @@ const filterFields = computed(() => [
         label: 'Terapkan',
         type: 'button',
         name: 'apply',
-        icon: 'fas fa-filter',
+        icon: 'fas fa-check',
         class: !hasActiveFilter.value ? 'btn-secondary' : 'btn-primary',
         disabled: !hasActiveFilter.value,
         handler: () => applyDateRange()

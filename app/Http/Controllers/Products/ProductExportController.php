@@ -25,35 +25,28 @@ class ProductExportController extends Controller
         $query = ProductPriceModel::query()
             ->with(['creator', 'product', 'branch']);
 
-        // Filter Kategori
-        if ($request->filled('category')) {
-            $query->whereHas('product', function ($q) use ($request) {
-                $q->where('category', $request['category']);
-            });
+
+        // cek apakah ada data yang sedang dipilih
+        if ($request->filled('all_id') && is_array($request['all_id'])) {
+            $query->whereIn('product_price_id', $request['all_id']);
         }
 
-        // Filter Kondisi
-        if ($request->filled('item_condition')) {
-            // $query->where('item_condition', $request['item_condition']);
-            $query->whereHas('product', function ($q) use ($request) {
-                $q->where('item_condition', $request['item_condition']);
-            });
-        }
-
-        // Filter Cabang (Agak tricky karena relasinya di tabel product_prices)
-        if ($request->filled('branch')) {
-            $query->whereHas('branch', function ($q) use ($request) {
-                $q->where('name', $request['branch']);
-            });
+        // Cek apakah ada data yang ditemukan
+        if ($query->count() === 0) {
+            return back()->withErrors(['warning' => 'Tidak ada data produk yang ditemukan untuk diekspor.']);
         }
 
         if ($request['format'] === 'excel') {
+            if ($query->count() > 500) {
+                return back()->withErrors(['error' => 'Data terlalu banyak untuk format Excel (>500). Silakan kurangi data yang akan diexport.']);
+            }
+
             return Excel::download(new ProductExport($query), 'Daftar_Produk_' . now()->format('Ymd_His') . '.xlsx');
         }
 
         if ($request['format'] === 'pdf') {
-            if ($query->count() > 1000) {
-                return back()->withErrors(['error' => 'Data terlalu banyak untuk format PDF (>1000). Silakan Export menggunakan Excel.']);
+            if ($query->count() > 500) {
+                return back()->withErrors(['error' => 'Data terlalu banyak untuk format PDF (>500). Silakan Export menggunakan Excel.']);
             }
             $products = $query->get();
             $pdf = Pdf::loadView('exports.product_pdf', [
@@ -71,7 +64,7 @@ class ProductExportController extends Controller
 
     public function information(Request $request)
     {
-
+        $this->authorize('export', ProductModel::class);
         $product = ProductPriceModel::query()
             ->with(['creator', 'product', 'branch']);
 

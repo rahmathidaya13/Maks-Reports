@@ -30,7 +30,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
 
-        $this->authorize('view', ProductPriceModel::class);
+        $this->authorize('view', ProductModel::class);
 
         $request->validate([
             'keyword' => 'nullable|string|max:100',
@@ -77,7 +77,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $this->authorize('create', ProductPriceModel::class);
+        $this->authorize('create', ProductModel::class);
         $branch = BranchesModel::select('branches_id', 'name')->get();
         $this->productRepository->clearCache(auth()->id());
         return Inertia::render('Product/Form/pageForm', [
@@ -90,7 +90,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create', ProductPriceModel::class);
+        $this->authorize('create', ProductModel::class);
         $this->validationText($request->all());
         $imageCover = null;
         if ($request->hasFile('image')) {
@@ -134,7 +134,7 @@ class ProductController extends Controller
      */
     public function show(ProductModel $productModel, string $id)
     {
-        $this->authorize('edit', ProductPriceModel::class);
+        $this->authorize('edit', ProductModel::class);
         $product = $productModel::with('creator')->findOrFail($id);
         $this->productRepository->clearCache(auth()->id());
         return Inertia::render('Product/ProductDetail', [
@@ -147,7 +147,7 @@ class ProductController extends Controller
      */
     public function edit(ProductPriceModel $productPriceModel, string $id)
     {
-        $this->authorize('edit', ProductPriceModel::class);
+        $this->authorize('edit', ProductModel::class);
 
         $product = $productPriceModel::with(['creator', 'product', 'branch'])->findOrFail($id);
         $branch = BranchesModel::select('branches_id', 'name')->get();
@@ -165,7 +165,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, ProductPriceModel $productPriceModel, string $id)
     {
-        $this->authorize('edit', ProductPriceModel::class);
+        $this->authorize('edit', ProductModel::class);
         $this->validationText($request->all(), $productPriceModel::findOrFail($id)->product_id);
         $product = $productPriceModel::findOrFail($id);
 
@@ -233,7 +233,7 @@ class ProductController extends Controller
      */
     public function destroy(ProductPriceModel $productPriceModel, string $id)
     {
-        $this->authorize('delete', ProductPriceModel::class);
+        $this->authorize('delete', ProductModel::class);
         $productPrice = $productPriceModel::with('product')->findOrFail($id);
         $productMaster = $productPrice->product;
         $totalProduct = $productPriceModel::where('product_id', $productPrice->product_id)->count();
@@ -258,7 +258,7 @@ class ProductController extends Controller
 
     public function destroy_all(Request $request)
     {
-        $this->authorize('delete', ProductPriceModel::class);
+        $this->authorize('delete', ProductModel::class);
         $ids = $request->input('ids');
         if (empty($ids) || !is_array($ids)) {
             return redirect()->back()->with('error', 'Tidak ada produk yang dipilih.');

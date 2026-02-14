@@ -98,7 +98,6 @@ watch(
     () => form.roles,
     (newRole) => {
 
-        // ⛔ Jangan override saat pertama load edit
         if (newRole === initialRole.value) return
 
         const selectedRole = props.roles.find(role => role.name === newRole)

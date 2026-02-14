@@ -19,5 +19,5 @@ return [
     ProductModel::class => 'product',
     CustomerModel::class => 'customers',
     TransactionModel::class => 'transaction',
-    ProductPriceModel::class => 'product',
+    ProductModel::class => 'product',
 ];
