@@ -17,10 +17,39 @@ const form = useForm({
     branch_code: props.branch?.branch_code ?? props.branchCode,
     address: props.branch?.address ?? '',
     status: props.branch?.status ?? 'active',
-    number_phone: props.branch?.branch_phone?.length
-        ? [...props.branch?.branch_phone?.map(value => value.phone)]
-        : [''],
+    status_official: props.branch?.status_official ?? 'unofficial',
+
+    // number_phone: props.branch?.branch_phone?.length
+    //     ? [...props.branch?.branch_phone?.map(value => value.phone)]
+    //     : [''],
+    phones: [],
 });
+const isEditMode = computed(() => {
+    return !!props.branch?.branches_id
+})
+const togglePhone = (phoneId) => {
+    console.log(phoneId);
+    const index = form.phones.findIndex(p => p.phone_id === phoneId);
+    if (index === -1) {
+        form.phones.push({
+            phone_id: phoneId,
+            phone: "",
+        });
+    } else {
+        form.phones.splice(index, 1);
+    }
+}
+onMounted(() => {
+    // update nomor handphone
+    if (isEditMode.value && props.branch.branch_phone.length > 0) {
+        form.phones = props.branch.branch_phone.map(ph => {
+            return {
+                phone_id: ph.branch_phone_id,
+                phone: ph.phone,
+            }
+        })
+    }
+})
 const isSubmit = () => {
     if (props.branch?.branches_id) {
         form.put(route('branch.update', props.branch?.branches_id), {
@@ -74,16 +103,14 @@ const goBack = () => {
 }
 
 const addPhone = () => {
-    if (form.number_phone.length) {
-        form.number_phone.push('')
-    }
+    form.phones.push('')
 }
 
-const removePhone = (index) => {
-    if (form.number_phone.length > 1) {
-        form.number_phone.splice(index, 1)
-    }
-}
+// const removePhone = (index) => {
+//     if (form.number_phone.length > 1) {
+//         form.number_phone.splice(index, 1)
+//     }
+// }
 const inputRef = ref(null);
 onMounted(() => {
     inputRef.value.focus();
@@ -161,6 +188,29 @@ onMounted(() => {
                                             ]" v-model="form.status" />
                                             <input-error :message="form.errors.status" />
                                         </div>
+                                        <div class="mb-3">
+                                            <input-label class="form-label-custom" for="status_official"
+                                                value="STATUS OFFICIAL" />
+                                            <div class="d-flex align-items-center gap-1">
+                                                <div class="p-1 rounded-2 px-4 border"
+                                                    :class="form.status_official === 'official' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
+                                                    <radio-box v-model:checked="form.status_official" value="official"
+                                                        name="status_official">
+                                                        Official
+                                                    </radio-box>
+                                                </div>
+                                                <div class="p-1 rounded-2 px-4 border"
+                                                    :class="form.status_official === 'unofficial' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
+                                                    <radio-box v-model:checked="form.status_official" value="unofficial"
+                                                        name="is_official">
+                                                        Unofficial
+                                                    </radio-box>
+                                                </div>
+
+                                            </div>
+                                            <input-error :message="form.errors.is_official" />
+
+                                        </div>
                                     </div>
 
                                     <div class="col-lg-7 ps-lg-4">
@@ -178,31 +228,30 @@ onMounted(() => {
                                             </div>
 
                                             <div class="bg-light p-3 rounded-3 border">
-                                                <div v-for="(phone, index) in form.number_phone" :key="index"
+                                                <div v-for="(ph, index) in form.phones" :key="index"
                                                     class="mb-2 last-no-margin">
                                                     <div class="position-relative d-flex gap-1">
                                                         <i class="fas fa-phone-alt fs-7 input-icon-left"></i>
-                                                        <text-input :tabindex="index + 1"
-                                                            v-model="form.number_phone[index]"
-                                                            :name="`number_phone.${index}`"
+                                                        <text-input :tabindex="index + 1" v-model="ph.phone"
+                                                            :name="`phones.${index}.phone`"
                                                             :placeholder="`Nomor kontak ${index + 1}`"
                                                             input-class="input-fixed-height" />
 
-                                                        <button v-if="form.number_phone.length > 1" type="button"
-                                                            class="btn btn-outline-danger" @click="removePhone(index)"
+                                                        <button v-if="form.phones.length > 1" type="button"
+                                                            class="btn btn-outline-danger"
+                                                            @click.prevent="togglePhone(ph.phone_id)"
                                                             title="Hapus nomor ini">
                                                             <i class="fas fa-times"></i>
                                                         </button>
                                                     </div>
-                                                    <input-error :message="form.errors[`number_phone.${index}`]"
+                                                    <input-error :message="form.errors[`phones.${index}.phone`]"
                                                         class="mt-1" />
                                                 </div>
-                                                <div v-if="form.number_phone.length === 0"
+                                                <div v-if="!form.phones.length"
                                                     class="text-center text-muted small py-2">
                                                     Belum ada nomor telepon. Klik tambah.
                                                 </div>
                                             </div>
-                                            <input-error :message="form.errors.number_phone" />
                                         </div>
 
                                         <div class="mb-3">

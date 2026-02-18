@@ -20,6 +20,7 @@ const props = defineProps({
     category: Array,
     branch: Array,
 })
+console.log(props.branch, props.category);
 const filters = reactive({
     keyword: props.filters.keyword ?? "",
     category: props.filters.category ?? null,
@@ -166,15 +167,7 @@ function itemCondition(val) {
     }
     return value[val] ?? '-'
 }
-function formatCurrency(value) {
-    if (!value) return "Rp 0";
-    return new Intl.NumberFormat('id-ID', {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(value)
-}
+
 const resolveImage = (path) => {
     // 1. Jika path kosong/null, pakai placeholder
     if (!path) return 'https://ui-avatars.com/api/?name=??';
@@ -303,57 +296,41 @@ const filterFields = computed(() => [
     },
 ]);
 
+
 const header = [
     {
-        label: "No",
+        label: "#",
         key: "__index",
-        attrs: {
-            class: "text-center",
-            style: "width:50px"
-        }
+        attrs: { class: "text-center align-middle", style: "width: 50px" }
     },
     {
-        label: "ID Produk",
+        label: "ID Produk", // Label lebih profesional
         key: "product_id",
-        attrs: {
-            class: "text-center"
-        }
+        attrs: { class: "text-start align-middle", style: "width: 120px" }
     },
     {
-        label: "Produk",
+        label: "Informasi Produk", // Gabungan Gambar + Nama + Link
         key: "name",
-        attrs: {
-            class: "ps-4 text-center"
-        }
-    },
-    {
-        label: "Kondisi Produk",
-        key: "item_condition",
-        attrs: {
-            class: "text-center"
-        }
+        attrs: { class: "ps-4 align-middle" } // Hapus text-center agar rapi rata kiri
     },
     {
         label: "Kategori",
         key: "category",
-        attrs: {
-            class: "d-none d-xl-table-cell text-center"
-        }
+        attrs: { class: "d-none d-xl-table-cell text-center align-middle" }
     },
     {
-        label: "Link Produk",
-        key: "link",
+        label: "Kondisi",
+        key: "item_condition",
+        attrs: { class: "text-center align-middle" }
     },
     {
-        label: "Aksi",
-        key: "-",
+        label: "", // Aksi tidak butuh label teks
+        key: "actions",
         visible: hasRole(['admin', 'developer']),
-        attrs: {
-            class: "text-center"
-        }
+        attrs: { class: "text-end pe-4 align-middle", style: "width: 100px" }
     },
 ];
-// modal untuk tampilkan export to
+
 const modals = reactive({
     export: false,
     detailInfo: false
@@ -412,24 +389,24 @@ const toolbarActions = computed(() => [
         show: hasRole(['admin', 'developer']),
         click: () => deleteSelected()
     },
-    {
-        label: `PDF (${selectedRow.value.length})`,
-        icon: 'fas fa-file-pdf',
-        iconColor: 'text-danger',
-        labelColor: 'text-danger',
-        disabled: !selectedRow.value.length > 0,
-        show: hasPermission('product.export') && hasRole(['admin', 'developer']),
-        click: () => download('pdf')
-    },
-    {
-        label: `Excel (${selectedRow.value.length})`,
-        icon: 'fas fa-file-excel',
-        iconColor: 'text-success',
-        labelColor: 'text-success',
-        disabled: !selectedRow.value.length > 0,
-        show: hasPermission('product.export') && hasRole(['admin', 'developer']),
-        click: () => download('excel')
-    },
+    // {
+    //     label: `PDF (${selectedRow.value.length})`,
+    //     icon: 'fas fa-file-pdf',
+    //     iconColor: 'text-danger',
+    //     labelColor: 'text-danger',
+    //     disabled: !selectedRow.value.length > 0,
+    //     show: hasPermission('product.export') && hasRole(['admin', 'developer']),
+    //     click: () => download('pdf')
+    // },
+    // {
+    //     label: `Excel (${selectedRow.value.length})`,
+    //     icon: 'fas fa-file-excel',
+    //     iconColor: 'text-success',
+    //     labelColor: 'text-success',
+    //     disabled: !selectedRow.value.length > 0,
+    //     show: hasPermission('product.export') && hasRole(['admin', 'developer']),
+    //     click: () => download('excel')
+    // },
     {
         label: 'Produk Baru',
         icon: 'fas fa-plus-circle',
@@ -512,61 +489,68 @@ const toolbarActions = computed(() => [
                                 </template>
 
                                 <template #row="{ item, index }">
+                                    <td class="text-center text-muted fw-medium">
+                                        {{ index + 1 + (product?.current_page - 1) * product?.per_page }}
+                                    </td>
 
-                                    <td class="ps-3 text-muted">{{ index + 1 + (product
-                                        ?.current_page
-                                        - 1) * product
-                                            ?.per_page }}
+                                    <td>
+                                        <div
+                                            class="bg-light border rounded px-2 py-1 d-inline-block font-monospace text-secondary small">
+                                            <span
+                                                v-html="highlight(item.product_id.substr(0, 12).replace(/-/g, '').toUpperCase(), filters.keyword)"></span>
+                                        </div>
                                     </td>
-                                    <td class="text-center">
-                                        <span class="fw-semibold text-muted" v-html="highlight(item.product_id.substr(0,
-                                            12).replace(/-/g, ''), filters.keyword)"></span>
-                                    </td>
+
                                     <td class="ps-4 py-3">
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-product me-3 shadow-sm rounded-3 overflow-hidden">
+                                            <div class="product-avatar me-3 position-relative">
                                                 <img :src="resolveImage(item.image_link || item.image_path)"
-                                                    class="w-100 h-100 object-fit-cover" alt="Product">
+                                                    class="rounded-3 shadow-sm object-fit-cover border" width="56"
+                                                    height="56" alt="Product">
                                             </div>
 
-                                            <div style="max-width: 500px;">
-                                                <div class="fw-bold text-dark mb-1 text-truncate" :title="item.name"
-                                                    v-html="highlight(item.name ?? '-', filters.keyword)">
+                                            <div class="d-flex flex-column" style="max-width: 400px;">
+                                                <div class="fw-bold text-dark mb-1 text-truncate" :title="item.name">
+                                                    <span v-html="highlight(item.name ?? '-', filters.keyword)"></span>
                                                 </div>
-                                                <button @click.prevent="openModal('detail_info', item)" type="button"
-                                                    class="btn-link btn text-decoration-none p-0">
-                                                    <i class="fas fa-info-circle"></i>
-                                                    Lihat Detail
-                                                </button>
+
+                                                <div class="d-flex align-items-center gap-1 small">
+                                                    <button @click.prevent="openModal('detail_info', item)"
+                                                        class="btn-link-custom text-secondary text-decoration-none d-flex align-items-center">
+                                                        <i class="fas fa-eye me-1"></i> Detail
+                                                    </button>
+
+                                                    <span class="text-muted border-start ps-3" v-if="item.link"></span>
+
+                                                    <a v-if="item.link" :href="item.link" target="_blank"
+                                                        class="btn-link-custom text-primary text-decoration-none d-flex align-items-center">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Buka Link
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
+
+                                    <td class="d-none d-xl-table-cell text-center">
+                                        <span
+                                            class="badge bg-white border text-secondary fw-normal px-3 py-2 rounded-pill shadow-sm">
+                                            {{ formatCategory(item.category) }}
+                                        </span>
+                                    </td>
+
                                     <td class="text-center">
-                                        <span class="badge border rounded-pill me-2 px-4 fs-7"
+                                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-capitalize"
                                             :class="getConditionBadgeClass(item.item_condition)">
                                             {{ itemCondition(item.item_condition) }}
                                         </span>
                                     </td>
-                                    <td class="d-none d-xl-table-cell">
-                                        <span
-                                            class="d-inline-flex bg-gradient align-items-center text-secondary fw-medium px-2 py-1 rounded-2 bg-light border small">
-                                            <i class="fas fa-tag me-2 fs-10"></i> {{
-                                                formatCategory(item.category) }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <a v-if="item.link" :href="item.link" target="_blank"
-                                            class="text-primary text-decoration-none hover-underline">
-                                            <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
-                                        </a>
-                                    </td>
 
-                                    <td class="text-center" v-if="hasRole(['admin', 'developer'])">
+                                    <td class="text-end pe-4" v-if="hasRole(['admin', 'developer'])">
                                         <dropdown-action :item="item" :actions="[
                                             {
                                                 label: 'Ubah Produk',
                                                 icon: 'bi bi-pencil-square fs-6',
-                                                color_icon: 'success',
+                                                color_icon: 'warning',
                                                 action: 'edit',
                                                 permission: 'product.edit'
                                             },
@@ -616,14 +600,6 @@ const toolbarActions = computed(() => [
     </app-layout>
 </template>
 <style scoped>
-.hover-scale {
-    transition: transform 0.2s;
-}
-
-.hover-scale:hover {
-    transform: scale(1.05);
-}
-
 /* Card Modern */
 .card-modern {
     background: #ffffff;
@@ -634,84 +610,11 @@ const toolbarActions = computed(() => [
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
 }
 
-
-
-/* Avatar Circle untuk kolom Creator */
-.avatar-circle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-}
-
-
-
-/* Animation Utilities */
-.animate-pop {
-    animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-
-@keyframes popIn {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
+/* --- TYPOGRAPHY --- */
 .fs-7 {
     font-size: 0.75rem;
 }
 
-
-
-/* Label Styling (Konsisten dengan halaman lain) */
-.form-label-custom {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: #8898aa;
-    /* Warna abu-abu soft */
-    text-transform: uppercase;
-}
-
-
-
-/* --- PRODUCT AVATAR --- */
-.avatar-product {
-    width: 50px;
-    height: 50px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-}
-
-/* --- SOFT BADGES --- */
-.badge-soft-success {
-    background-color: rgba(25, 135, 84, 0.1);
-    color: #198754;
-}
-
-.badge-soft-secondary {
-    background-color: rgba(108, 117, 125, 0.1);
-    color: #6c757d;
-}
-
-.dot-indicator {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    margin-bottom: 1px;
-}
-
-/* --- TYPOGRAPHY --- */
 .fs-9 {
     font-size: 0.75rem;
 }
@@ -722,33 +625,6 @@ const toolbarActions = computed(() => [
 
 .ls-1 {
     letter-spacing: 0.5px;
-}
-
-.hover-underline:hover {
-    text-decoration: underline !important;
-}
-
-
-
-/* --- ANIMATION --- */
-.hover-lift {
-    transition: transform 0.2s;
-}
-
-.hover-lift:hover {
-    transform: translateY(-2px);
-}
-
-/* Transition for Bulk Delete Button */
-.pop-enter-active,
-.pop-leave-active {
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.pop-enter-from,
-.pop-leave-to {
-    opacity: 0;
-    transform: scale(0.8);
 }
 
 /* Base Badge Style */
@@ -801,5 +677,27 @@ const toolbarActions = computed(() => [
     color: #475569;
     /* Abu-abu Slate Gelap */
     border-color: #cbd5e1 !important;
+}
+
+/* Font Monospace untuk ID */
+.font-monospace {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.8rem;
+    letter-spacing: -0.5px;
+}
+
+/* Custom Link Button (Detail/External) */
+.btn-link-custom {
+    font-size: 0.8rem;
+    transition: color 0.2s;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.btn-link-custom:hover {
+    text-decoration: underline !important;
+    color: var(--bs-primary) !important;
 }
 </style>

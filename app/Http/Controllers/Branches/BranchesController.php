@@ -59,6 +59,7 @@ class BranchesController extends Controller
         $branch->name = $request->input('name');
         $branch->address = $request->input('address');
         $branch->status = $request->input('status');
+        $branch->status_official = $request->input('status_official');
         $branch->save();
 
         // Sync Phones
@@ -98,6 +99,7 @@ class BranchesController extends Controller
         $branch->name = $request->input('name');
         $branch->address = $request->input('address');
         $branch->status = $request->input('status');
+        $branch->status_official = $request->input('status_official');
         $branch->update();
 
         // Sync Phones

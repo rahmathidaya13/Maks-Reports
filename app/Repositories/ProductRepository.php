@@ -30,8 +30,6 @@ class ProductRepository extends BaseCacheRepository
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhereRaw("REPLACE(product_id, '-', '') LIKE ?", ["%{$cleanSearch}%"]);
             });
-            // $query->whereHas('product', function ($product) use ($search, $cleanSearch) {
-            // });
         }
 
         /*
@@ -42,8 +40,6 @@ class ProductRepository extends BaseCacheRepository
         if (array_key_exists('category', $filters) && $filters['category'] !== null) {
             $category = $filters['category'];
             $query->where('category', $category);
-
-            $query->whereHas('product', function ($product) use ($category) {});
         }
 
 

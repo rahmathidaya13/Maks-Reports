@@ -40,70 +40,32 @@ const header = [
     {
         label: "No",
         key: "__index",
-        attrs: {
-            class: "text-center",
-            style: "width:50px"
-        }
+        attrs: { class: "text-center align-middle", style: "width: 50px" }
     },
     {
-        label: "Kode Cabang",
-        key: "branch_code",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Nama Cabang",
+        label: "Identitas Cabang", // Gabungan Kode + Nama + Status Official
         key: "name",
+        attrs: { class: "text-start align-middle" }
     },
     {
-        label: "No Telepon",
-        key: "phone",
-        attrs: {
-            class: "text-center"
-        }
+        label: "Kontak & Lokasi", // Gabungan Telepon + Alamat
+        key: "contact",
+        attrs: { class: "text-start align-middle", style: "width: 300px" }
     },
     {
-        label: "Alamat",
-        key: "address",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Status",
+        label: "Status Operasional", // Status Aktif/Tidak
         key: "status",
-        attrs: {
-            class: "text-center"
-        }
+        attrs: { class: "text-center align-middle" }
     },
     {
-        label: "Dibuat Oleh",
+        label: "Pembuat", // Creator + Tanggal
         key: "created_by",
-        attrs: {
-            class: "text-center ps-4"
-        }
-    },
-    {
-        label: "Dibuat",
-        key: "created_at",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Diperbarui",
-        key: "updated_at",
-        attrs: {
-            class: "text-center"
-        }
+        attrs: { class: "text-start align-middle" }
     },
     {
         label: "Aksi",
-        key: "-",
-        attrs: {
-            class: "text-center"
-        }
+        key: "actions",
+        attrs: { class: "text-center align-middle" }
     },
 ];
 watch(
@@ -338,63 +300,100 @@ const toolbarActions = computed(() => [
 
                                 <template #row="{ item, index }">
 
-                                    <td class="ps-3 text-muted fw-semibold">{{ index + 1 + (branch?.current_page
-                                        - 1) * branch?.per_page }}</td>
-
-                                    <td class="text-center ps-3">
-                                        <span class="font-monospace bg-light border px-2 py-1 rounded text-dark"
-                                            v-html="highlight(item.branch_code, filters.keyword)">
-                                        </span>
-                                    </td>
-                                    <td class="ps-3">
-                                        <div class="fw-bold text-dark text-capitalize"
-                                            v-html="highlight(item.name, filters.keyword)"></div>
-                                    </td>
-                                    <td class="text-start phone">
-                                        <ul class="list-unstyled lh-2" style="font-size: 1.2rem;">
-                                            <li v-for="item in item.branch_phone" :key="item.branch_phone_id">
-                                                <div class="badge text-dark bg-light font-monospace border"
-                                                    v-html="highlight(item.phone, filters.keyword)">
-                                                </div>
-                                            </li>
-                                        </ul>
-                                        <div class="text-center" v-if="!item.branch_phone.length">-</div>
+                                    <td class="text-center text-muted fw-medium align-middle">
+                                        {{ index + 1 + (branch?.current_page - 1) * branch?.per_page }}
                                     </td>
 
-                                    <td class="text-start ps-3 ">
-                                        <div v-html="item.address"></div>
-                                    </td>
+                                    <td class="ps-3 align-middle">
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <span class="fw-bold text-dark fs-6 text-capitalize me-2"
+                                                    v-html="highlight(item.name, filters.keyword)"></span>
 
-                                    <td class="text-center ps-3">
-                                        <span class="badge py-2 px-4" :class="{
-                                            'text-bg-success': item.status === 'active',
-                                            'text-bg-danger': item.status === 'inactive'
-                                        }">
-                                            {{ item.status === 'active' ? 'Aktif' : 'Tidak Aktif' }}
-                                        </span>
-
-                                    </td>
-                                    <td class="ps-3">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="avatar-circle bg-light text-primary fw-bold">
-                                                {{ item.creator?.name ?
-                                                    item.creator.name.substring(0, 2).toUpperCase() : '??' }}
+                                                <span v-if="item.status_official === 'official'"
+                                                    class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 rounded-pill d-flex align-items-center px-2 py-1"
+                                                    style="font-size: 0.65rem;">
+                                                    <i class="fas fa-certificate me-1"></i> PUSAT
+                                                </span>
+                                                <span v-else
+                                                    class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 rounded-pill px-2 py-1"
+                                                    style="font-size: 0.65rem;">
+                                                    CABANG
+                                                </span>
                                             </div>
-                                            <span>{{ item.creator?.name ?? '-' }}</span>
+
+                                            <div>
+                                                <span
+                                                    class="font-monospace text-muted small bg-light border rounded px-2"
+                                                    style="font-size: 0.75rem;">
+                                                    <i class="fas fa-hashtag me-1 opacity-50"></i> {{ item.branch_code }}
+                                                </span>
+                                            </div>
                                         </div>
                                     </td>
 
-                                    <td class="ps-3 small text-muted">{{ daysTranslate(item.created_at) }}
-                                    </td>
-                                    <td class="ps-3 small text-muted">{{ daysTranslate(item.updated_at) }}
+                                    <td class="align-middle">
+                                        <div class="d-flex flex-column gap-2 py-2">
+                                            <div v-if="item.branch_phone && item.branch_phone.length > 0">
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span v-for="phone in item.branch_phone"
+                                                        :key="phone.branch_phone_id"
+                                                        class="badge bg-white border text-dark fw-normal shadow-sm d-flex align-items-center">
+                                                        <i class="fas fa-phone-alt text-muted me-2"
+                                                            style="font-size: 0.6rem;"></i>
+                                                        <span v-html="highlight(phone.phone, filters.keyword)"></span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div v-else class="text-muted small fst-italic">
+                                                - Tidak ada no. telepon -
+                                            </div>
+
+                                            <div class="d-flex align-items-start small text-secondary"
+                                                style="line-height: 1.3;">
+                                                <i class="fas fa-map-marker-alt text-danger mt-1 me-2 opacity-75"></i>
+                                                <span v-html="item.address || '-'"></span>
+                                            </div>
+                                        </div>
                                     </td>
 
-                                    <td class="text-center">
+                                    <td class="text-center align-middle">
+                                        <div class="d-flex justify-content-center">
+                                            <span
+                                                class="badge rounded-pill px-3 py-2 fw-medium d-flex align-items-center gap-2"
+                                                :class="{
+                                                    'bg-success bg-opacity-10 text-success border border-success border-opacity-10': item.status === 'active',
+                                                    'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10': item.status === 'inactive'
+                                                }">
+                                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
+                                                {{ item.status === 'active' ? 'Aktif' : 'Non-Aktif' }}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-2 bg-gradient-light border text-primary fw-bold small d-flex align-items-center justify-content-center"
+                                                style="width: 32px; height: 32px; border-radius: 50%;">
+                                                {{ item.creator?.name ? item.creator.name.substring(0, 2).toUpperCase()
+                                                : '?' }}
+                                            </div>
+                                            <div class="d-flex flex-column small" style="line-height: 1.2;">
+                                                <span class="fw-semibold text-dark">{{ item.creator?.name || 'Sistem'
+                                                    }}</span>
+                                                <span class="text-muted" style="font-size: 0.7rem;">
+                                                    {{ daysTranslate(item.created_at) }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center align-middle">
                                         <dropdown-action :item="item" :actions="[
                                             {
                                                 label: 'Ubah Data',
                                                 icon: 'bi bi-pencil-square fs-6',
-                                                color: 'success',
+                                                color: 'success', // Ganti color_icon jadi color agar konsisten
                                                 action: 'edit',
                                                 permission: 'branches.edit'
                                             },
@@ -404,7 +403,6 @@ const toolbarActions = computed(() => [
                                                 color: 'danger',
                                                 action: 'delete',
                                                 permission: 'branches.delete'
-
                                             }
                                         ]" @edit="navigateTo('branch.edit', { id: item.branches_id }, 'Sedang membuka form edit...')"
                                             @delete="deleted('branch.deleted', item)" />
@@ -415,7 +413,7 @@ const toolbarActions = computed(() => [
 
                         <div
                             class="card-footer bg-white border-0 py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center">
-                            <span class="text-muted mb-2 mb-md-0">
+                            <span class="text-muted mb-2 mb-md-0 small">
                                 Menampilkan <strong>{{ props.branch?.from ?? 0 }}</strong> - <strong>{{
                                     props.branch?.to ?? 0 }}</strong> dari <strong>{{ props.branch?.total ?? 0
                                     }}</strong>
@@ -444,5 +442,11 @@ const toolbarActions = computed(() => [
     align-items: center;
     justify-content: center;
     font-size: 0.7rem;
+}
+
+/* Font Monospace untuk kode */
+.font-monospace {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    letter-spacing: -0.5px;
 }
 </style>

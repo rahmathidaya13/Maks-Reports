@@ -142,12 +142,8 @@ class ProductController extends Controller
     {
         $this->authorize('edit', ProductModel::class);
 
-        $product = $productModel::with(['creator', 'prices.branch'])->find($id);
-
-
-        // $branchOfficial = BranchesModel::where('status_official', $product->branch->status_official)->first();
-
-        // $currentOfficial = $branchOfficial && $branchOfficial->status_official === 'official';
+        $product = $productModel::with(['creator', 'prices.branch'])
+            ->findOrFail($id);
 
         $branches = BranchesModel::select('branches_id', 'name', 'status_official')
             ->get();
@@ -246,70 +242,49 @@ class ProductController extends Controller
 
         $product->delete();
         $message = 'Produk ' . $product->name . ' telah dihapus beserta seluruh datanya.';
-        // dd($totalProduct);
-        // if ($totalProduct > 1) {
-        //     $product->delete();
-        //     $message = 'Salah satu produk ' . $productMaster->name . ' dari cabang ' . $product->branch->name . ' berhasil dihapus. Produk utama masih tersimpan.';
-        // } else {
-        //     // HAPUS FOTO UTAMA (COVER)
-        //     if ($productMaster->image_path) {
-        //         // Cek file ada atau tidak untuk menghindari error, lalu hapus
-        //         if (Storage::disk('public')->exists($productMaster->image_path)) {
-        //             Storage::disk('public')->delete($productMaster->image_path);
-        //         }
-        //     }
-        //     $productMaster->delete();
-        //     $message = 'Produk ' . $productMaster->name . ' telah dihapus permanen beserta seluruh datanya.';
-        // }
         $this->productRepository->clearCache(auth()->id());
         return redirect()->route('product')->with('message', $message);
     }
 
     public function destroy_all(Request $request)
     {
+        // 1. Otorisasi
         $this->authorize('delete', ProductModel::class);
-        $ids = $request->input('ids');
+
+        // 2. Validasi Input
+        $ids = $request->input('ids', []);
         if (empty($ids) || !is_array($ids)) {
             return redirect()->back()->with('error', 'Tidak ada produk yang dipilih.');
         }
 
-        foreach ($ids as $id) {
-            $productPrice = ProductPriceModel::with('product')->find($id);
+        // 3. Ambil data sekaligus (Lebih hemat query daripada looping find satu-satu)
+        // Pastikan 'product_id' sesuai dengan Primary Key tabel produk (bisa 'id' atau 'product_id')
+        $product = ProductModel::with(['creator', 'prices.branch'])
+            ->whereIn('product_id', $ids)
+            ->get();
 
-            // Jika data tidak ditemukan (mungkin sudah dihapus), skip ke loop berikutnya
-            if (!$productPrice) continue;
+        if ($product->isEmpty()) {
+            return redirect()->back()->with('error', 'Data Produk tidak ditemukan.');
+        }
 
-            $productMaster = $productPrice->product;
+        $deletedCount = 0;
 
-            // Pastikan Parent Product masih ada (Mencegah error orphan data)
-            if (!$productMaster) {
-                // Jika induknya hilang, hapus saja data harga ini langsung
-                $productPrice->delete();
-                continue;
+        foreach ($product as $prod) {
+            // A. Hapus File Gambar Fisik (Penting agar storage tidak penuh sampah)
+            if ($prod->image_path && Storage::disk('public')->exists($prod->image_path)) {
+                Storage::disk('public')->delete($prod->image_path);
             }
 
-            // Hitung jumlah varian yang tersisa untuk produk induk ini
-            $totalProduct = ProductPriceModel::where('product_id', $productPrice->product_id)->count();
-
-            // LOGIKA UTAMA
-            if ($totalProduct > 1) {
-                // KONDISI A: Masih ada varian lain (kakak/adiknya).
-                // Hapus varian ini saja.
-                $productPrice->delete();
-            } else {
-                // KONDISI B: Ini varian terakhir (Single Fighter).
-                // Hapus Induknya sekalian + Gambarnya.
-
-                if ($productMaster->image_path && Storage::disk('public')->exists($productMaster->image_path)) {
-                    Storage::disk('public')->delete($productMaster->image_path);
-                }
-
-                // Hapus Parent (Otomatis anak terakhir ini ikut terhapus karena Cascade atau logic DB)
-                $productMaster->delete();
-            }
+            // B. Hapus Data Anak (Prices)
+            // Jika database Anda sudah setting "ON DELETE CASCADE", baris di bawah ini opsional.
+            // Tapi untuk keamanan (mencegah data yatim piatu), sebaiknya di-delete eksplisit.
+            $prod->prices()->delete();
+            // C. Hapus Produk Induk
+            $prod->delete();
+            $deletedCount++;
         }
         $this->productRepository->clearCache(auth()->id());
-        return redirect()->route('product')->with('message', count($ids) . ' Produk terpilih berhasil dihapus.');
+        return redirect()->route('product')->with('message', $deletedCount . ' Produk terpilih berhasil dihapus.');
     }
 
     public function deletedGalleryImage(Request $request, ProductModel $productModel, string $id)
