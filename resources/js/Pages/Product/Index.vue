@@ -12,6 +12,7 @@ import { useConfirm } from "@/helpers/useConfirm.js"
 const confirm = useConfirm(); // Memanggil fungsi confirm untuk alert delete
 
 import ModalExport from "./ModalExport.vue";
+import ModalProdukDetail from "./ModalProdukDetail.vue";
 
 const props = defineProps({
     product: Object,
@@ -25,9 +26,6 @@ const filters = reactive({
     limit: props.filters.limit ?? null,
     order_by: props.filters.order_by ?? null,
     page: props.filters?.page ?? 1,
-    branch: props.filters?.branch ?? null,
-    status: props.filters?.status ?? null,
-    discount_only: props.filters?.discount_only ?? null,
     condition: props.filters?.condition ?? null,
 })
 
@@ -87,14 +85,14 @@ const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
 const deleted = async (data) => {
     const setConfirm = await confirm.ask({
         title: 'Hapus',
-        message: `Produk ${formatText(data.product.name)} akan dihapus. Data tidak dapat dikembalikan!`,
+        message: `Produk ${formatText(data.name)} akan dihapus. Data tidak dapat dikembalikan!`,
         confirmText: 'Ya, Hapus',
         variant: 'danger' // Memberikan warna merah pada tombol konfirmasi
     });
 
     if (setConfirm) {
         loaderActive.value?.show("Sedang menghapus data...");
-        router.delete(route('product.deleted', data.product_price_id), {
+        router.delete(route('product.deleted', data.product_id), {
             onFinish: () => loaderActive.value?.hide(),
             preserveScroll: false,
             replace: true
@@ -228,7 +226,7 @@ const filterFields = computed(() => [
     {
         key: 'keyword',
         label: 'Pencarian',
-        col: 'col-xl-5 col-md-12',
+        col: 'col-xl-12 col-md-12',
         type: 'search',
         icon: 'fas fa-search',
         autofocus: true,
@@ -242,7 +240,7 @@ const filterFields = computed(() => [
         key: 'category',
         label: 'Kategori',
         type: 'select',
-        col: 'col-xl-3 col-md-4',
+        col: 'col-xl-3 col-md-3 col-6',
         icon: 'fas fa-tags',
         props: {
             selectClass: 'border-start-0 ps-2 shadow-none',
@@ -254,7 +252,7 @@ const filterFields = computed(() => [
         key: 'limit',
         label: 'Tampilkan',
         type: 'select',
-        col: 'col-xl-2 col-md-4 col-6',
+        col: 'col-xl-3 col-md-3 col-6',
         icon: 'fas fa-list-ol',
         props: {
             selectClass: 'border-start-0 ps-2 shadow-none',
@@ -272,7 +270,7 @@ const filterFields = computed(() => [
         key: 'order_by',
         label: 'Urutan',
         type: 'select',
-        col: 'col-xl-2 col-md-4 col-6',
+        col: 'col-xl-3 col-md-3 col-6',
         icon: 'fas fa-sort',
         props: {
             selectClass: 'border-start-0 ps-2 shadow-none',
@@ -285,56 +283,10 @@ const filterFields = computed(() => [
         ]
     },
     {
-        key: 'branch',
-        label: 'Cabang',
-        type: 'select',
-        col: 'col-xl-3 col-md-6 col-6',
-        icon: 'fas fa-dot-circle',
-        roles: ['developer', 'admin'],
-        props: {
-            selectClass: 'border-start-0 ps-2 shadow-none',
-            isValid: false,
-        },
-        options: branchOptions.value
-    },
-    {
-        key: 'status',
-        label: 'Status Publikasi',
-        type: 'select',
-        col: 'col-xl-3 col-md-6 col-6',
-        icon: 'fas fa-dot-circle',
-        roles: ['developer', 'admin'],
-        props: {
-            selectClass: 'border-start-0 ps-2 shadow-none',
-            isValid: false,
-        },
-        options: [
-            { value: null, label: 'Semua Publikasi' },
-            { value: 'published', label: 'Published' },
-            { value: 'draft', label: 'Draft' },
-        ]
-    },
-    {
-        key: 'discount_only',
-        label: 'Tipe Harga',
-        type: 'select',
-        col: 'col-xl-3 col-md-6 col-6',
-        icon: 'fas fa-dot-circle',
-        props: {
-            selectClass: 'border-start-0 ps-2 shadow-none',
-            isValid: false,
-        },
-        options: [
-            { value: null, label: 'Semua Harga' },
-            { value: 'discount', label: 'Diskon' },
-            { value: 'normal', label: 'Normal' },
-        ]
-    },
-    {
         key: 'condition',
         label: 'Kondisi Produk',
         type: 'select',
-        col: 'col-xl-3 col-md-6 col-6',
+        col: 'col-xl-3 col-md-3 col-6',
         icon: 'fas fa-dot-circle',
         props: {
             selectClass: 'border-start-0 ps-2 shadow-none',
@@ -361,10 +313,24 @@ const header = [
         }
     },
     {
+        label: "ID Produk",
+        key: "product_id",
+        attrs: {
+            class: "text-center"
+        }
+    },
+    {
         label: "Produk",
         key: "name",
         attrs: {
             class: "ps-4 text-center"
+        }
+    },
+    {
+        label: "Kondisi Produk",
+        key: "item_condition",
+        attrs: {
+            class: "text-center"
         }
     },
     {
@@ -375,46 +341,8 @@ const header = [
         }
     },
     {
-        label: 'Cabang',
-        key: "branches_id",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Harga",
-        key: "base_price",
-        attrs: {
-            class: "text-center"
-        }
-    },
-    {
-        label: "Tgl.Berlaku",
-        key: "valid_from",
-        attrs: {
-            class: "text-center d-none d-xl-table-cell"
-        }
-    },
-    {
-        label: "Tgl.Berakhir",
-        key: "valid_until",
-        attrs: {
-            class: "text-center d-none d-xl-table-cell"
-        }
-    },
-    {
-        label: "Tipe Harga",
-        key: "price_type",
-        attrs: {
-            class: "text-center d-none d-xl-table-cell"
-        }
-    },
-    {
-        label: "Publikasi",
-        key: "status",
-        attrs: {
-            class: "text-center d-none d-xl-table-cell"
-        }
+        label: "Link Produk",
+        key: "link",
     },
     {
         label: "Aksi",
@@ -428,9 +356,14 @@ const header = [
 // modal untuk tampilkan export to
 const modals = reactive({
     export: false,
+    detailInfo: false
 });
+
+const selectedData = ref(null);
 const openModal = (type, data) => {
+    selectedData.value = data;
     if (type === 'export') modals.export = true;
+    if (type === 'detail_info') modals.detailInfo = true;
 }
 // end modal untuk tampilkan export to
 
@@ -568,7 +501,7 @@ const toolbarActions = computed(() => [
                         <div class="card-body p-0 position-relative">
                             <base-table :markAll="hasRole(['admin', 'developer'])" :loader="isLoading"
                                 loaderText="Sedang memuat data..." :headers="header" :items="product?.data"
-                                row-key="product_price_id" @update:selected="(val) => selectedRow = val">
+                                row-key="product_id" @update:selected="(val) => selectedRow = val">
 
                                 <template #empty>
                                     <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
@@ -585,89 +518,48 @@ const toolbarActions = computed(() => [
                                         - 1) * product
                                             ?.per_page }}
                                     </td>
+                                    <td class="text-center">
+                                        <span class="fw-semibold text-muted" v-html="highlight(item.product_id.substr(0,
+                                            12).replace(/-/g, ''), filters.keyword)"></span>
+                                    </td>
                                     <td class="ps-4 py-3">
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-product me-3 shadow-sm rounded-3 overflow-hidden">
-                                                <img :src="resolveImage(item.product?.image_link || item.product?.image_path)"
+                                                <img :src="resolveImage(item.image_link || item.image_path)"
                                                     class="w-100 h-100 object-fit-cover" alt="Product">
                                             </div>
 
                                             <div style="max-width: 500px;">
-                                                <div class="fw-bold text-dark mb-1 text-truncate"
-                                                    :title="item.product?.name"
-                                                    v-html="highlight(item.product?.name ?? '-', filters.keyword)">
+                                                <div class="fw-bold text-dark mb-1 text-truncate" :title="item.name"
+                                                    v-html="highlight(item.name ?? '-', filters.keyword)">
                                                 </div>
-                                                <div class="small text-muted align-items-center d-flex">
-                                                    <span
-                                                        class="badge bg-light text-secondary border fw-normal rounded-5 me-2">ID:
-                                                        <span v-html="highlight(item.product_id.substr(0,
-                                                            12).replace(/-/g, ''), filters.keyword)"></span>
-                                                    </span>
-
-                                                    <span class="badge border fw-bold rounded-pill me-2 px-2 py-1"
-                                                        :class="getConditionBadgeClass(item.product?.item_condition)">
-                                                        {{ itemCondition(item.product?.item_condition) }}
-                                                    </span>
-
-                                                    <a v-if="item.product?.link" :href="item.product?.link"
-                                                        target="_blank"
-                                                        class="text-primary text-decoration-none hover-underline">
-                                                        <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
-                                                    </a>
-                                                </div>
+                                                <button @click.prevent="openModal('detail_info', item)" type="button"
+                                                    class="btn-link btn text-decoration-none p-0">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    Lihat Detail
+                                                </button>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge border rounded-pill me-2 px-4 fs-7"
+                                            :class="getConditionBadgeClass(item.item_condition)">
+                                            {{ itemCondition(item.item_condition) }}
+                                        </span>
                                     </td>
                                     <td class="d-none d-xl-table-cell">
                                         <span
                                             class="d-inline-flex bg-gradient align-items-center text-secondary fw-medium px-2 py-1 rounded-2 bg-light border small">
                                             <i class="fas fa-tag me-2 fs-10"></i> {{
-                                                formatCategory(item.product?.category) }}
+                                                formatCategory(item.category) }}
                                         </span>
                                     </td>
-                                    <td>
-                                        <span
-                                            class="d-inline-flex text-white align-items-center fw-medium px-2 py-1 bg-opacity-75 rounded-2 bg-success border small text-capitalize">
-                                            <i class="fas fa-map-marker-alt me-2 fs-10"></i>
-                                            {{ item.branch?.name ?? 'Pusat' }}
-                                        </span>
+                                    <td class="text-center">
+                                        <a v-if="item.link" :href="item.link" target="_blank"
+                                            class="text-primary text-decoration-none hover-underline">
+                                            <i class="fas fa-external-link-alt fs-10 me-1"></i>Link
+                                        </a>
                                     </td>
-
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                            <template v-if="item.discount_price">
-                                                <span class="fw-bold text-dark">{{
-                                                    formatCurrency(item.discount_price) }}</span>
-                                                <small class="text-decoration-line-through fs-10 text-danger">{{
-                                                    formatCurrency(item.base_price) }}</small>
-                                            </template>
-                                            <template v-else>
-                                                <span class="fw-bold text-dark">{{
-                                                    formatCurrency(item.base_price) }}</span>
-                                            </template>
-                                        </div>
-                                    </td>
-                                    <td class="text-center fw-normal d-none d-xl-table-cell text-muted">
-                                        {{ daysTranslate(item.valid_from, 'Efektif') }}
-                                    </td>
-                                    <td class="text-center fw-normal d-none d-xl-table-cell text-muted">
-                                        {{ daysTranslate(item.valid_until, 'Seterusnya') }}
-                                    </td>
-                                    <td class="text-center fw-semibold small text-muted d-none d-xl-table-cell">
-                                        {{ item.price_type == 'discount' ? 'Diskon' : 'Normal' }}
-                                    </td>
-
-                                    <td class="text-center d-none d-xl-table-cell">
-                                        <span class="badge rounded-pill px-3 py-2 fw-bold" :class="{
-                                            'badge-soft-success': item.status === 'published',
-                                            'badge-soft-secondary': item.status === 'draft'
-                                        }">
-                                            <i class="me-1"
-                                                :class="item.status === 'published' ? 'fas fa-globe' : 'fas fa-lock'"></i>
-                                            {{ item.status === 'published' ? 'Publish' : 'Draft' }}
-                                        </span>
-                                    </td>
-
 
                                     <td class="text-center" v-if="hasRole(['admin', 'developer'])">
                                         <dropdown-action :item="item" :actions="[
@@ -685,7 +577,7 @@ const toolbarActions = computed(() => [
                                                 action: 'delete',
                                                 permission: 'product.delete'
                                             }
-                                        ]" @edit="navigateTo('product.edit', item.product_price_id)"
+                                        ]" @edit="navigateTo('product.edit', item.product_id)"
                                             @delete="deleted(item)" />
                                     </td>
 
@@ -708,9 +600,6 @@ const toolbarActions = computed(() => [
                                         order_by: filters.order_by,
                                         keyword: filters.keyword,
                                         category: filters.category,
-                                        branch: filters.branch,
-                                        status: filters.status,
-                                        discount_only: filters.discount_only,
                                         condition: filters.condition,
                                     }" />
                             </div>
@@ -719,9 +608,10 @@ const toolbarActions = computed(() => [
                     </div>
                 </div>
             </div>
-            <ModalExport :product="product" :show="modals.export" @update:show="modals.export = $event"
-                :branches="branch" :categories="category" />
-
+            <!-- <ModalExport :product="product" :show="modals.export" @update:show="modals.export = $event"
+                :branches="branch" :categories="category" /> -->
+            <ModalProdukDetail :product="selectedData" :show="modals.detailInfo"
+                @update:show="modals.detailInfo = $event" />
         </template>
     </app-layout>
 </template>

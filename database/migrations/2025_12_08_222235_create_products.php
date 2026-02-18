@@ -22,8 +22,8 @@ return new class extends Migration
             $table->enum('source', ['manual', 'scrape'])->default('manual')->index();
 
             // nama produk, penting untuk pencarian
-            $table->string('name', 100)->unique()->index();
-            $table->string('slug', 100)->nullable()->unique();
+            $table->string('name', 100)->index();
+            $table->string('slug', 100)->nullable()->index();
             $table->string('category', 100)->index();
 
             $table->enum('item_condition', ['new', 'used', 'refurbished', 'damaged', 'discontinued'])->default('new')->index();

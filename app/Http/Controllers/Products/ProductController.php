@@ -38,10 +38,6 @@ class ProductController extends Controller
             'page' => 'nullable|integer|min:1',
             'order_by' => 'nullable|in:asc,desc',
             'category' => 'nullable|string|max:100',
-
-            'status' => 'nullable|in:draft,published|string',
-            'branch' => 'nullable|string|max:100',
-            'discount_only' => 'nullable|in:normal,discount|string',
             'condition' => 'nullable|in:new,used,refurbished,damaged,discontinued|string',
         ]);
 
@@ -51,10 +47,6 @@ class ProductController extends Controller
             'page',
             'order_by',
             'category',
-
-            'status',
-            'branch',
-            'discount_only',
             'condition',
         ]);
         $products = $this->productRepository->getCached(auth()->id(), $filters);
@@ -90,6 +82,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         $this->authorize('create', ProductModel::class);
         $this->validationText($request->all());
         $imageCover = null;
@@ -98,11 +91,10 @@ class ProductController extends Controller
             $imageCover = $request->file('image')->store('product/cover', 'public');
         }
 
-
         $product = ProductModel::create([
             'created_by'     => auth()->id(),
             'source'         => 'manual',
-            'name'           => $request['name'],
+            'name'           => ucwords($request['name']),
             'item_condition' => $request['item_condition'],
             'link'           => $request['link'],
             'slug'           => Str::slug($request['name']),
@@ -110,18 +102,19 @@ class ProductController extends Controller
             'image_path'        => $imageCover,
         ]);
 
-        foreach ($request['branch'] as $branch) {
-            $isDiscount = $request->filled('discount_price')
-                && $request->discount_price > 0;
+        foreach ($request['branch_prices'] as $branch_prices) {
+            $isDiscount = $branch_prices['discount_price'] !== null
+                && $branch_prices['discount_price'] > 0;
+
             $product->prices()->create([
                 'created_by'     => auth()->id(),
                 'product_id' => $product->product_id,
-                'branch_id' => $branch,
-                'status'            => $request['status'],
-                'base_price' => $request['base_price'],
-                'discount_price' => $request['discount_price'],
-                'valid_from' => $request['valid_from'],
-                'valid_until' => $request['valid_until'],
+                'branch_id' => $branch_prices['branch_id'],
+                'status'            => $branch_prices['status'],
+                'base_price' => $branch_prices['base_price'],
+                'discount_price' => $branch_prices['discount_price'] ?? 0,
+                'valid_from' => $branch_prices['valid_from'] ?? Carbon::now()->toDateString(),
+                'valid_until' => $branch_prices['valid_until'],
                 'price_type' => $isDiscount ? 'discount' : 'normal',
             ]);
         }
@@ -145,45 +138,53 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ProductPriceModel $productPriceModel, string $id)
+    public function edit(ProductModel $productModel, string $id)
     {
         $this->authorize('edit', ProductModel::class);
 
-        $product = $productPriceModel::with(['creator', 'product', 'branch'])->findOrFail($id);
-        $branch = BranchesModel::select('branches_id', 'name')->get();
+        $product = $productModel::with(['creator', 'prices.branch'])->find($id);
 
+
+        // $branchOfficial = BranchesModel::where('status_official', $product->branch->status_official)->first();
+
+        // $currentOfficial = $branchOfficial && $branchOfficial->status_official === 'official';
+
+        $branches = BranchesModel::select('branches_id', 'name', 'status_official')
+            ->get();
 
         $this->productRepository->clearCache(auth()->id());
         return Inertia::render('Product/Form/pageForm', [
             'product' => $product,
-            'branch' => $branch,
+            'branch' => $branches,
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ProductPriceModel $productPriceModel, string $id)
+    public function update(Request $request, ProductModel $productModel, string $id)
     {
         $this->authorize('edit', ProductModel::class);
-        $this->validationText($request->all(), $productPriceModel::findOrFail($id)->product_id);
-        $product = $productPriceModel::findOrFail($id);
+        $this->validationText($request->all(), $id);
+
+        $product = $productModel::with(['creator', 'prices.branch'])
+            ->findOrFail($id);
 
         $imageCover = null;
         if ($request->hasFile('image')) {
-            if ($product->product->image_path && Storage::disk('public')->exists($product->product->image_path)) {
-                Storage::disk('public')->delete($product->product->image_path);
+            if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
+                Storage::disk('public')->delete($product->image_path);
             }
             $imageCover = $request->file('image')
                 ->store('product/cover', 'public');
         } else {
-            $imageCover = $product->product->image_path;
+            $imageCover = $product->image_path;
         }
 
-        $product->product()->update([
+        $product->update([
             'created_by'     => auth()->id(),
             'source'         => 'manual',
-            'name'           => $request['name'],
+            'name'           => ucwords($request['name']),
             'item_condition' => $request['item_condition'],
             'link'           => $request['link'],
             'slug'           => Str::slug($request['name']),
@@ -191,67 +192,75 @@ class ProductController extends Controller
             'image_path'     => $imageCover,
         ]);
 
-        $branches = $request['branch'];
-        $isDiscount = $request->filled('discount_price')
-            && $request->discount_price > 0;
-        $priceData = [
-            'created_by'     => auth()->id(),
-            'status'         => $request['status'],
-            'base_price'     => $request['base_price'],
-            'discount_price' => $request['discount_price'] ?? 0,
-            'valid_from'     => $request['valid_from'],
-            'valid_until'    => $request['valid_until'],
-            'price_type'     => $isDiscount ? 'discount' : 'normal',
-        ];
-        if (count($branches) > 0) {
-            // Ambil cabang pertama, dan hapus dia dari array $branches
-            $firstBranchId = array_shift($branches);
+        // Kumpulkan semua branch_id yang dikirim dari Vue
+        // Kita butuh array ID: ['uuid-jakarta', 'uuid-bandung']
+        $requestBranchIds = collect($request['branch_prices'])->pluck('branch_id')->toArray();
+        // B. HAPUS harga di database yang TIDAK ADA di list request
+        // "Tolong hapus harga milik produk ini, KECUALI cabang yang ada di list $requestBranchIds"
+        $product->prices()
+            ->whereNotIn('branch_id', $requestBranchIds)
+            ->delete();
 
-            // Update baris ini ($id) menjadi milik cabang pertama
-            $product->update(array_merge($priceData, [
-                'branch_id' => $firstBranchId
-            ]));
-        }
-        foreach ($branches as $branch) {
-            $productPriceModel::updateOrCreate(
+        foreach ($request['branch_prices'] as $branch_prices) {
+
+            $isDiscount = isset($branch_prices['discount_price'])
+                && $branch_prices['discount_price'] !== null
+                && $branch_prices['discount_price'] > 0;
+
+            $product->prices()->updateOrCreate(
                 [
-                    'product_id' => $product->product_id,
-                    'branch_id'  => $branch
+                    'branch_id' => $branch_prices['branch_id'],
+                    'product_id' => $product->product_id
                 ],
-                $priceData // Data harga sama dengan yang pertama
+                [
+                    'created_by'     => auth()->id(),
+                    'status'         => $branch_prices['status'],
+                    'base_price'     => $branch_prices['base_price'],
+                    'discount_price' => $branch_prices['discount_price'] ?? 0,
+                    'valid_from'     => $branch_prices['valid_from'] ?? Carbon::now()->toDateString(),
+                    'valid_until'    => $branch_prices['valid_until'],
+                    'price_type'     => $isDiscount ? 'discount' : 'normal',
+                ]
             );
         }
-
         $this->productRepository->clearCache(auth()->id());
-
-        return redirect()->route('product')->with('message', 'Produk ' . $product->product->name . ' Berhasil Diperbarui');
+        return redirect()->route('product')->with('message', 'Produk ' . ucwords($product->name) . ' berhasil diperbarui.');
     }
 
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ProductPriceModel $productPriceModel, string $id)
+    public function destroy(ProductModel $productModel, string $id)
     {
         $this->authorize('delete', ProductModel::class);
-        $productPrice = $productPriceModel::with('product')->findOrFail($id);
-        $productMaster = $productPrice->product;
-        $totalProduct = $productPriceModel::where('product_id', $productPrice->product_id)->count();
+        $product = $productModel::with(['prices.branch', 'creator'])->findOrFail($id);
 
-        if ($totalProduct > 1) {
-            $productPrice->delete();
-            $message = 'Salah satu varian harga/cabang berhasil dihapus. Produk utama masih tersimpan.';
-        } else {
-            // HAPUS FOTO UTAMA (COVER)
-            if ($productMaster->image_path) {
-                // Cek file ada atau tidak untuk menghindari error, lalu hapus
-                if (Storage::disk('public')->exists($productMaster->image_path)) {
-                    Storage::disk('public')->delete($productMaster->image_path);
-                }
+        // $totalProduct = $productModel::where('product_id', $product->product_id)->count();
+        if ($product->image_path) {
+            // Cek file ada atau tidak untuk menghindari error, lalu hapus
+            if (Storage::disk('public')->exists($product->image_path)) {
+                Storage::disk('public')->delete($product->image_path);
             }
-            $productMaster->delete();
-            $message = 'Produk ' . $productMaster->name . ' telah dihapus permanen beserta seluruh datanya.';
         }
+
+        $product->delete();
+        $message = 'Produk ' . $product->name . ' telah dihapus beserta seluruh datanya.';
+        // dd($totalProduct);
+        // if ($totalProduct > 1) {
+        //     $product->delete();
+        //     $message = 'Salah satu produk ' . $productMaster->name . ' dari cabang ' . $product->branch->name . ' berhasil dihapus. Produk utama masih tersimpan.';
+        // } else {
+        //     // HAPUS FOTO UTAMA (COVER)
+        //     if ($productMaster->image_path) {
+        //         // Cek file ada atau tidak untuk menghindari error, lalu hapus
+        //         if (Storage::disk('public')->exists($productMaster->image_path)) {
+        //             Storage::disk('public')->delete($productMaster->image_path);
+        //         }
+        //     }
+        //     $productMaster->delete();
+        //     $message = 'Produk ' . $productMaster->name . ' telah dihapus permanen beserta seluruh datanya.';
+        // }
         $this->productRepository->clearCache(auth()->id());
         return redirect()->route('product')->with('message', $message);
     }

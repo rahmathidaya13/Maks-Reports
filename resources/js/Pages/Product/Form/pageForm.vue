@@ -14,45 +14,35 @@ const props = defineProps({
     },
 });
 const form = useForm({
-    name: props.product.product?.name ?? "",
-    item_condition: props.product?.product?.item_condition ?? null,
-    link: props.product?.product?.link ?? "",
-    category: formatCategory(props.product?.product?.category) ?? "",
-    // status: props.product?.status ?? 'published',
+    name: props.product?.name ?? "",
+    item_condition: props.product?.item_condition ?? null,
+    link: props.product?.link ?? "",
+    category: formatCategory(props.product?.category) ?? "",
     image: null,
-
-    // base_price: props.product?.base_price ?? 0,
-    // discount_price: props.product?.discount_price ?? 0,
-    // branch: props.product?.branch_id ? [props.product.branch_id] : [],
-    // valid_from: props.product?.valid_from ?? "",
-    // valid_until: props.product?.valid_until ?? "",
 
     branch_prices: [],
 });
 
-// Logika: Jika ada ID product, berarti ini mode EDIT. Jika tidak, mode CREATE.
 const isEditMode = computed(() => {
-    return !!props.product.product_price_id;
+    return !!props.product?.product_id
 });
 const previewImage = ref(null);
 
-// Filter cabang yang sudah dipilih berdasarkan branch_id dari produk (jika ada)
-// const branchSelected = computed(() => {
-//     const currentBranchId = props.product?.branch_id;
-//     if (currentBranchId) {
-//         return props.branch.filter(b => b.branches_id === currentBranchId);
-//     }
-//     return props.branch;
-// });
-
+const branchOfficial = computed(() => {
+    const official = props.branch?.find(b => b.status_official === 'official');
+    return official ? official.branches_id : null;
+})
 const toggleBranch = (branchId) => {
+    if (branchOfficial.value && branchId === branchOfficial.value) {
+        return;
+    }
     const index = form.branch_prices.findIndex(p => p.branch_id === branchId);
     if (index === -1) {
         form.branch_prices.push({
             branch_id: branchId,
             base_price: 0,
             discount_price: 0,
-            valid_from: "",
+            valid_from: moment().format('YYYY-MM-DD'),
             valid_until: "",
             status: "",
         });
@@ -60,17 +50,16 @@ const toggleBranch = (branchId) => {
         form.branch_prices.splice(index, 1);
     }
 };
-const getBranchName = (id) => props.branch.find(b => b.branches_id === id)?.name || 'Cabang';
-
+const getBranchName = (id) => props.branch.find(b => b.branches_id === id)?.name || 'Pusat';
 const isSubmit = () => {
     const method = isEditMode.value ? "put" : "";
     const url = isEditMode.value
-        ? route("product.update", props.product.product_price_id)
+        ? route("product.update", props.product?.product_id)
         : route("product.store");
 
     form.post(url, {
         forceFormData: true,
-        _method: method,
+        method: method,
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
@@ -81,7 +70,7 @@ const isSubmit = () => {
 const pageMeta = computed(() => {
     if (isEditMode.value) {
         return {
-            title: "Ubah Produk " + props.product?.product?.name,
+            title: "Ubah Produk " + props.product?.name,
             icon: "fas fa-edit",
             url: route("product"),
         };
@@ -130,8 +119,8 @@ const handleFileUpload = (event) => {
 
 // Hitung Diskon Otomatis
 const discountPercentage = computed(() => {
-    const base = Number(form.base_price);
-    const disc = Number(form.discount_price);
+    const base = Number(form.branch_prices[0].base_price);
+    const disc = Number(form.branch_prices[0].discount_price);
 
     if (base > 0 && disc > 0 && disc < base) {
         const saving = base - disc;
@@ -155,11 +144,26 @@ const resolveImage = (path) => {
 onMounted(() => {
     // A. SET PREVIEW GAMBAR UTAMA (COVER)
 
-    if (props.product?.product?.image_path) {
-        previewImage.value = resolveImage(props.product?.product?.image_path);
-    } else if (props.product?.product?.image_link) {
-        previewImage.value = resolveImage(props.product?.product?.image_link);
+    if (props.product?.image_path) {
+        previewImage.value = resolveImage(props.product?.image_path);
+    } else if (props.product?.image_link) {
+        previewImage.value = resolveImage(props.product?.image_link);
     }
+
+    if (isEditMode.value && props.product?.prices?.length > 0) {
+        // Mapping Array Prices ke Form
+        form.branch_prices = props.product.prices.map((price) => {
+            return {
+                branch_id: price.branch_id,
+                base_price: Number(price.base_price),
+                discount_price: Number(price.discount_price),
+                valid_from: price.valid_from,
+                valid_until: price.valid_until,
+                status: price.status
+            }
+        })
+    }
+
 });
 const inputProduct = ref(null);
 onMounted(() => {
@@ -207,9 +211,11 @@ function formatCategory(cat = '') {
                         <div class="card-body position-relative">
                             <loading-overlay :show="form.processing" text="Sedang memproses..." />
                             <form-wrapper @submit="isSubmit">
-                                <div class="row g-4">
+                                <div class="row g-4 p-3">
                                     <div class="col-lg-12 col-12 col-xl-4">
-
+                                        <h6 class="fw-bold text-uppercase text-primary small ls-1 mb-2 px-2">
+                                            <i class="fas fa-camera me-2"></i>Visual Produk
+                                        </h6>
                                         <div
                                             class="ratio ratio-1x1 bg-light rounded-4 mb-3 border border-2 position-relative overflow-hidden group-hover-zoom">
                                             <img v-if="previewImage" :src="previewImage"
@@ -225,8 +231,7 @@ function formatCategory(cat = '') {
                                                 class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-10 opacity-0 hover-opacity-100 transition-all pointer-events-none">
                                             </div>
                                         </div>
-
-                                        <div class="text-center mb-3 border-bottom pb-3">
+                                        <div class="text-center mb-3">
                                             <label
                                                 class="btn btn-outline-primary border-dashed w-100 mb-2 cursor-pointer position-relative py-3 rounded-3 hover-bg-light">
                                                 <div class="d-flex flex-column align-items-center">
@@ -253,19 +258,26 @@ function formatCategory(cat = '') {
                                             <input-error :message="form.errors.image" class="text-start" />
                                         </div>
 
+
+
+                                    </div>
+                                    <div class="col-lg-12 col-12 col-xl-8">
+                                        <h6 class="fw-bold text-uppercase text-primary small ls-1 mb-2">
+                                            <i class="fas fa-info-circle me-2"></i>Informasi Dasar
+                                        </h6>
                                         <div class="p-3 border rounded-3 overflow-hidden mb-3">
                                             <div class="mb-2">
                                                 <input-label for="name" class="form-label-custom" value="Nama Produk" />
                                                 <text-input ref="inputProduct" placeholder="Nama produk" name="name"
                                                     v-model="form.name"
-                                                    input-class="border-0 border-bottom input-height-1 bg-light text-center fw-bold" />
+                                                    input-class="border-0 border-bottom input-height-1 fw-bold rounded-0 p-0 pe-5" />
                                                 <input-error :message="form.errors.name" />
                                             </div>
                                             <div class="mb-2">
                                                 <input-label for="category" class="form-label-custom"
                                                     value="Kategori" />
                                                 <text-input placeholder="Contoh: Mesin, Sparepart dll"
-                                                    input-class="border-0 border-bottom input-height-1 bg-light"
+                                                    input-class="border-0 border-bottom input-height-1 fw-bold rounded-0 p-0 pe-5"
                                                     name="category" v-model="form.category" />
                                                 <input-error :message="form.errors.category" />
                                             </div>
@@ -282,7 +294,7 @@ function formatCategory(cat = '') {
                                                     { label: 'Rusak', value: 'damaged' },
                                                     { label: 'Dihentikan', value: 'discontinued' }
                                                 ]" name="item_condition" v-model="form.item_condition"
-                                                    select-class="border-bottom input-height-1 border-0 bg-light" />
+                                                    select-class="border-bottom input-height-1 border-0 rounded-0 p-2" />
                                                 <input-error :message="form.errors.item_condition" />
                                             </div>
 
@@ -295,173 +307,205 @@ function formatCategory(cat = '') {
                                                         class="badge bg-light text-secondary border fw-normal mb-2">Opsional</span>
                                                 </div>
                                                 <div class="position-relative">
-                                                    <i class="fas fa-link input-icon-left"></i>
                                                     <text-input placeholder="https://shopee/..." name="link"
                                                         v-model="form.link"
-                                                        input-class="input-fixed-height border-0 border-bottom input-height-1 bg-light" />
+                                                        input-class="border-0 border-bottom input-height-1 rounded-0 p-0 pe-5" />
                                                 </div>
                                                 <input-error :message="form.errors.link" />
                                             </div>
                                         </div>
 
                                         <div class="p-3 border rounded-3 overflow-hidden mb-3">
-                                            <h6 class="fw-bold mb-3"><i class="fas fa-store me-2"></i>Pilih Cabang
-                                            </h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="fw-bold mb-3"><i class="fas fa-store me-2"></i>Pilih Cabang
+                                                </h6>
+                                                <div class="badge bg-primary">Cabang terpilih: {{
+                                                    form.branch_prices.length }}</div>
+                                            </div>
                                             <div class="d-flex flex-wrap gap-2">
-                                                <button v-for="b in branch" :key="b.branches_id" type="button"
+                                                <button :disabled="b.branches_id === branchOfficial" v-for="b in branch"
+                                                    :key="b.branches_id" type="button"
                                                     @click="toggleBranch(b.branches_id)"
-                                                    class="btn btn-sm rounded-3 transition-all text-capitalize"
+                                                    class="btn btn-sm btn-height-1 px-4 rounded-2 transition-all text-capitalize"
                                                     :class="form.branch_prices.some(p => p.branch_id === b.branches_id) ? 'btn-primary' : 'btn-outline-light text-dark border'">
+                                                    <i v-if="b.branches_id === branchOfficial"
+                                                        class="fas fa-lock me-1 text-warning"></i>
                                                     {{ b.name }}
                                                 </button>
                                             </div>
                                             <input-error :message="form.errors.branch_prices" />
                                         </div>
 
-                                    </div>
-                                    <div class="col-lg-12 col-12 col-xl-8">
+                                        <div class="branch-prices-section border-0 border-top pt-3">
 
-                                        <div v-if="!form.branch_prices.length"
-                                            class="empty-state text-center py-5 card border-0 rounded-4 shadow-sm bg-white">
-                                            <div class="py-5">
-                                                <i class="fas fa-store-slash fa-4x text-light mb-3"></i>
-                                                <h5 class="text-muted">Belum ada yang cabang dipilih</h5>
-                                                <p class="small text-muted">Klik nama cabang di panel kiri untuk
-                                                    mengatur harga dan periode</p>
-                                            </div>
-                                        </div>
-
-                                        <div v-for="(priceItem, index) in form.branch_prices" :key="priceItem.branch_id"
-                                            class="card border-0 shadow-sm rounded-4 mb-4 pricing-card">
-                                            <div class="card-body p-4">
-                                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="icon-branch me-3">
-                                                            <i class="fas fa-map-marked-alt text-primary"></i>
-                                                        </div>
-                                                        <div>
-                                                            <h5 class="fw-bold mb-0 text-capitalize">{{
-                                                                getBranchName(priceItem.branch_id) }}</h5>
-                                                        </div>
-                                                    </div>
-                                                    <button type="button" @click="toggleBranch(priceItem.branch_id)"
-                                                        class="btn btn-link text-danger text-decoration-none">
-                                                        <i class="fas fa-trash-alt me-1"></i> Hapus
-                                                    </button>
+                                            <div v-if="!form.branch_prices.length"
+                                                class="empty-state text-center py-5 card  rounded-4 shadow-sm bg-white">
+                                                <div class="py-5">
+                                                    <i class="fas fa-store-slash fa-4x text-light mb-3"></i>
+                                                    <h5 class="text-muted">Belum ada yang cabang dipilih</h5>
                                                 </div>
+                                            </div>
 
-                                                <div class="row g-4">
-                                                    <div class="col-md-6">
-                                                        <div
-                                                            class="input-group-custom p-3 rounded-4 bg-light border border-2 border-transparent">
-                                                            <label
-                                                                class="text-muted small fw-bold text-uppercase d-block mb-1">Harga
-                                                                Normal</label>
-                                                            <div class="d-flex align-items-center">
-                                                                <currency-input
-                                                                    input-class="bg-transparent border-0 fs-5 fw-bold text-dark shadow-none w-100"
-                                                                    :decimals="0" v-model="priceItem.base_price"
-                                                                    name="base_price" placeholder="0" />
+                                            <div v-for="(priceItem, index) in form.branch_prices"
+                                                :key="priceItem.branch_id"
+                                                class="card shadow-sm rounded-4 mb-4 pricing-card ">
+                                                <div class="card-body p-4">
+                                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="icon-branch me-3">
+                                                                <i class="fas fa-map-marked-alt text-primary"></i>
+                                                            </div>
+                                                            <div>
+                                                                <h5 class="fw-bold mb-0 text-capitalize">{{
+                                                                    getBranchName(priceItem.branch_id) + " - " +
+                                                                    `(${form.name})` }}</h5>
                                                             </div>
                                                         </div>
-                                                        <input-error
-                                                            :message="form.errors[`prices.${index}.base_price`]" />
+                                                        <button v-if="branchOfficial !== priceItem.branch_id"
+                                                            type="button" @click="toggleBranch(priceItem.branch_id)"
+                                                            class="btn btn-link text-danger text-decoration-none">
+                                                            <i class="fas fa-trash-alt me-1"></i> Hapus
+                                                        </button>
                                                     </div>
 
-                                                    <div class="col-md-6">
-                                                        <div
-                                                            class="input-group-custom p-3 rounded-4 bg-rose-soft border border-2 border-transparent">
-                                                            <label
-                                                                class="text-danger small fw-bold text-uppercase d-block mb-1">Harga
-                                                                Promo (Diskon)</label>
-                                                            <div class="d-flex align-items-center">
-                                                                <currency-input
-                                                                    input-class="bg-transparent border-0 fs-5 fw-bold text-danger shadow-none w-100"
-                                                                    :decimals="0" v-model="priceItem.discount_price"
-                                                                    name="discount_price" placeholder="0" />
+                                                    <div class="row g-4">
+                                                        <div class="col-md-6">
+                                                            <div
+                                                                class="input-group-custom p-3 rounded-4 bg-light border border-2 border-transparent">
+                                                                <label :for="`branch_prices.${index}.base_price`"
+                                                                    class="text-muted small fw-bold text-uppercase d-block mb-1">Harga
+                                                                    Normal</label>
+                                                                <div class="d-flex align-items-center">
+                                                                    <currency-input
+                                                                        input-class="bg-transparent border-0 fs-5 fw-bold text-dark shadow-none w-100"
+                                                                        :decimals="0" v-model="priceItem.base_price"
+                                                                        :name="`branch_prices.${index}.base_price`"
+                                                                        placeholder="0" />
+                                                                </div>
                                                             </div>
                                                             <input-error
-                                                                :message="form.errors[`prices.${index}.discount_price`]" />
+                                                                :message="form.errors[`branch_prices.${index}.base_price`]" />
                                                         </div>
-                                                    </div>
 
-                                                    <div class="col-md-6">
-                                                        <input-label
-                                                            class="mb-2 fw-bold text-secondary text-xs text-uppercase"
-                                                            value="Tanggal Berlaku" />
-                                                        <div class="position-relative">
-                                                            <i class="far fa-calendar-alt input-icon-left"></i>
-                                                            <text-input type="date" v-model="priceItem.valid_from"
-                                                                name="valid_from" :input-class="['input-fixed-height',
-                                                                    priceItem.valid_from || form.errors[`prices.${index}.valid_from`] ? 'pe-5' : 'pe-3'
-                                                                ]" />
-                                                        </div>
-                                                        <input-error
-                                                            :message="form.errors[`prices.${index}.valid_from`]" />
-                                                    </div>
+                                                        <div class="col-md-6">
+                                                            <div
+                                                                class="input-group-custom p-3 rounded-4 bg-rose-soft border border-2 border-transparent">
 
-                                                    <div class="col-md-6">
-                                                        <div class="align-items-center d-flex justify-content-between">
-                                                            <input-label class="form-label-custom"
-                                                                value="Tanggal Berakhir" />
-                                                            <span
-                                                                class="badge bg-light text-muted border fw-normal mb-2"
-                                                                style="font-size: 0.7rem;">OPSIONAL</span>
-                                                        </div>
-                                                        <div class="position-relative">
-                                                            <i class="far fa-calendar-alt input-icon-left"></i>
-                                                            <text-input type="date" v-model="priceItem.valid_until"
-                                                                name="valid_until" :input-class="['input-fixed-height',
-                                                                    priceItem.valid_until || form.errors[`prices.${index}.valid_until`] ? 'pe-5' : 'pe-3'
-                                                                ]" />
-                                                        </div>
-                                                        <input-error
-                                                            :message="form.errors[`prices.${index}.valid_until`]" />
-                                                    </div>
 
-                                                    <div class="col-12">
-                                                        <input-label for="status" class="form-label-custom"
-                                                            value="Status Publikasi" />
-                                                        <div class="d-flex gap-3 mt-2">
-
-                                                            <div class="p-2 rounded-2 px-4 border"
-                                                                :class="priceItem.status === 'draft' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
-                                                                <radio-box v-model:checked="priceItem.status"
-                                                                    value="draft" name="status">
-                                                                    <i class="fas fa-lock me-1 ms-2"></i>
-                                                                    Simpan sebagai Draft
-                                                                </radio-box>
+                                                                <div
+                                                                    class="d-flex align-items-center justify-content-between">
+                                                                    <label
+                                                                        :for="`branch_prices.${index}.discount_price`"
+                                                                        class="text-danger small fw-bold text-uppercase d-block mb-1">Harga
+                                                                        Promo (Diskon)</label>
+                                                                    <transition name="fade">
+                                                                        <span v-if="discountPercentage > 0"
+                                                                            class="badge bg-danger rounded-pill shadow-sm animate-pulse px-3 border-0">
+                                                                            <i class="fas fa-fire me-1"></i> Diskon {{
+                                                                                discountPercentage
+                                                                            }}%
+                                                                        </span>
+                                                                    </transition>
+                                                                </div>
+                                                                <div class="d-flex align-items-center">
+                                                                    <currency-input
+                                                                        input-class="bg-transparent border-0 fs-5 fw-bold text-danger shadow-none w-100"
+                                                                        :decimals="0" v-model="priceItem.discount_price"
+                                                                        :name="`branch_prices.${index}.discount_price`"
+                                                                        placeholder="0" />
+                                                                </div>
                                                             </div>
-
-                                                            <div class="p-2 rounded-2 px-4 border "
-                                                                :class="priceItem.status === 'published' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
-                                                                <radio-box v-model:checked="priceItem.status"
-                                                                    value="published" name="status">
-                                                                    <i class="fas fa-globe me-1 ms-2"></i>
-                                                                    Terbitkan Sekarang
-                                                                </radio-box>
-                                                            </div>
+                                                            <input-error
+                                                                :message="form.errors[`branch_prices.${index}.discount_price`]" />
                                                         </div>
-                                                        <input-error :message="form.errors[`prices.${index}.status`]" />
-                                                    </div>
 
+                                                        <div class="col-md-6">
+                                                            <input-label :for="`branch_prices.${index}.valid_from`"
+                                                                class="mb-2 fw-bold text-secondary text-xs text-uppercase"
+                                                                value="Tanggal Berlaku" />
+                                                            <div class="position-relative">
+                                                                <i class="far fa-calendar-alt input-icon-left"></i>
+                                                                <text-input type="date" v-model="priceItem.valid_from"
+                                                                    :name="`branch_prices.${index}.valid_from`"
+                                                                    :input-class="['input-fixed-height',
+                                                                        priceItem.valid_from || form.errors[`branch_prices.${index}.valid_from`] ? 'pe-5' : 'pe-3'
+                                                                    ]" />
+                                                            </div>
+                                                            <input-error
+                                                                :message="form.errors[`branch_prices.${index}.valid_from`]" />
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div
+                                                                class="align-items-center d-flex justify-content-between">
+                                                                <input-label :for="`branch_prices.${index}.valid_until`"
+                                                                    class="form-label-custom"
+                                                                    value="Tanggal Berakhir" />
+                                                                <span
+                                                                    class="badge bg-light text-muted border fw-normal mb-2"
+                                                                    style="font-size: 0.7rem;">OPSIONAL</span>
+                                                            </div>
+                                                            <div class="position-relative">
+                                                                <i class="far fa-calendar-alt input-icon-left"></i>
+                                                                <text-input type="date" v-model="priceItem.valid_until"
+                                                                    :name="`branch_prices.${index}.valid_until`"
+                                                                    :input-class="['input-fixed-height',
+                                                                        priceItem.valid_until || form.errors[`branch_prices.${index}.valid_until`] ? 'pe-5' : 'pe-3'
+                                                                    ]" />
+                                                            </div>
+                                                            <input-error
+                                                                :message="form.errors[`branch_prices.${index}.valid_until`]" />
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <input-label :for="`branch_prices.${index}.status`"
+                                                                class="form-label-custom" value="Status Publikasi" />
+                                                            <div class="d-flex gap-3 mt-2">
+
+                                                                <div class="p-2 rounded-2 px-4 border"
+                                                                    :class="priceItem.status === 'draft' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
+                                                                    <radio-box v-model:checked="priceItem.status"
+                                                                        value="draft"
+                                                                        :name="`branch_prices.${index}.status`">
+                                                                        <i class="fas fa-lock me-1 ms-2"></i>
+                                                                        Simpan sebagai Draft
+                                                                    </radio-box>
+                                                                </div>
+
+                                                                <div class="p-2 rounded-2 px-4 border "
+                                                                    :class="priceItem.status === 'published' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
+                                                                    <radio-box v-model:checked="priceItem.status"
+                                                                        value="published"
+                                                                        :name="`branch_prices.${index}.status`">
+                                                                        <i class="fas fa-globe me-1 ms-2"></i>
+                                                                        Terbitkan Sekarang
+                                                                    </radio-box>
+                                                                </div>
+                                                            </div>
+                                                            <input-error
+                                                                :message="form.errors[`branch_prices.${index}.status`]" />
+                                                        </div>
+
+                                                    </div>
                                                 </div>
                                             </div>
+
                                         </div>
-
                                     </div>
 
-                                    <div class="d-grid d-xl-block mt-4">
-                                        <base-button waiting="Memproses...." :loading="form.processing" :button-class="['btn shadow-lg fw-bold px-5 text-nowrap',
-                                            isEditMode ? 'btn-success' : 'btn-primary']" type="submit"
-                                            :icon="isEditMode ? 'fas fa-check me-2' : 'fas fa-plus-circle me-2'"
-                                            :label="isEditMode ? 'Simpan perubahan' : 'Tambah Produk'" />
-                                    </div>
                                 </div>
                             </form-wrapper>
-
-
-
+                            <div class="d-grid d-xl-flex justify-content-xl-end gap-2">
+                                <Link @click.prevent="goBack" :href="route('product')"
+                                    class="btn btn-light  text-decoration-none fw-bold text-muted order-last order-xl-0">
+                                    Batal & Kembali
+                                </Link>
+                                <base-button @click.prevent="isSubmit" waiting="Memproses...."
+                                    :loading="form.processing" :button-class="['btn shadow-lg fw-bold px-5 text-nowrap',
+                                        isEditMode ? 'btn-success' : 'btn-primary']" type="submit"
+                                    :icon="isEditMode ? 'fas fa-check-circle me-2' : 'fas fa-plus-circle me-2'"
+                                    :label="isEditMode ? 'Simpan perubahan' : 'Tambah Produk'" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -602,11 +646,36 @@ function formatCategory(cat = '') {
 }
 
 /* Pointer Events Helper */
+.branch-prices-section {
+    pointer-events: auto;
+    max-height: 550px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+}
+
 .pointer-events-none {
     pointer-events: none;
 }
 
 .cursor-pointer {
     cursor: pointer;
+}
+
+/* Card Styling */
+.pricing-card {
+    border-left: 5px solid #0d6efd !important;
+    transition: 0.3s;
+}
+
+.icon-branch {
+    width: 48px;
+    height: 48px;
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
 }
 </style>

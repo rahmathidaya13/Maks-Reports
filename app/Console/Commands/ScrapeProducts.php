@@ -6,6 +6,7 @@ use Goutte\Client;
 use Illuminate\Support\Str;
 use App\Models\ProductModel;
 use App\Jobs\ScrapeProductJob;
+use App\Models\BranchesModel;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpClient\HttpClient;
@@ -17,7 +18,7 @@ class ScrapeProducts extends Command
      *
      * @var string
      */
-    protected $signature = 'scrape:products';
+    protected $signature = 'scrape:product';
 
     /**
      * The console command description.
@@ -149,15 +150,19 @@ class ScrapeProducts extends Command
                                 'source' => 'scrape',
                                 'link' => $link,
                                 'name' => $nama,
+                                'item_condition' => 'new',
+                                'slug' => Str::slug($nama),
                                 'image_link' => $img,
                                 'category' => $categoryFormatted,
                             ]);
 
                             $product->prices()->create([
                                 'product_id' => $product->product_id,
+                                'branch_id' => BranchesModel::where('name', 'Jakarta (Cakung)')->first()->branches_id,
                                 'base_price' => $priceOriginal ?? 0,
                                 'discount_price' => $priceDiscount ?? 0,
                                 'price_type' => isset($priceDiscount) && $priceDiscount > 0 ? 'discount' : 'normal',
+
                             ]);
 
 

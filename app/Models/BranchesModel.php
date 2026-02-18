@@ -21,6 +21,7 @@ class BranchesModel extends Model
         'name',
         'address',
         'status',
+        'status_official',
     ];
     protected $dates    = ["deleted_at"];
     protected $hidden = [

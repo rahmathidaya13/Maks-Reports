@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->string('name'); // nama cabang, contoh: Pekanbaru
             $table->text('address');
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('status_official', ['official', 'unofficial'])->default('unofficial');
             $table->index(['branches_id', 'created_by', 'name']);
             $table->softDeletes();
             $table->timestamps();

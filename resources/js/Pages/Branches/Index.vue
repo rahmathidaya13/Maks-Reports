@@ -55,9 +55,6 @@ const header = [
     {
         label: "Nama Cabang",
         key: "name",
-        attrs: {
-            class: "text-center"
-        }
     },
     {
         label: "No Telepon",
@@ -423,7 +420,7 @@ const toolbarActions = computed(() => [
                                     props.branch?.to ?? 0 }}</strong> dari <strong>{{ props.branch?.total ?? 0
                                     }}</strong>
                             </span>
-                            <pagination size="pagination-sm" :links="props.branch?.links" routeName="job_title"
+                            <pagination size="pagination-sm" :links="props.branch?.links" routeName="branch"
                                 :additionalQuery="{
                                     order_by: filters.order_by,
                                     limit: filters.limit,
