@@ -62,8 +62,12 @@ class BranchesController extends Controller
         $branch->status_official = $request->input('status_official');
         $branch->save();
 
-        // Sync Phones
-        $branch->syncPhones($request->input('number_phone'));
+        foreach ($request['phones'] as $phoneData) {
+            $branch->branchPhone()->create([
+                'phone' => $phoneData['phone'],
+            ]);
+        }
+
         $this->branchesRepository->clearCache(auth()->id());
         return redirect()->route('branch')->with('message', 'Cabang ' . $branch->name . ' berhasil dbuat.');
     }
@@ -94,6 +98,7 @@ class BranchesController extends Controller
     {
         $this->authorize('edit', BranchesModel::class);
         $this->validationText($request->all(), $id);
+
         $branch = $branchesModel::findOrFail($id);
         $branch->created_by = auth()->id();
         $branch->name = $request->input('name');
@@ -102,8 +107,19 @@ class BranchesController extends Controller
         $branch->status_official = $request->input('status_official');
         $branch->update();
 
-        // Sync Phones
-        $branch->syncPhones($request->input('number_phone'));
+
+        $requestPhone = collect($request['phones'])->pluck('phone_id')->filter()->toArray();
+
+        $branch->branchPhone()
+            ->whereNotIn('branch_phone_id', $requestPhone)
+            ->delete();
+
+        foreach ($request['phones'] as $phoneData) {
+            $branch->branchPhone()->updateOrCreate(
+                ['branch_phone_id' => $phoneData['phone_id']], // Kunci update (jika null, dia create)
+                ['phone' => $phoneData['phone']]
+            );
+        }
         $this->branchesRepository->clearCache(auth()->id());
         return redirect()->route('branch')->with('message', 'Cabang ' . $branch->name . ' berhasil diperbarui.');
     }
@@ -115,6 +131,12 @@ class BranchesController extends Controller
     {
         $this->authorize('delete', BranchesModel::class);
         $branch = $branchesModel::findOrFail($id);
+
+        if ($branch->profile()->exists()) {
+            // Redirect kembali dengan pesan Error
+            return redirect()->back()->with('warning', 'Cabang ' . $branch->name . ' ini sedang digunakan oleh user, menghapus dapat membuat kesalahan. Cabang ' . $branch->name . ' ini hanya dapat diubah.');
+        }
+
         $branch->delete();
         $this->branchesRepository->clearCache(auth()->id());
         return redirect()->route('branch')->with('message', 'Cabang ' . $branch->name . ' berhasil dihapus.');
@@ -124,10 +146,62 @@ class BranchesController extends Controller
     {
         $this->authorize('delete', BranchesModel::class);
         $all_id = $request->input('all_id', []);
-        if (!count($all_id)) return back()->with('message', 'Tidak ada data yang dipilih.');
-        BranchesModel::whereIn('branches_id', $all_id)->delete();
-        $this->branchesRepository->clearCache(auth()->id());
-        return redirect()->route('branch')->with('message', count($all_id) . ' Data berhasil Terhapus.');
+
+        // Validasi jika tidak ada yang dipilih
+        if (empty($all_id)) {
+            return back()->with('error', 'Tidak ada data yang dipilih.');
+        }
+
+        // A. Cari ID Cabang yang statusnya 'OFFICIAL' (Pusat)
+        // Cabang pusat HARAM dihapus karena akan merusak logika sistem.
+        $officialIds = BranchesModel::whereIn('branches_id', $all_id)
+            ->where('status_official', 'official')
+            ->pluck('branches_id')
+            ->toArray();
+
+        // B. Cari ID Cabang yang SEDANG DIGUNAKAN (Relasi)
+        // Cek apakah cabang punya Karyawan (users) atau Harga Produk (prices)
+        // Pastikan nama relasi 'profile' sesuai dengan BranchesModel Anda.
+        $usedIds = BranchesModel::whereIn('branches_id', $all_id)
+            ->where(function ($query) {
+                $query->has('profile.user');
+            })
+            ->pluck('branches_id')
+            ->toArray();
+
+        // Gabungkan semua ID yang TIDAK BOLEH dihapus (Official + Terpakai)
+        $protectedIds = array_unique(array_merge($officialIds, $usedIds));
+
+        // Hitung ID yang AMAN untuk dihapus (Selisih antara Semua Pilihan - Yang Dilindungi)
+        $idsToDelete = array_diff($all_id, $protectedIds);
+
+        // Hitung statistik untuk pesan notifikasi
+        $countDeleted = count($idsToDelete);
+        $countSkipped = count($protectedIds);
+
+        if ($countDeleted > 0) {
+            // Hapus data cabang yang aman
+            BranchesModel::whereIn('branches_id', $idsToDelete)->delete();
+
+            // Hapus cache (Penting agar dropdown cabang di tempat lain terupdate)
+            $this->branchesRepository->clearCache(auth()->id());
+        }
+
+        // Skenario 1: Gagal Total (Semua yang dipilih ternyata Official atau Terpakai)
+        if ($countDeleted === 0 && $countSkipped > 0) {
+            return back()->with('warning', 'Gagal menghapus. Cabang yang dipilih sedang memiliki data aktif atau sedang digunakan.');
+        }
+
+        // Skenario 2: Berhasil Sebagian (Partial Success)
+        // Contoh: Pilih 5, tapi 1 Pusat (dilewati), 4 Cabang Biasa (dihapus).
+        if ($countDeleted > 0 && $countSkipped > 0) {
+            return redirect()->route('branch')->with(
+                'warning',
+                "$countDeleted cabang berhasil dihapus. $countSkipped cabang DILEWATI karena berstatus Official atau sedang digunakan."
+            );
+        }
+
+        return redirect()->route('branch')->with('message', "$countDeleted Cabang berhasil dihapus.");
     }
 
     public function reset()

@@ -315,7 +315,7 @@ const toolbarActions = computed(() => [
             <callout />
 
             <div class="row pb-3">
-                <div class="col-xl-12 col-12 mb-3">
+                <div class="col-xl-12 col-12">
                     <base-filters title="Filter" v-model="filters" :fields="fileterFields" />
                 </div>
                 <div class="col-xl-12 col-12">

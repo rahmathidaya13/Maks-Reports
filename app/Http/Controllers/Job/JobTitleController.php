@@ -110,6 +110,13 @@ class JobTitleController extends Controller
     {
         $this->authorize('delete', JobTitleModel::class);
         $jobTitle = $jobTitleModel::findOrFail($id);
+
+        // Cek apakah jabatan ini digunakan oleh user
+        if ($jobTitle->profile()->exists()) {
+            // Redirect kembali dengan pesan Error
+            return redirect()->back()->with('warning', 'Jabatan ' . $jobTitle->title . ' ini sedang digunakan oleh user, menghapus dapat membuat kesalahan. Jabatan ' . $jobTitle->title . ' ini hanya dapat diubah.');
+        }
+
         $jobTitle->delete();
         $this->jobTitle->clearCache(auth()->id());
         return redirect()->route('job_title')->with('message', 'Jabatan ' . $jobTitle->title . ' berhasil dihapus.');
@@ -118,10 +125,46 @@ class JobTitleController extends Controller
     {
         $this->authorize('delete', JobTitleModel::class);
         $all_id = $request->input('all_id', []);
-        if (!count($all_id)) return back()->with('message', 'Tidak ada data yang dipilih.');
-        JobTitleModel::whereIn('job_title_id', $all_id)->delete();
-        $this->jobTitle->clearCache(auth()->id());
-        return redirect()->route('job_title')->with('message', count($all_id) . ' Data berhasil Terhapus.');
+
+        if (empty($all_id) || count($all_id) === 0) {
+            return back()->with('info', 'Tidak ada data yang dipilih.');
+        }
+
+        // DETEKSI: Mana Jabatan yang SEDANG DIPAKAI?
+        // cari ID dari $all_id yang memiliki relasi 'profile' (atau 'users')
+        // Pastikan ganti 'profile' sesuai nama method relasi di Model
+
+        $idsInUse = JobTitleModel::whereIn('job_title_id', $all_id)
+            ->whereHas('profile')
+            ->pluck('job_title_id')
+            ->toArray();
+
+        // FILTER: Pisahkan yang Aman dapat dihapus vs Bahaya yang tidak boleh dihapus
+        // $idsToDelete = Semua ID yang dipilih DIKURANGI ID yang sedang dipakai
+        $idsToDelete = array_diff($all_id, $idsInUse);
+        $skippedCount = count($idsInUse);
+        $deletedCount = count($idsToDelete);
+
+        // EKSEKUSI HAPUS (Hanya yang aman)
+        if ($deletedCount > 0) {
+            JobTitleModel::whereIn('job_title_id', $idsToDelete)->delete();
+            $this->jobTitle->clearCache(auth()->id());
+        }
+
+        // MEMBUAT PESAN NOTIFIKASI PINTAR
+        if ($deletedCount === 0 && $skippedCount > 0) {
+            // Kasus A: Semua yang dipilih ternyata sedang dipakai (Gagal Total)
+            return redirect()->back()->with('error', 'Gagal menghapus. Jabatan yang dipilih sedang digunakan oleh user.');
+        } elseif ($skippedCount > 0) {
+            // Kasus B: Sebagian terhapus, Sebagian tertinggal (Partial)
+            return redirect()->route('job_title')->with(
+                'warning',
+                "$deletedCount jabatan berhasil dihapus. $skippedCount jabatan DILEWATI karena sedang digunakan user."
+            );
+        } else {
+            // Kasus C: Sukses Semua (Bersih)
+            return redirect()->route('job_title')->with('message', "$deletedCount Data berhasil Terhapus.");
+        }
     }
 
     public function reset()

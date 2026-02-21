@@ -20,7 +20,6 @@ const props = defineProps({
     category: Array,
     branch: Array,
 })
-console.log(props.branch, props.category);
 const filters = reactive({
     keyword: props.filters.keyword ?? "",
     category: props.filters.category ?? null,
@@ -450,7 +449,7 @@ const toolbarActions = computed(() => [
 
             <div class="row pb-5">
 
-                <div class="col-12 mb-3">
+                <div class="col-12">
                     <base-filters :roles="['admin', 'developer']" title="Filter Produk" v-model="filters"
                         :fields="filterFields" />
                 </div>
@@ -550,7 +549,7 @@ const toolbarActions = computed(() => [
                                             {
                                                 label: 'Ubah Produk',
                                                 icon: 'bi bi-pencil-square fs-6',
-                                                color_icon: 'warning',
+                                                color_icon: 'success',
                                                 action: 'edit',
                                                 permission: 'product.edit'
                                             },

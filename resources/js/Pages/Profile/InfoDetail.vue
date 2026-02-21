@@ -71,7 +71,7 @@ function daysTranslate(dayValue) {
                                 {{ textToUppercase(props.detail?.user.name) ?? 'NAMA PENGGUNA' }}
                             </h5>
                             <p class="text-primary fw-semibold mb-2">
-                                {{ textToUppercase(props.detail?.job_title.title) ?? 'Jabatan Tidak Diketahui' }}
+                                {{ textToUppercase(props.detail?.job_title?.title) ?? 'Jabatan Tidak Diketahui' }}
                             </p>
                             <div class="badge bg-light text-secondary border px-3 py-2 rounded-pill mb-4">
                                 {{ props.detail?.employee_id_number ?? 'No ID' }}

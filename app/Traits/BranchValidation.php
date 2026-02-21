@@ -2,7 +2,6 @@
 
 namespace App\Traits;
 
-use App\Rules\MaxQuillCharacters;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
@@ -12,44 +11,47 @@ trait BranchValidation
     {
         return Validator::make($request, [
             'name' => ['required', 'string', 'max:50'],
-            'address' => ['required', 'string', new MaxQuillCharacters(500)],
+            'address' => ['required', 'string', 'max:250'],
             'status' => ['required', 'string', 'max:50'],
+            'status_official' => ['required', 'string', 'max:50', 'in:official,unofficial'],
 
 
-            'number_phone' => ['required', 'array', 'min:1'],
-            'number_phone.*' => [
+            'phones' => ['required', 'array', 'min:1'],
+            'phones.*.phone' => [
                 'required',
-                'string',
-                'max:13',
-                'regex:/^[0-9+]+$/',
+                'numeric',
+                'digits_between:10,13',
                 'distinct',
-                'regex:/^[0-9+]+$/',
                 Rule::unique('branch_phone', 'phone')
                     ->ignore($id, 'branches_id'),
             ],
         ], [
-            'name.required' => 'Nama wajib diisi.',
-            'name.string' => 'Nama harus berupa teks.',
-            'name.max' => 'Nama maksimal 50 karakter.',
+            'name.required' => 'Nama Cabang wajib diisi.',
+            'name.string' => 'Nama Cabang harus berupa teks.',
+            'name.max' => 'Nama Cabang maksimal 50 karakter.',
 
             'address.required' => 'Alamat wajib diisi.',
             'address.string' => 'Alamat harus berupa teks.',
             'address.max' => 'Alamat maksimal 250 karakter.',
 
-            'number_phone.required' => 'Nomor telepon wajib diisi.',
-            'number_phone.array' => 'Nomor telepon tidak valid.',
-            'number_phone.min' => 'Minimal harus ada 1 nomor telepon yang diinputkan.',
+            'status.required' => 'Status Operasional wajib dipilih.',
+            'status.string' => 'Status Operasional harus berupa teks.',
+            'status.max' => 'Status Operasional maksimal 50 karakter.',
 
-            'number_phone.*.required' => 'Nomor telepon wajib diisi.',
-            'number_phone.*.string' => 'Nomor telepon harus berupa teks.',
-            'number_phone.*.max' => 'Nomor telepon maksimal 13 karakter.',
-            'number_phone.*.regex' => 'Nomor telepon tidak valid.',
-            'number_phone.*.distinct' => 'Nomor telepon tidak boleh sama.',
-            'number_phone.*.unique' => 'Nomor telepon ini sudah ada.',
+            'status_official.required' => 'Status official wajib dipilih.',
+            'status_official.string' => 'Status official harus berupa teks.',
+            'status_official.max' => 'Status official maksimal 50 karakter.',
+            'status_official.in' => 'Status official tidak sesuai.',
 
-            'status.required' => 'Status wajib diisi.',
-            'status.string' => 'Status harus berupa teks.',
-            'status.max' => 'Status maksimal 50 karakter.',
+            'phones.required' => 'Wajib ada minimal satu nomor telepon.',
+            'phones.min'      => 'Minimal harus ada 1 nomor telepon.',
+
+            'phones.*.phone.required' => 'Kolom nomor telepon tidak boleh kosong.',
+            'phones.*.phone.numeric'  => 'Nomor telepon harus berupa angka.',
+            'phones.*.phone.digits_between' => 'Nomor telepon harus antara 10-13 digit.',
+            'phones.*.phone.distinct' => 'Ada nomor telepon yang sama di dalam form ini.',
+            'phones.*.phone.unique'   => 'Nomor telepon ini sudah terdaftar di cabang lain.',
+
         ])->validate();
     }
 }

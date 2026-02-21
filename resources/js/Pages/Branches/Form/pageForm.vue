@@ -18,99 +18,77 @@ const form = useForm({
     address: props.branch?.address ?? '',
     status: props.branch?.status ?? 'active',
     status_official: props.branch?.status_official ?? 'unofficial',
-
-    // number_phone: props.branch?.branch_phone?.length
-    //     ? [...props.branch?.branch_phone?.map(value => value.phone)]
-    //     : [''],
     phones: [],
 });
 const isEditMode = computed(() => {
     return !!props.branch?.branches_id
 })
-const togglePhone = (phoneId) => {
-    console.log(phoneId);
-    const index = form.phones.findIndex(p => p.phone_id === phoneId);
-    if (index === -1) {
-        form.phones.push({
-            phone_id: phoneId,
-            phone: "",
-        });
-    } else {
-        form.phones.splice(index, 1);
-    }
+const addPhone = () => {
+    form.phones.push({
+        phone_id: null,
+        phone: "",
+    })
+}
+
+const removePhone = (index) => {
+    form.phones.splice(index, 1);
 }
 onMounted(() => {
-    // update nomor handphone
-    if (isEditMode.value && props.branch.branch_phone.length > 0) {
-        form.phones = props.branch.branch_phone.map(ph => {
-            return {
-                phone_id: ph.branch_phone_id,
-                phone: ph.phone,
-            }
-        })
+    if (isEditMode.value && props.branch?.branch_phone?.length > 0) {
+        form.phones = props.branch.branch_phone.map(ph => ({
+            phone_id: ph.branch_phone_id, // Simpan ID lama
+            phone: ph.phone,
+        }));
+    } else {
+        // Opsional: Jika mode create/edit kosong, otomatis tambah 1 kolom kosong biar user gak perlu klik tambah
+        if (form.phones.length === 0) addPhone();
     }
 })
 const isSubmit = () => {
-    if (props.branch?.branches_id) {
-        form.put(route('branch.update', props.branch?.branches_id), {
-            onSuccess: () => {
-                form.reset();
-            },
-        })
-    } else {
-        // Create
-        form.post(route('branch.store'), {
-            onSuccess: () => {
-                form.reset();
-            }
-        });
-    }
+    const method = isEditMode.value ? "put" : "post";
+    const url = isEditMode.value
+        ? route("branch.update", props.branch?.branches_id)
+        : route("branch.store");
+    form[method](url, {
+        onSuccess: () => {
+            form.reset();
+        },
+    });
 };
-const title = ref("");
-const icon = ref("");
-const url = ref("")
-onMounted(() => {
-    if (props.branch && props.branch?.branches_id) {
-        title.value = "Ubah Data Cabang - " + props.branch?.name
-        icon.value = "fas fa-edit"
-        url.value = route('branch')
-    } else {
-        title.value = "Buat Cabang Baru"
-        icon.value = "fas fa-plus-square"
-        url.value = route('branch')
+const pageMeta = computed(() => {
+    if (isEditMode.value) {
+        return {
+            title: "Ubah Data Cabang - " + props.branch?.name,
+            icon: "fas fa-edit",
+            url: route('branch')
+        }
+    }
+    return {
+        title: "Buat Cabang Baru",
+        icon: "fas fa-plus-square",
+        url: route('branch')
     }
 })
 const breadcrumbItems = computed(() => {
-    if (props.branch && props.branch?.branches_id) {
-        return [
-            { text: "Daftar Cabang", url: route("branch") },
-            { text: "Buat Cabang Baru", url: route("branch.create") },
-            { text: title.value }
-        ]
-    }
-    return [
-        { text: "Daftar Cabang", url: route("branch") },
-        { text: title.value }
-    ]
-})
+    const items = [{ text: "Daftar Cabang",  url: route("branch")  }];
+    items.push({
+        text: pageMeta.value.title,
+        url: null,
+    });
+    return items;
+});
+
+
 
 const loaderActive = ref(null);
 const goBack = () => {
     loaderActive.value?.show("Memproses...");
-    router.get(url.value, {}, {
+    router.get(pageMeta.value.url, {}, {
         onFinish: () => loaderActive.value?.hide()
     });
 }
 
-const addPhone = () => {
-    form.phones.push('')
-}
 
-// const removePhone = (index) => {
-//     if (form.number_phone.length > 1) {
-//         form.number_phone.splice(index, 1)
-//     }
-// }
 const inputRef = ref(null);
 onMounted(() => {
     inputRef.value.focus();
@@ -118,11 +96,11 @@ onMounted(() => {
 </script>
 <template>
 
-    <Head :title="title" />
+    <Head :title="pageMeta.title" />
     <app-layout>
         <template #content>
             <loader-page ref="loaderActive" />
-            <bread-crumbs :icon="icon" :title="title" :items="breadcrumbItems" />
+            <bread-crumbs :icon="pageMeta.icon" :title="pageMeta.title" :items="breadcrumbItems" />
             <div class="row pb-3">
                 <div class="col-xl-12 col-12">
 
@@ -138,7 +116,7 @@ onMounted(() => {
                                     <p class="text-muted small mb-0">Kelola informasi kantor cabang.</p>
                                 </div>
                             </div>
-                            <Link @click.prevent="goBack" :href="url" class="btn btn-danger fw-bold border px-3">
+                            <Link @click.prevent="goBack" :href="pageMeta.url" class="btn btn-danger fw-bold border px-3">
                                 <i class="fas fa-arrow-left me-2"></i> Kembali
                             </Link>
                         </div>
@@ -208,7 +186,7 @@ onMounted(() => {
                                                 </div>
 
                                             </div>
-                                            <input-error :message="form.errors.is_official" />
+                                            <input-error :message="form.errors.status_official" />
 
                                         </div>
                                     </div>
@@ -232,17 +210,18 @@ onMounted(() => {
                                                     class="mb-2 last-no-margin">
                                                     <div class="position-relative d-flex gap-1">
                                                         <i class="fas fa-phone-alt fs-7 input-icon-left"></i>
-                                                        <text-input :tabindex="index + 1" v-model="ph.phone"
+
+                                                        <input-number :tabindex="index + 1" v-model="ph.phone"
                                                             :name="`phones.${index}.phone`"
                                                             :placeholder="`Nomor kontak ${index + 1}`"
                                                             input-class="input-fixed-height" />
 
                                                         <button v-if="form.phones.length > 1" type="button"
                                                             class="btn btn-outline-danger"
-                                                            @click.prevent="togglePhone(ph.phone_id)"
-                                                            title="Hapus nomor ini">
+                                                            @click.prevent="removePhone(index)" title="Hapus nomor ini">
                                                             <i class="fas fa-times"></i>
                                                         </button>
+
                                                     </div>
                                                     <input-error :message="form.errors[`phones.${index}.phone`]"
                                                         class="mt-1" />

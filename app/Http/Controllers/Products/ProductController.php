@@ -230,20 +230,21 @@ class ProductController extends Controller
     public function destroy(ProductModel $productModel, string $id)
     {
         $this->authorize('delete', ProductModel::class);
-        $product = $productModel::with(['prices.branch', 'creator'])->findOrFail($id);
+        $product = $productModel::findOrFail($id);
 
-        // $totalProduct = $productModel::where('product_id', $product->product_id)->count();
-        if ($product->image_path) {
-            // Cek file ada atau tidak untuk menghindari error, lalu hapus
-            if (Storage::disk('public')->exists($product->image_path)) {
-                Storage::disk('public')->delete($product->image_path);
-            }
+        if ($product->transactions()->exists()) {
+            return redirect()->back()->with('warning', 'Gagal menghapus. Produk "' . $product->name . '" masih terkait dengan data transaksi.');
         }
 
+        if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+
+        $product->prices()->delete();
         $product->delete();
-        $message = 'Produk ' . $product->name . ' telah dihapus beserta seluruh datanya.';
+        $message = 'Produk ' . $product->name . ' telah dihapus.';
         $this->productRepository->clearCache(auth()->id());
-        return redirect()->route('product')->with('message', $message);
+        return redirect()->back()->with('message', $message);
     }
 
     public function destroy_all(Request $request)
@@ -253,38 +254,61 @@ class ProductController extends Controller
 
         // 2. Validasi Input
         $ids = $request->input('ids', []);
+
         if (empty($ids) || !is_array($ids)) {
             return redirect()->back()->with('error', 'Tidak ada produk yang dipilih.');
         }
 
-        // 3. Ambil data sekaligus (Lebih hemat query daripada looping find satu-satu)
-        // Pastikan 'product_id' sesuai dengan Primary Key tabel produk (bisa 'id' atau 'product_id')
-        $product = ProductModel::with(['creator', 'prices.branch'])
-            ->whereIn('product_id', $ids)
-            ->get();
+        // FILTERING: Cari Produk yang SEDANG DIPAKAI TRANSAKSI
+        // ambil ID produk yang punya relasi ke transaksi
+        $usedIds = ProductModel::whereIn('product_id', $ids)
+            ->has('transactions') // Cek relasi (sesuaikan nama function di model, misal: transactions / orderItems)
+            ->pluck('product_id')
+            ->toArray();
 
-        if ($product->isEmpty()) {
-            return redirect()->back()->with('error', 'Data Produk tidak ditemukan.');
-        }
+        // Tentukan Produk yang AMAN dihapus
+        // Aman = Semua Pilihan - Yang Terpakai
+        $idsToDelete = array_diff($ids, $usedIds);
 
-        $deletedCount = 0;
+        // Hitung statistik
+        $countDeleted = count($idsToDelete);
+        $countSkipped = count($usedIds);
 
-        foreach ($product as $prod) {
-            // A. Hapus File Gambar Fisik (Penting agar storage tidak penuh sampah)
-            if ($prod->image_path && Storage::disk('public')->exists($prod->image_path)) {
-                Storage::disk('public')->delete($prod->image_path);
+        // EKSEKUSI HAPUS (Hanya untuk yang Aman)
+        if ($countDeleted > 0) {
+            // Ambil data produk yang aman (kita butuh modelnya untuk hapus gambar)
+            $products = ProductModel::whereIn('product_id', $idsToDelete)->get();
+
+            foreach ($products as $prod) {
+                // A. Hapus Gambar
+                if ($prod->image_path && Storage::disk('public')->exists($prod->image_path)) {
+                    Storage::disk('public')->delete($prod->image_path);
+                }
+
+                // B. Hapus Harga (Child)
+                $prod->prices()->delete();
+
+                // C. Hapus Produk (Parent)
+                $prod->delete();
             }
 
-            // B. Hapus Data Anak (Prices)
-            // Jika database Anda sudah setting "ON DELETE CASCADE", baris di bawah ini opsional.
-            // Tapi untuk keamanan (mencegah data yatim piatu), sebaiknya di-delete eksplisit.
-            $prod->prices()->delete();
-            // C. Hapus Produk Induk
-            $prod->delete();
-            $deletedCount++;
+            // Bersihkan cache setelah loop selesai
+            $this->productRepository->clearCache(auth()->id());
         }
-        $this->productRepository->clearCache(auth()->id());
-        return redirect()->route('product')->with('message', $deletedCount . ' Produk terpilih berhasil dihapus.');
+
+        // Skenario A: Semua gagal karena terpakai
+        if ($countDeleted === 0 && $countSkipped > 0) {
+            return redirect()->back()
+                ->with('error', 'Gagal menghapus. Produk yang dipilih sedang digunakan dalam transaksi user.');
+        }
+
+        // Skenario B: Partial Success (Ada yang terhapus, ada yang dilewati)
+        if ($countSkipped > 0) {
+            return redirect()->route('product')
+                ->with('warning', "$countDeleted produk berhasil dihapus. $countSkipped produk DILEWATI karena sedang digunakan dalam transaksi.");
+        }
+
+        return redirect()->route('product')->with('message', $countDeleted . ' Produk terpilih berhasil dihapus.');
     }
 
     public function deletedGalleryImage(Request $request, ProductModel $productModel, string $id)

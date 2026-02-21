@@ -39,7 +39,7 @@ class ProductModel extends Model
 
     public function transactions()
     {
-        return $this->hasMany(TransactionModel::class, 'product_id', 'product_id');
+        return $this->hasMany(TransactionItemModel::class, 'product_id', 'product_id');
     }
     public function prices()
     {

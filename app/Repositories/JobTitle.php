@@ -17,7 +17,7 @@ class JobTitle extends BaseCacheRepository
         $isAdmin = $user->hasAnyRole(['admin', 'developer']);
 
         $query = JobTitleModel::query()
-            ->with('creator');
+            ->with(['creator', 'profile.user']);
 
         /*
     |--------------------------------------------------------------------------

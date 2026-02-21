@@ -60,10 +60,10 @@ const header = [
     {
         label: "Pembuat", // Creator + Tanggal
         key: "created_by",
-        attrs: { class: "text-start align-middle" }
+        attrs: { class: "text-center align-middle" }
     },
     {
-        label: "Aksi",
+        label: "",
         key: "actions",
         attrs: { class: "text-center align-middle" }
     },
@@ -260,7 +260,7 @@ const toolbarActions = computed(() => [
             <callout />
 
             <div class="row pb-3">
-                <div class="col-xl-12 col-12 mb-3">
+                <div class="col-xl-12 col-12">
                     <base-filters title="Filter" v-model="filters" :fields="filterFields" />
                 </div>
 
@@ -338,7 +338,7 @@ const toolbarActions = computed(() => [
                                                 <div class="d-flex flex-wrap gap-1">
                                                     <span v-for="phone in item.branch_phone"
                                                         :key="phone.branch_phone_id"
-                                                        class="badge bg-white border text-dark fw-normal shadow-sm d-flex align-items-center">
+                                                        class="badge bg-white border text-dark fw-normal shadow-sm d-flex align-items-center" style="font-size: 0.8rem;">
                                                         <i class="fas fa-phone-alt text-muted me-2"
                                                             style="font-size: 0.6rem;"></i>
                                                         <span v-html="highlight(phone.phone, filters.keyword)"></span>

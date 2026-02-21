@@ -207,6 +207,7 @@ function formatCategory(cat = '') {
                         </Link>
                     </div>
 
+
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                         <div class="card-body position-relative">
                             <loading-overlay :show="form.processing" text="Sedang memproses..." />
@@ -269,16 +270,14 @@ function formatCategory(cat = '') {
                                             <div class="mb-2">
                                                 <input-label for="name" class="form-label-custom" value="Nama Produk" />
                                                 <text-input ref="inputProduct" placeholder="Nama produk" name="name"
-                                                    v-model="form.name"
-                                                    input-class="border-0 border-bottom input-height-1 fw-bold rounded-0 p-0 pe-5" />
+                                                    v-model="form.name" />
                                                 <input-error :message="form.errors.name" />
                                             </div>
                                             <div class="mb-2">
                                                 <input-label for="category" class="form-label-custom"
                                                     value="Kategori" />
-                                                <text-input placeholder="Contoh: Mesin, Sparepart dll"
-                                                    input-class="border-0 border-bottom input-height-1 fw-bold rounded-0 p-0 pe-5"
-                                                    name="category" v-model="form.category" />
+                                                <text-input placeholder="Contoh: Mesin, Sparepart dll" name="category"
+                                                    v-model="form.category" />
                                                 <input-error :message="form.errors.category" />
                                             </div>
 
@@ -293,8 +292,7 @@ function formatCategory(cat = '') {
                                                     { label: 'Diperbaharui', value: 'refurbished' },
                                                     { label: 'Rusak', value: 'damaged' },
                                                     { label: 'Dihentikan', value: 'discontinued' }
-                                                ]" name="item_condition" v-model="form.item_condition"
-                                                    select-class="border-bottom input-height-1 border-0 rounded-0 p-2" />
+                                                ]" name="item_condition" v-model="form.item_condition" />
                                                 <input-error :message="form.errors.item_condition" />
                                             </div>
 
@@ -308,8 +306,7 @@ function formatCategory(cat = '') {
                                                 </div>
                                                 <div class="position-relative">
                                                     <text-input placeholder="https://shopee/..." name="link"
-                                                        v-model="form.link"
-                                                        input-class="border-0 border-bottom input-height-1 rounded-0 p-0 pe-5" />
+                                                        v-model="form.link" />
                                                 </div>
                                                 <input-error :message="form.errors.link" />
                                             </div>
@@ -335,173 +332,167 @@ function formatCategory(cat = '') {
                                             </div>
                                             <input-error :message="form.errors.branch_prices" />
                                         </div>
+                                    </div>
 
-                                        <div class="branch-prices-section border-0 border-top pt-3">
+                                    <div class="branch-prices-section border-0 p-2 rounded-4">
 
-                                            <div v-if="!form.branch_prices.length"
-                                                class="empty-state text-center py-5 card  rounded-4 shadow-sm bg-white">
-                                                <div class="py-5">
-                                                    <i class="fas fa-store-slash fa-4x text-light mb-3"></i>
-                                                    <h5 class="text-muted">Belum ada yang cabang dipilih</h5>
-                                                </div>
+                                        <div v-if="!form.branch_prices.length"
+                                            class="text-center py-5 card rounded-4 shadow-sm bg-white">
+                                            <div class="py-5">
+                                                <i class="fas fa-store-slash fa-4x text-light mb-3"></i>
+                                                <h5 class="text-muted">Belum ada yang cabang dipilih</h5>
                                             </div>
-
-                                            <div v-for="(priceItem, index) in form.branch_prices"
-                                                :key="priceItem.branch_id"
-                                                class="card shadow-sm rounded-4 mb-4 pricing-card ">
-                                                <div class="card-body p-4">
-                                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="icon-branch me-3">
-                                                                <i class="fas fa-map-marked-alt text-primary"></i>
-                                                            </div>
-                                                            <div>
-                                                                <h5 class="fw-bold mb-0 text-capitalize">{{
-                                                                    getBranchName(priceItem.branch_id) + " - " +
-                                                                    `(${form.name})` }}</h5>
-                                                            </div>
-                                                        </div>
-                                                        <button v-if="branchOfficial !== priceItem.branch_id"
-                                                            type="button" @click="toggleBranch(priceItem.branch_id)"
-                                                            class="btn btn-link text-danger text-decoration-none">
-                                                            <i class="fas fa-trash-alt me-1"></i> Hapus
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="row g-4">
-                                                        <div class="col-md-6">
-                                                            <div
-                                                                class="input-group-custom p-3 rounded-4 bg-light border border-2 border-transparent">
-                                                                <label :for="`branch_prices.${index}.base_price`"
-                                                                    class="text-muted small fw-bold text-uppercase d-block mb-1">Harga
-                                                                    Normal</label>
-                                                                <div class="d-flex align-items-center">
-                                                                    <currency-input
-                                                                        input-class="bg-transparent border-0 fs-5 fw-bold text-dark shadow-none w-100"
-                                                                        :decimals="0" v-model="priceItem.base_price"
-                                                                        :name="`branch_prices.${index}.base_price`"
-                                                                        placeholder="0" />
-                                                                </div>
-                                                            </div>
-                                                            <input-error
-                                                                :message="form.errors[`branch_prices.${index}.base_price`]" />
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div
-                                                                class="input-group-custom p-3 rounded-4 bg-rose-soft border border-2 border-transparent">
-
-
-                                                                <div
-                                                                    class="d-flex align-items-center justify-content-between">
-                                                                    <label
-                                                                        :for="`branch_prices.${index}.discount_price`"
-                                                                        class="text-danger small fw-bold text-uppercase d-block mb-1">Harga
-                                                                        Promo (Diskon)</label>
-                                                                    <transition name="fade">
-                                                                        <span v-if="discountPercentage > 0"
-                                                                            class="badge bg-danger rounded-pill shadow-sm animate-pulse px-3 border-0">
-                                                                            <i class="fas fa-fire me-1"></i> Diskon {{
-                                                                                discountPercentage
-                                                                            }}%
-                                                                        </span>
-                                                                    </transition>
-                                                                </div>
-                                                                <div class="d-flex align-items-center">
-                                                                    <currency-input
-                                                                        input-class="bg-transparent border-0 fs-5 fw-bold text-danger shadow-none w-100"
-                                                                        :decimals="0" v-model="priceItem.discount_price"
-                                                                        :name="`branch_prices.${index}.discount_price`"
-                                                                        placeholder="0" />
-                                                                </div>
-                                                            </div>
-                                                            <input-error
-                                                                :message="form.errors[`branch_prices.${index}.discount_price`]" />
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <input-label :for="`branch_prices.${index}.valid_from`"
-                                                                class="mb-2 fw-bold text-secondary text-xs text-uppercase"
-                                                                value="Tanggal Berlaku" />
-                                                            <div class="position-relative">
-                                                                <i class="far fa-calendar-alt input-icon-left"></i>
-                                                                <text-input type="date" v-model="priceItem.valid_from"
-                                                                    :name="`branch_prices.${index}.valid_from`"
-                                                                    :input-class="['input-fixed-height',
-                                                                        priceItem.valid_from || form.errors[`branch_prices.${index}.valid_from`] ? 'pe-5' : 'pe-3'
-                                                                    ]" />
-                                                            </div>
-                                                            <input-error
-                                                                :message="form.errors[`branch_prices.${index}.valid_from`]" />
-                                                        </div>
-
-                                                        <div class="col-md-6">
-                                                            <div
-                                                                class="align-items-center d-flex justify-content-between">
-                                                                <input-label :for="`branch_prices.${index}.valid_until`"
-                                                                    class="form-label-custom"
-                                                                    value="Tanggal Berakhir" />
-                                                                <span
-                                                                    class="badge bg-light text-muted border fw-normal mb-2"
-                                                                    style="font-size: 0.7rem;">OPSIONAL</span>
-                                                            </div>
-                                                            <div class="position-relative">
-                                                                <i class="far fa-calendar-alt input-icon-left"></i>
-                                                                <text-input type="date" v-model="priceItem.valid_until"
-                                                                    :name="`branch_prices.${index}.valid_until`"
-                                                                    :input-class="['input-fixed-height',
-                                                                        priceItem.valid_until || form.errors[`branch_prices.${index}.valid_until`] ? 'pe-5' : 'pe-3'
-                                                                    ]" />
-                                                            </div>
-                                                            <input-error
-                                                                :message="form.errors[`branch_prices.${index}.valid_until`]" />
-                                                        </div>
-
-                                                        <div class="col-12">
-                                                            <input-label :for="`branch_prices.${index}.status`"
-                                                                class="form-label-custom" value="Status Publikasi" />
-                                                            <div class="d-flex gap-3 mt-2">
-
-                                                                <div class="p-2 rounded-2 px-4 border"
-                                                                    :class="priceItem.status === 'draft' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
-                                                                    <radio-box v-model:checked="priceItem.status"
-                                                                        value="draft"
-                                                                        :name="`branch_prices.${index}.status`">
-                                                                        <i class="fas fa-lock me-1 ms-2"></i>
-                                                                        Simpan sebagai Draft
-                                                                    </radio-box>
-                                                                </div>
-
-                                                                <div class="p-2 rounded-2 px-4 border "
-                                                                    :class="priceItem.status === 'published' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
-                                                                    <radio-box v-model:checked="priceItem.status"
-                                                                        value="published"
-                                                                        :name="`branch_prices.${index}.status`">
-                                                                        <i class="fas fa-globe me-1 ms-2"></i>
-                                                                        Terbitkan Sekarang
-                                                                    </radio-box>
-                                                                </div>
-                                                            </div>
-                                                            <input-error
-                                                                :message="form.errors[`branch_prices.${index}.status`]" />
-                                                        </div>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
                                         </div>
+
+                                        <div v-for="(priceItem, index) in form.branch_prices" :key="priceItem.branch_id"
+                                            class="card shadow-sm rounded-4 mb-4 pricing-card">
+                                            <div class="card-body p-4">
+                                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="icon-branch me-3">
+                                                            <i class="fas fa-map-marked-alt text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h5 class="fw-bold mb-0 text-capitalize">{{
+                                                                getBranchName(priceItem.branch_id) + " - " +
+                                                                `(${form.name})` }}</h5>
+                                                        </div>
+                                                    </div>
+                                                    <button v-if="branchOfficial !== priceItem.branch_id" type="button"
+                                                        @click="toggleBranch(priceItem.branch_id)"
+                                                        class="btn btn-link text-danger text-decoration-none">
+                                                        <i class="fas fa-trash-alt me-1"></i> Hapus
+                                                    </button>
+                                                </div>
+
+                                                <div class="row g-4">
+                                                    <div class="col-md-6">
+                                                        <div
+                                                            class="input-group-custom p-3 rounded-4 bg-light border border-2 border-transparent">
+                                                            <label :for="`branch_prices.${index}.base_price`"
+                                                                class="text-muted small fw-bold text-uppercase d-block mb-1">Harga
+                                                                Normal</label>
+                                                            <div class="d-flex align-items-center">
+                                                                <currency-input
+                                                                    input-class="bg-transparent border-0 fs-5 fw-bold text-primary shadow-none w-100"
+                                                                    :decimals="0" v-model="priceItem.base_price"
+                                                                    :name="`branch_prices.${index}.base_price`"
+                                                                    placeholder="0" />
+                                                            </div>
+                                                        </div>
+                                                        <input-error
+                                                            :message="form.errors[`branch_prices.${index}.base_price`]" />
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <div
+                                                            class="input-group-custom p-3 rounded-4 bg-rose-soft border border-2 border-transparent">
+                                                            <div
+                                                                class="d-flex align-items-center justify-content-between">
+                                                                <label :for="`branch_prices.${index}.discount_price`"
+                                                                    class="text-danger small fw-bold text-uppercase d-block mb-1">Harga
+                                                                    Promo (Diskon)</label>
+                                                                <transition name="fade">
+                                                                    <span v-if="discountPercentage > 0"
+                                                                        class="badge bg-danger rounded-pill shadow-sm animate-pulse px-3 border-0">
+                                                                        <i class="fas fa-fire me-1"></i> Diskon {{
+                                                                            discountPercentage
+                                                                        }}%
+                                                                    </span>
+                                                                </transition>
+                                                            </div>
+                                                            <div class="d-flex align-items-center">
+                                                                <currency-input
+                                                                    input-class="bg-transparent border-0 fs-5 fw-bold text-danger shadow-none w-100"
+                                                                    :decimals="0" v-model="priceItem.discount_price"
+                                                                    :name="`branch_prices.${index}.discount_price`"
+                                                                    placeholder="0" />
+                                                            </div>
+                                                        </div>
+                                                        <input-error
+                                                            :message="form.errors[`branch_prices.${index}.discount_price`]" />
+                                                    </div>
+
+                                                    <div class="col-xl-6">
+                                                        <input-label :for="`branch_prices.${index}.valid_from`"
+                                                            class="mb-2 fw-bold text-secondary text-xs text-uppercase"
+                                                            value="Tanggal Berlaku" />
+                                                        <div class="position-relative">
+                                                            <i class="far fa-calendar-alt input-icon-left"></i>
+                                                            <text-input type="date" v-model="priceItem.valid_from"
+                                                                :name="`branch_prices.${index}.valid_from`"
+                                                                :input-class="['input-fixed-height',
+                                                                    priceItem.valid_from || form.errors[`branch_prices.${index}.valid_from`] ? 'pe-5' : 'pe-3'
+                                                                ]" />
+                                                        </div>
+                                                        <input-error
+                                                            :message="form.errors[`branch_prices.${index}.valid_from`]" />
+                                                    </div>
+
+                                                    <div class="col-xl-6">
+                                                        <div class="align-items-center d-flex justify-content-between">
+                                                            <input-label :for="`branch_prices.${index}.valid_until`"
+                                                                class="form-label-custom" value="Tanggal Berakhir" />
+                                                            <span
+                                                                class="badge bg-light text-muted border fw-normal mb-2"
+                                                                style="font-size: 0.7rem;">OPSIONAL</span>
+                                                        </div>
+                                                        <div class="position-relative">
+                                                            <i class="far fa-calendar-alt input-icon-left"></i>
+                                                            <text-input type="date" v-model="priceItem.valid_until"
+                                                                :name="`branch_prices.${index}.valid_until`"
+                                                                :input-class="['input-fixed-height',
+                                                                    priceItem.valid_until || form.errors[`branch_prices.${index}.valid_until`] ? 'pe-5' : 'pe-3'
+                                                                ]" />
+                                                        </div>
+                                                        <input-error
+                                                            :message="form.errors[`branch_prices.${index}.valid_until`]" />
+                                                    </div>
+
+                                                    <div class="col-12">
+                                                        <input-label :for="`branch_prices.${index}.status`"
+                                                            class="form-label-custom" value="Status Publikasi" />
+                                                        <div class="d-flex gap-3 mt-2">
+
+                                                            <div class="p-2 rounded-2 px-4 border "
+                                                                :class="priceItem.status === 'draft' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
+                                                                <radio-box v-model:checked="priceItem.status"
+                                                                    value="draft"
+                                                                    :name="`branch_prices.${index}.status`">
+                                                                    <i class="fas fa-lock me-1 ms-2"></i>
+                                                                    Simpan sebagai Draft
+                                                                </radio-box>
+                                                            </div>
+
+                                                            <div class="p-2 rounded-2 px-4 border "
+                                                                :class="priceItem.status === 'published' ? 'border-primary bg-primary bg-opacity-10 text-primary' : 'text-muted'">
+                                                                <radio-box v-model:checked="priceItem.status"
+                                                                    value="published"
+                                                                    :name="`branch_prices.${index}.status`">
+                                                                    <i class="fas fa-globe me-1 ms-2"></i>
+                                                                    Terbitkan Sekarang
+                                                                </radio-box>
+                                                            </div>
+                                                        </div>
+                                                        <input-error
+                                                            :message="form.errors[`branch_prices.${index}.status`]" />
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+
                                     </div>
 
                                 </div>
                             </form-wrapper>
-                            <div class="d-grid d-xl-flex justify-content-xl-end gap-2">
+                            <div class="d-grid d-xl-flex justify-content-xl-end gap-2 align-items-center">
                                 <Link @click.prevent="goBack" :href="route('product')"
-                                    class="btn btn-light  text-decoration-none fw-bold text-muted order-last order-xl-0">
+                                    class="btn btn-light btn-height-1 fw-bold text-muted order-last order-xl-0">
                                     Batal & Kembali
                                 </Link>
                                 <base-button @click.prevent="isSubmit" waiting="Memproses...."
-                                    :loading="form.processing" :button-class="['btn shadow-lg fw-bold px-5 text-nowrap',
+                                    :loading="form.processing" :button-class="['btn btn-height-1 shadow-lg fw-bold px-5 text-nowrap',
                                         isEditMode ? 'btn-success' : 'btn-primary']" type="submit"
                                     :icon="isEditMode ? 'fas fa-check-circle me-2' : 'fas fa-plus-circle me-2'"
                                     :label="isEditMode ? 'Simpan perubahan' : 'Tambah Produk'" />
@@ -524,14 +515,6 @@ function formatCategory(cat = '') {
     text-transform: uppercase;
 }
 
-.hover-scale {
-    transition: transform 0.2s;
-}
-
-.hover-scale:hover {
-    transform: scale(1.05);
-}
-
 .pe-5 {
     padding-right: 2rem !important;
 }
@@ -549,28 +532,6 @@ function formatCategory(cat = '') {
     font-size: 0.75rem;
 }
 
-/* HOVER EFFECTS */
-.hover-lift {
-    transition: transform 0.2s;
-}
-
-.hover-lift:hover {
-    transform: translateY(-2px);
-}
-
-.hover-scale {
-    transition: transform 0.2s;
-}
-
-.hover-scale:hover {
-    transform: scale(1.02);
-}
-
-.hover-bg-light:hover {
-    background-color: #f5f4f4;
-    border-color: #0d6efd;
-    color: #818181;
-}
 
 /* IMAGE PREVIEW BOX */
 .group-hover-zoom:hover img {
@@ -595,15 +556,6 @@ function formatCategory(cat = '') {
 }
 
 /* INPUT STYLES */
-.form-label-custom {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    text-transform: uppercase;
-}
-
-/* Custom Gradient Background for Header Card */
 .bg-gradient-primary-soft {
     background: linear-gradient(135deg, rgba(13, 110, 253, 0.05) 0%, rgba(13, 110, 253, 0.0) 100%);
 }
@@ -648,7 +600,7 @@ function formatCategory(cat = '') {
 /* Pointer Events Helper */
 .branch-prices-section {
     pointer-events: auto;
-    max-height: 550px;
+    max-height: 600px;
     overflow-y: auto;
     overflow-x: hidden;
 
