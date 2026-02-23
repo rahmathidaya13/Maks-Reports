@@ -24,6 +24,10 @@ Fitur utama meliputi manajemen produk, transaksi penjualan, serta dashboard moni
 - Mysql
 - Node.js & Npm
 
+## ⚠️ Disclaimer
+Project ini dibuat untuk tujuan pengembangan portofolio.
+Dilarang menggunakan, mendistribusikan, memodifikasi, atau mempublikasikan ulang aplikasi ini untuk kebutuhan komersial atau bisnis tanpa izin dari pemilik repository.
+
 ## Instalasi
 
 Ikuti langkah-langkah di bawah ini untuk dapat menggunakan aplikasi ini
