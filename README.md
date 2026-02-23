@@ -1,6 +1,6 @@
 # 🧾 Web-Based Point of Sale (POS) System
 
-<p align="center"> <img src="ss/login.png" width="800"> </p> <p align="center"> <img src="ss/dashboard_admin.png" width="800"> </p> <p align="center"> <img src="ss/dashboard_user.png" width="800"> </p>
+<img width="300" alt="login" src="https://github.com/user-attachments/assets/f5d8f9f4-859b-4858-87f4-d25d168f648c" /> <img width="600"  alt="dashboard Admin" src="https://github.com/user-attachments/assets/5ba3c10e-5bc3-4b24-9cd5-d9dfbd4f7761" /> <img width="600" alt="dashboard User" src="https://github.com/user-attachments/assets/0ce9c7ae-c221-4188-9e37-05ed4bd05f84" />
 
 ## 📌 Deskripsi
 
