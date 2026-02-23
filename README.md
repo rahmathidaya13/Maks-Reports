@@ -1,6 +1,6 @@
 # 🧾 Web-Based Point of Sale (POS) System
 
-<p align="center"> <img src="/public/storage/ss/login.png" width="800"> </p> <p align="center"> <img src="/public/storage/ss/dashboard_admin.png" width="800"> </p> <p align="center"> <img src="/public/storage/ss/dashboard_user.png" width="800"> </p>
+<p align="center"> <img src="storage/ss/login.png" width="800"> </p> <p align="center"> <img src="storage/ss/dashboard_admin.png" width="800"> </p> <p align="center"> <img src="storage/ss/dashboard_user.png" width="800"> </p>
 
 ## 📌 Deskripsi
 
