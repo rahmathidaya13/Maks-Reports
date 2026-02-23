@@ -142,20 +142,6 @@ const deleteSelected = async () => {
 }
 // END MULTIPLE DELETE
 
-// date convert
-function daysTranslate(dayValue, invalidText) {
-    const dayConvert = {
-        "Sunday": "Minggu",
-        "Monday": "Senin",
-        "Tuesday": "Selasa",
-        "Wednesday": "Rabu",
-        "Thursday": "Kamis",
-        "Friday": "Jumat",
-        "Saturday": "Sabtu",
-    };
-    const dateFormat = moment(dayValue).format('DD-MM-YYYY');
-    return dateFormat === 'Invalid date' ? invalidText : dateFormat;
-}
 function itemCondition(val) {
     const value = {
         new: 'Baru',

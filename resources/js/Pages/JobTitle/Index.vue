@@ -14,7 +14,7 @@ const props = defineProps({
     jobTitle: Object,
     filters: Object,
 });
-
+// console.log(props.jobTitle.data.);
 const filters = reactive({
     keyword: props.filters.keyword ?? '',
     limit: props.filters.limit ?? null,
@@ -39,66 +39,32 @@ const header = [
     {
         label: "No",
         key: "__index",
-        attrs: {
-            class: "text-center",
-            style: "width:50px"
-        }
+        attrs: { class: "text-center align-middle text-muted", style: "width: 50px" }
     },
     {
-        label: "Kode Jabatan",
-        key: "job_title_code",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Nama Jabatan",
+        label: "Informasi Jabatan",
         key: "title",
-        attrs: {
-            class: "text-center",
-        }
+        attrs: { class: "text-start align-middle" }
     },
     {
-        label: "Jabatan Alias",
-        key: "title_alias",
-        attrs: {
-            class: "text-center",
-        }
+        label: "Total Karyawan",
+        key: "users_count",
+        attrs: { class: "text-center align-middle", style: "width: 150px" }
     },
     {
         label: "Deskripsi",
         key: "description",
-        attrs: {
-            class: "text-center",
-        }
+        attrs: { class: "text-center align-middle", style: "width: 35%" }
     },
     {
-        label: "Dibuat Oleh",
+        label: "Pembuat",
         key: "created_by",
-        attrs: {
-            class: "text-center",
-        }
+        attrs: { class: "text-center align-middle", style: "width: 280px" }
     },
     {
-        label: "Dibuat",
-        key: "created_at",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Diperbarui",
-        key: "updated_at",
-        attrs: {
-            class: "text-center",
-        }
-    },
-    {
-        label: "Aksi",
-        key: "-",
-        attrs: {
-            class: "text-center",
-        }
+        label: "",
+        key: "actions",
+        attrs: { class: "text-center align-middle", style: "width: 80px" }
     },
 ];
 watch(
@@ -115,22 +81,15 @@ watch(
 
 // CRUD OPERATION
 const loaderActive = ref(null)
-const create = () => {
-    loaderActive.value?.show("Memproses...");
-    router.get(route("job_title.create"), {}, {
-        onFinish: () => {
-            loaderActive.value?.hide()
-        }
+const navigateTo = (routeName, params = {}, message = "Sedang membuka...") => {
+    if (message) loaderActive.value?.show(message);
+    router.get(route(routeName, params), {}, {
+        onFinish: () => message && loaderActive.value?.hide(),
+        preserveScroll: false,
+        replace: true,
     });
-}
 
-const edit = (id) => {
-    loaderActive.value?.show("Sedang memuat data...");
-    router.get(route("job_title.edit", id), {}, {
-        onFinish: () => loaderActive.value?.hide()
-    });
 }
-
 const deleted = async (nameRoute, data) => {
     const setConfirm = await confirm.ask({
         title: 'Hapus',
@@ -151,11 +110,7 @@ const deleted = async (nameRoute, data) => {
 
 const reset = () => {
     isLoading.value = true
-    router.get(route("job_title.reset"), {}, {
-        preserveScroll: true,
-        replace: true,
-        onFinish: () => isLoading.value = false
-    });
+    navigateTo("job_title.reset", {}, false);
 }
 // end CRUD OPERATION
 
@@ -285,7 +240,7 @@ const toolbarActions = computed(() => [
         labelColor: 'text-danger',
         disabled: !selectedRow.value.length > 0,
         show: hasPermission('job.title.delete'),
-        click: deleteSelected
+        click: () => deleteSelected()
     },
 
     {
@@ -293,14 +248,14 @@ const toolbarActions = computed(() => [
         icon: 'fas fa-plus-circle',
         isPrimary: true, // Prioritas Utama
         show: hasPermission('job.title.create'),
-        click: create
+        click: () => navigateTo("job_title.create")
     },
     {
         label: 'Segarkan',
         icon: 'fas fa-redo-alt',
         iconColor: 'text-primary',
         loading: isLoading.value,
-        click: reset
+        click: () => reset()
     }
 ]);
 </script>
@@ -345,55 +300,97 @@ const toolbarActions = computed(() => [
                                 row-key="job_title_id" @update:selected="(val) => selectedRow = val">
 
                                 <template #empty>
-                                    <div class="text-muted d-flex flex-column align-items-center">
-                                        <i class="far fa-folder-open fs-1 mb-3 opacity-25"></i>
-                                        <span>Tidak ada data ditemukan</span>
+                                    <div class="text-center py-5">
+                                        <div class="bg-transparent rounded-circle d-inline-flex p-2 mb-3">
+                                            <i class="fas fa-id-badge text-muted opacity-50 fs-1"></i>
+                                        </div>
+                                        <h6 class="fw-bold text-dark">Data Jabatan Kosong</h6>
+                                        <p class="text-muted small">Belum ada data jabatan yang terdaftar.</p>
                                     </div>
                                 </template>
 
                                 <template #row="{ item, index }">
-                                    <td class="ps-3 text-muted">{{ index + 1 + (jobTitle?.current_page
-                                        - 1) * jobTitle?.per_page }}</td>
-
-                                    <td class="ps-3">
-                                        <div class="fw-bold text-dark"
-                                            v-html="highlight(item.job_title_code, filters.keyword)"></div>
-                                    </td>
-                                    <td class="ps-3">
-                                        <div v-html="highlight(item.title, filters.keyword)"></div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div v-html="highlight(item.title_alias, filters.keyword)"></div>
-                                    </td>
-                                    <td class="ps-3">
-                                        <div class="text-muted" v-html="item.description"></div>
+                                    <td class="text-center text-muted fw-medium align-middle">
+                                        {{ index + 1 + (jobTitle?.current_page - 1) * jobTitle?.per_page }}
                                     </td>
 
-                                    <td class="ps-3">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="avatar-circle bg-light text-primary fw-bold">
-                                                {{ item.creator?.name ?
-                                                    item.creator.name.substring(0, 2).toUpperCase() : '??' }}
+                                    <td class="ps-3 align-middle py-3">
+                                        <div class="d-flex align-items-start">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center me-3 mt-1"
+                                                style="width: 36px; height: 36px;">
+                                                <i class="fas fa-briefcase"></i>
                                             </div>
-                                            <span>{{ item.creator?.name ?? '-' }}</span>
+
+                                            <div class="d-flex flex-column">
+                                                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                                                    <span class="fw-bold text-dark fs-6 text-capitalize"
+                                                        v-html="highlight(item.title, filters.keyword)"></span>
+
+                                                    <span v-if="item.title_alias"
+                                                        class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 rounded-pill px-2 py-1"
+                                                        style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                                                        <span
+                                                            v-html="highlight(item.title_alias, filters.keyword)"></span>
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <span
+                                                        class="font-monospace text-muted bg-light border rounded px-2 py-1 d-inline-block"
+                                                        style="font-size: 0.75rem;">
+                                                        <i class="fas fa-hashtag me-1 opacity-50"></i>
+                                                        <span
+                                                            v-html="highlight(item.job_title_code, filters.keyword)"></span>
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
 
-                                    <td class="ps-3 small text-muted">{{ daysTranslate(item.created_at) }}
-                                    </td>
-                                    <td class="ps-3 small text-muted">{{ daysTranslate(item.updated_at) }}
+                                    <td class="text-center align-middle">
+                                        <span class="badge rounded-pill px-3 py-2 fw-medium"
+                                            :class="item.profile_count > 0 ? 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10' : 'bg-light text-muted border'">
+                                            <i class="fas fa-users me-1" style="font-size: 0.7rem;"></i>
+                                            {{ item.profile_count || 0 }} Orang
+                                        </span>
                                     </td>
 
-                                    <td class="text-center">
+                                    <td class="ps-3 align-middle text-muted small" style="line-height: 1.4;">
+                                        <span v-if="item.description" v-html="item.description"></span>
+                                        <span v-else class="fst-italic opacity-50">Tidak ada deskripsi</span>
+                                    </td>
+
+                                    <td class="ps-3 align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-3 bg-gradient-light border text-primary fw-bold small d-flex align-items-center justify-content-center shadow-sm"
+                                                style="width: 36px; height: 36px; border-radius: 50%;">
+                                                {{ item.creator?.name ? item.creator.name.substring(0, 2).toUpperCase()
+                                                    : '??' }}
+                                            </div>
+                                            <div class="d-flex flex-column small" style="line-height: 1.3;">
+                                                <span class="fw-bold text-dark mb-1">{{ item.creator?.name || 'Sistem'
+                                                    }}</span>
+                                                <div class="text-muted d-flex flex-column" style="font-size: 0.7rem;">
+                                                    <span><i class="fas fa-plus-circle me-1 opacity-50"></i> {{
+                                                        daysTranslate(item.created_at) }}</span>
+                                                    <span v-if="item.updated_at !== item.created_at">
+                                                        <i class="fas fa-pencil-alt me-1 opacity-50"></i> {{
+                                                            daysTranslate(item.updated_at) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center align-middle">
                                         <dropdown-action :item="item" :actions="[
                                             {
                                                 label: 'Ubah Jabatan',
                                                 icon: 'bi bi-pencil-square fs-6',
-                                                color_icon: 'success',
+                                                color: 'success', // disamakan pakai parameter color
                                                 action: 'edit',
                                                 permission: 'job.title.edit'
                                             },
-
                                             {
                                                 label: 'Hapus',
                                                 icon: 'bi bi-trash fs-6',
@@ -401,7 +398,7 @@ const toolbarActions = computed(() => [
                                                 action: 'delete',
                                                 permission: 'job.title.delete'
                                             }
-                                        ]" @edit="edit(item.job_title_id)"
+                                        ]" @edit="navigateTo('job_title.edit', item.job_title_id)"
                                             @delete="deleted('job_title.deleted', item)" />
                                     </td>
                                 </template>
@@ -436,9 +433,6 @@ const toolbarActions = computed(() => [
     transition: all 0.3s ease;
 }
 
-
-
-
 /* Avatar Circle untuk kolom Creator */
 .avatar-circle {
     width: 40px;
@@ -450,39 +444,8 @@ const toolbarActions = computed(() => [
     font-size: 0.7rem;
 }
 
-/* --- DROPDOWN & ICON --- */
-.btn-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.btn-icon:hover {
-    background-color: #e9ecef;
-    transform: rotate(90deg);
-}
-
-/* Animation Utilities */
-.animate-pop {
-    animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-
-@keyframes popIn {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.fs-7 {
-    font-size: 0.75rem;
+.font-monospace {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    letter-spacing: -0.3px;
 }
 </style>

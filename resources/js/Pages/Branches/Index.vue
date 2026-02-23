@@ -68,6 +68,7 @@ const header = [
         attrs: { class: "text-center align-middle" }
     },
 ];
+
 watch(
     () => [
         filters.keyword,
@@ -326,7 +327,8 @@ const toolbarActions = computed(() => [
                                                 <span
                                                     class="font-monospace text-muted small bg-light border rounded px-2"
                                                     style="font-size: 0.75rem;">
-                                                    <i class="fas fa-hashtag me-1 opacity-50"></i> {{ item.branch_code }}
+                                                    <i class="fas fa-hashtag me-1 opacity-50"></i> {{ item.branch_code
+                                                    }}
                                                 </span>
                                             </div>
                                         </div>
@@ -338,7 +340,8 @@ const toolbarActions = computed(() => [
                                                 <div class="d-flex flex-wrap gap-1">
                                                     <span v-for="phone in item.branch_phone"
                                                         :key="phone.branch_phone_id"
-                                                        class="badge bg-white border text-dark fw-normal shadow-sm d-flex align-items-center" style="font-size: 0.8rem;">
+                                                        class="badge bg-white border text-dark fw-normal shadow-sm d-flex align-items-center"
+                                                        style="font-size: 0.8rem;">
                                                         <i class="fas fa-phone-alt text-muted me-2"
                                                             style="font-size: 0.6rem;"></i>
                                                         <span v-html="highlight(phone.phone, filters.keyword)"></span>
@@ -370,20 +373,24 @@ const toolbarActions = computed(() => [
                                             </span>
                                         </div>
                                     </td>
-
-                                    <td class="align-middle">
+                                    <td class="ps-3 align-middle">
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-circle me-2 bg-gradient-light border text-primary fw-bold small d-flex align-items-center justify-content-center"
-                                                style="width: 32px; height: 32px; border-radius: 50%;">
+                                            <div class="avatar-circle me-3 bg-gradient-light border text-primary fw-bold small d-flex align-items-center justify-content-center shadow-sm"
+                                                style="width: 36px; height: 36px; border-radius: 50%;">
                                                 {{ item.creator?.name ? item.creator.name.substring(0, 2).toUpperCase()
-                                                : '?' }}
+                                                    : '??' }}
                                             </div>
-                                            <div class="d-flex flex-column small" style="line-height: 1.2;">
-                                                <span class="fw-semibold text-dark">{{ item.creator?.name || 'Sistem'
+                                            <div class="d-flex flex-column small" style="line-height: 1.3;">
+                                                <span class="fw-bold text-dark mb-1">{{ item.creator?.name || 'Sistem'
                                                     }}</span>
-                                                <span class="text-muted" style="font-size: 0.7rem;">
-                                                    {{ daysTranslate(item.created_at) }}
-                                                </span>
+                                                <div class="text-muted d-flex flex-column" style="font-size: 0.7rem;">
+                                                    <span><i class="fas fa-plus-circle me-1 opacity-50"></i> {{
+                                                        daysTranslate(item.created_at) }}</span>
+                                                    <span v-if="item.updated_at !== item.created_at">
+                                                        <i class="fas fa-pencil-alt me-1 opacity-50"></i> {{
+                                                            daysTranslate(item.updated_at) }}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>

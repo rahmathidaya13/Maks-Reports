@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Job\JobTitleController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Daily\DailyReportPrintOut;
@@ -176,6 +177,12 @@ Route::middleware(['auth', 'verified', 'profile.completed', 'check.status.active
     //     Route::put('/product/update/{id}', 'update')->name('admin.request.update');
     //     Route::get('/product/reset', 'reset')->name('admin.request.reset');
     // });
+
+    Route::controller(AdminDashboardController::class)->prefix('admin')->group(function () {
+        Route::get('/dashboard/information', 'index')->name('admin.dashboard.index');
+    });
+
+
 
     // cetak laporan
     Route::controller(ProductExportController::class)->group(function () {

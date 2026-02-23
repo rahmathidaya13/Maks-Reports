@@ -59,20 +59,36 @@ const jobTitle = page.props.auth.user.profile.job_title;
                         </div>
                     </div>
                     <div class="sb-sidenav-menu-heading">Home</div>
-                    <Link @click.prevent="navigateTo('home')" class="nav-link"
+
+                    <Link v-if="hasRole(['user', 'developer'])" @click.prevent="navigateTo('home')" class="nav-link"
                         :class="{ 'active active-link': is('dashboard*') }" :href="route('home')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-tachometer-alt"></i>
                         </div>
                         Dashboard
+                        <small class="ms-auto" style="font-size: 12px;">
+                            U
+                        </small>
+                    </Link>
+
+                    <Link v-if="hasRole(['developer', 'admin'])" @click.prevent="navigateTo('admin.dashboard.index')"
+                        class="nav-link" :class="{ 'active active-link': is('admin*') }"
+                        :href="route('admin.dashboard.index')">
+                        <div class="sb-nav-link-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        Dashboard
+                        <small class="ms-auto" style="font-size: 12px;">
+                            A
+                        </small>
                     </Link>
 
 
                     <div class="sb-sidenav-menu-heading" v-if="hasPermission('product.view')">Produk
                     </div>
 
-                    <Link v-if="hasPermission('product.view')" @click.prevent="navigateTo('product')" :href="route('product')" class="nav-link"
-                        :class="{ 'active active-link': is('product*') }">
+                    <Link v-if="hasPermission('product.view')" @click.prevent="navigateTo('product')"
+                        :href="route('product')" class="nav-link" :class="{ 'active active-link': is('product*') }">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-tags"></i>
                         </div>

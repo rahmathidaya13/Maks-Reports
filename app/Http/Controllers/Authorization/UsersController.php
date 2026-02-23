@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Authorization;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
-use App\Services\UserService;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;

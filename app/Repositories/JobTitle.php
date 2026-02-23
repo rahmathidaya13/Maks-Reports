@@ -17,7 +17,8 @@ class JobTitle extends BaseCacheRepository
         $isAdmin = $user->hasAnyRole(['admin', 'developer']);
 
         $query = JobTitleModel::query()
-            ->with(['creator', 'profile.user']);
+            ->with(['creator', 'profile.user'])
+            ->withCount('profile');
 
         /*
     |--------------------------------------------------------------------------
@@ -45,7 +46,7 @@ class JobTitle extends BaseCacheRepository
         }
 
         return $query
-            ->orderBy('created_at', $filters['order_by'] ?? 'desc')
+            ->orderBy('job_title.created_at', $filters['order_by'] ?? 'desc')
             ->paginate($filters['limit'] ?? 10);
     }
 }

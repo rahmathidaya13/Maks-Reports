@@ -77,7 +77,17 @@ class BranchesModel extends Model
             }
         });
     }
-
+    public function transactions()
+    {
+        return $this->hasManyThrough(
+            TransactionModel::class, // 1. Model Target (Transaksi)
+            ProfileModel::class,     // 2. Model Perantara (Profile)
+            'branches_id',             // 3. Foreign key di tabel profiles (yg menunjuk ke cabang)
+            'created_by',            // 4. Foreign key di tabel transactions (yg menunjuk ke user_id)
+            'branches_id',           // 5. Primary key di tabel branches
+            'users_id'                // 6. Foreign key di tabel profiles (yg di-referensi oleh transactions)
+        );
+    }
     public function product()
     {
         return $this->hasMany(ProductModel::class, 'branch_id', 'branches_id');
