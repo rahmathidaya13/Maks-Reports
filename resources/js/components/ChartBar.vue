@@ -100,15 +100,16 @@ const renderChart = () => {
                 displayColors: false,
                 callbacks: {
                     // Format angka di tooltip (biar tidak polos)
-                    label: function(context) {
-                         let label = context.dataset.label || '';
-                         if (label) {
-                             label += ': ';
-                         }
-                         if (context.parsed.y !== null) {
-                             label += new Intl.NumberFormat('id-ID').format(context.parsed.y);
-                         }
-                         return label;
+                    label: function (context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': Rp '; // Tambahkan 'Rp ' biar makin cantik
+                        }
+                        if (context.raw !== null && context.raw !== undefined) {
+                            // GUNAKAN context.raw
+                            label += new Intl.NumberFormat('id-ID').format(context.raw);
+                        }
+                        return label;
                     }
                 }
             }

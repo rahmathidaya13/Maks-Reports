@@ -68,6 +68,13 @@ const grossTotal = computed(() => {
     return props.transaction.items.reduce((sum, item) => sum + (Number(item.price_unit) * Number(item.quantity)), 0);
 });
 
+// ==========================================
+// DATA PAJAK (Diambil dari Backend)
+// ==========================================
+const subTotalNet = computed(() => Number(props.transaction?.sub_total ?? 0));
+const taxPercentage = computed(() => Number(props.transaction?.tax_percentage ?? 0));
+const taxAmount = computed(() => Number(props.transaction?.tax_amount ?? 0));
+
 // Warna Tema Berdasarkan Status
 const themeColor = computed(() => {
     if (props.transaction?.status === 'cancelled') return 'danger';
@@ -75,12 +82,13 @@ const themeColor = computed(() => {
     if (paymentStatus.value === 'PARTIAL') return 'warning';
     return 'secondary';
 });
+
 </script>
 <template>
     <div class="row" v-if="props.show">
         <div class="col-xl-12 col-sm-12">
-            <modal width="900px" size="modal-lg" :footer="false" icon="fas fa-info-circle" :show="props.show" title="Detail Transaksi"
-                @closed="close">
+            <modal width="900px" size="modal-lg" :footer="false" icon="fas fa-info-circle" :show="props.show"
+                title="Detail Transaksi" @closed="close">
                 <template #body>
                     <div v-if="transaction">
 
@@ -113,7 +121,7 @@ const themeColor = computed(() => {
                             v-if="transaction.status !== 'cancelled'">
                             <div class="d-flex justify-content-between small fw-bold mb-1">
                                 <span :class="`text-${themeColor}`">Terbayar: {{ Math.round(paymentPercentage)
-                                }}%</span>
+                                    }}%</span>
                                 <span class="text-muted">Tagihan: {{ formatCurrency(grandTotal) }}</span>
                             </div>
                             <div class="progress shadow-sm" style="height: 10px;">
@@ -252,23 +260,32 @@ const themeColor = computed(() => {
 
                                         <tfoot class="bg-light border-top">
                                             <tr>
-                                                <td colspan="3" class="ps-4 text-end text-muted text-sm">Total Subtotal
-                                                </td>
+                                                <td colspan="3" class="ps-4 text-end text-muted text-sm">Total Harga
+                                                    Barang</td>
                                                 <td class="pe-4 text-end text-muted text-sm">{{
                                                     formatCurrency(grossTotal) }}</td>
                                             </tr>
 
                                             <tr v-if="totalDiscount > 0">
-                                                <td colspan="3" class="ps-4 text-end text-danger text-sm">Total Diskon
+                                                <td colspan="3" class="ps-4 text-end text-danger text-sm">Total
+                                                    Diskon
                                                 </td>
                                                 <td class="pe-4 text-end text-danger text-sm">- {{
                                                     formatCurrency(totalDiscount) }}</td>
                                             </tr>
 
+                                            <tr v-if="taxAmount > 0">
+                                                <td colspan="3" class="ps-4 text-end text-danger text-sm">PPN
+                                                    ({{ taxPercentage }}%)</td>
+                                                <td class="pe-4 text-end text-danger text-sm">+ {{
+                                                    formatCurrency(taxAmount) }}</td>
+                                            </tr>
+
                                             <tr>
                                                 <td colspan="3"
-                                                    class="ps-4 text-end fw-bold text-dark text-sm border-top">Total
-                                                    Tagihan (Net)</td>
+                                                    class="ps-4 text-end fw-bold text-dark text-sm border-top">
+                                                    Total Tagihan (Grand Total)
+                                                </td>
                                                 <td class="pe-4 text-end fw-bold text-dark text-sm border-top">{{
                                                     formatCurrency(grandTotal) }}</td>
                                             </tr>

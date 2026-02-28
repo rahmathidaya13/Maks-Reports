@@ -54,6 +54,11 @@ class LoginController extends Controller
         }
 
         $request->session()->regenerate();
+
+        $user = auth()->user();
+        if ($user->hasAnyRole(['admin', 'developer'])) {
+            return redirect()->intended(route('admin.dashboard.index'));
+        }
         return redirect()->intended('/dashboard/analitics');
     }
 

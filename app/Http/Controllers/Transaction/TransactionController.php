@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 use App\Models\TransactionModel;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Repositories\AdminDashboardRepository;
 use App\Traits\TransactionValidation;
 use App\Repositories\DashboardRepository;
 use App\Repositories\TransactionRepository;
@@ -81,27 +82,36 @@ class TransactionController extends Controller
 
         $this->validationText($request->all());
 
-        // Hitung Grand Total (Looping Server Side)
-        // Jangan percaya total dari frontend, hitung ulang di backend demi keamanan
-        $grandTotal = 0;
+        // Hitung Sub Total (Harga Barang Murni)
+        $subTotal = 0;
         foreach ($request->items as $item) {
-            $subtotal = ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0);
-            $grandTotal += $subtotal;
+            $grossItemPrice = $item['price_original'] * $item['quantity']; // Harga Kotor
+            $discountPct = $item['discount_percentage'] ?? 0; // Tangkap angka 10, 11, atau 0
+            $nominalDiscount = $grossItemPrice * ($discountPct / 100); // Hitung nominal aslinya
+            $itemSubTotal = $grossItemPrice - $nominalDiscount; // Harga Bersih
+            $subTotal += $itemSubTotal; // Hitung Sub Total
         }
+
+        // Hitung PPN (Hanya ambil persentasenya dari Request)
+        $taxPercentage = $request->tax_percentage ?? 0; // Tangkap angka 10, 11, atau 0
+        $taxAmount = $subTotal * ($taxPercentage / 100); // Hitung nominal aslinya
+        // Hitung Grand Total (Sub Total + PPN)
+        $grandTotal = $subTotal + $taxAmount;
+
 
         // Validasi Bisnis (DP)
         if ($request->payment_type === 'payment') {
-            $dpMin = $grandTotal * 0.5;
+            $dpMin = $grandTotal * 0.5; // DP minimal 50% dari harga setelah pajak
             if ($request->amount < $dpMin) {
                 return back()->withErrors(['amount' => 'Minimal DP 50% adalah Rp ' . number_format($dpMin)]);
             }
             if ($request->amount >= $grandTotal) {
-                return back()->withErrors(['amount' => 'Nominal DP tidak boleh lunas. Gunakan opsi Lunas Langsung.']);
+                return back()->withErrors(['amount' => 'Nominal DP tidak boleh melebihi dari harga lunas. Gunakan opsi Lunas Langsung.']);
             }
         }
 
         try {
-            $transaction = DB::transaction(function () use ($request, $grandTotal) {
+            $transaction = DB::transaction(function () use ($request, $grandTotal, $subTotal, $taxAmount, $taxPercentage) {
                 // A. Header Transaksi
                 $transaction = TransactionModel::create([
                     'created_by'       => auth()->id(),
@@ -109,6 +119,10 @@ class TransactionController extends Controller
                     'transaction_date' => now(),
                     'customer_id'      => $request->customer_id,
                     'status'           => $request->payment_type === 'repayment' ? 'repayment' : 'payment',
+
+                    'sub_total'        => $subTotal,
+                    'tax_percentage'   => $taxPercentage,
+                    'tax_amount'       => $taxAmount,
                     'grand_total'      => $grandTotal,
                 ]);
 
@@ -116,15 +130,19 @@ class TransactionController extends Controller
                 // Kita mapping dulu agar sesuai nama kolom di DB transaction_items
                 $itemsData = [];
                 foreach ($request->items as $item) {
+                    $grossItemPrice = $item['price_original'] * $item['quantity']; // Harga Kotor
+                    $discountPct = $item['discount_percentage'] ?? 0; // Tangkap angka 10, 11, atau 0
+                    $nominalDiscount = $grossItemPrice * ($discountPct / 100); // Hitung nominal aslinya
                     $itemsData[] = [
                         'created_by'      => auth()->id(),
                         'product_id'      => $item['product_id'],
                         'quantity'        => $item['quantity'],
                         'price_unit'      => $item['price_original'], // Harga Manual
-                        'discount_amount' => $item['price_discount'] ?? 0,
-                        'subtotal'        => ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0),
+                        'discount_amount' => $nominalDiscount,
+                        'subtotal'        => $grossItemPrice - $nominalDiscount,
                     ];
                 }
+
                 $transaction->items()->createMany($itemsData);
                 // C. Simpan Pembayaran
                 $payAmount = $request->payment_type === 'repayment' ? $grandTotal : $request->amount;
@@ -255,7 +273,9 @@ class TransactionController extends Controller
         app(DashboardRepository::class)->clearCache(auth()->id());
         return Inertia::render('Transaction/Form/pageForm', [
             'transaction' => $transaction,
-            'customer' => CustomerModel::select('customer_id', 'customer_name')->get(),
+            'customer' => CustomerModel::select('customer_id', 'customer_name')
+                ->where('created_by', auth()->id())
+                ->get(),
             'product' => ProductModel::select('product_id', 'name')->get()
         ]);
     }
@@ -280,43 +300,57 @@ class TransactionController extends Controller
                 ->with('message', 'Transaksi dengan status ' . $status . ' tidak dapat diubah.');
         }
 
-        // Hitung Grand Total Baru (Server Side Calculation)
-        $newGrandTotal = 0;
+        // Hitung Sub Total Baru (Server Side Calculation)
+        $subTotal = 0;
         foreach ($request->items as $item) {
-            $subtotal = ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0);
-            $newGrandTotal += $subtotal;
+            $grossItemPrice = $item['price_original'] * $item['quantity']; // Harga Kotor
+            $discountPct = $item['discount_percentage'] ?? 0;  // Hitung nominal diskon dari persentase
+            $nominalDiscount = $grossItemPrice * ($discountPct / 100);
+            $itemSubtotal = $grossItemPrice - $nominalDiscount;
+            $subTotal += $itemSubtotal;
         }
+
+        // Hitung Pajak
+        $taxPercentage = $request->tax_percentage ?? 0;
+        $taxAmount = $subTotal * ($taxPercentage / 100);
+
+        // Hitung Grand Total Sebenarnya
+        $newGrandTotal = $subTotal + $taxAmount;
 
         // Validasi Bisnis (Aturan DP 50%)
-        // Karena item berubah, Grand Total berubah, maka syarat Min DP juga berubah.
-        $dpMin = $newGrandTotal * 0.5;
+        // Karena item berubah, Sub Total berubah, maka syarat Min DP juga berubah.
         $inputDP = $request->amount;
+        $paymentType = $request->payment_type ?? 'payment';
 
-
-        // Cek Min 50%
-        if ($inputDP < $dpMin) {
-            return back()->withErrors([
-                'amount' => 'Karena total belanja berubah menjadi Rp ' . number_format($newGrandTotal) . ', maka Minimal DP (50%) adalah Rp ' . number_format($dpMin)
-            ]);
+        if ($paymentType === 'payment') {
+            $dpMin = $newGrandTotal * 0.5;
+            // Cek Min 50%
+            if ($inputDP < $dpMin) {
+                return back()->withErrors([
+                    'amount' => 'Karena total belanja berubah menjadi Rp ' . number_format($newGrandTotal) . ', maka Minimal DP (50%) adalah Rp ' . number_format($dpMin)
+                ]);
+            }
+            // Cek Maksimal (Tidak boleh lunas di sini)
+            // Karena kalau lunas, harusnya lewat menu pelunasan
+            if ($inputDP >= $newGrandTotal) {
+                return back()->withErrors([
+                    'amount' => 'Nominal DP tidak boleh menyamai/melebihi Total Tagihan. Jika ingin melunasi, silakan simpan dulu lalu masuk ke menu Pelunasan.'
+                ]);
+            }
         }
-
-        // Cek Maksimal (Tidak boleh lunas di sini)
-        // Karena kalau lunas, harusnya lewat menu pelunasan
-        if ($inputDP >= $newGrandTotal) {
-            return back()->withErrors([
-                'amount' => 'Nominal DP tidak boleh menyamai/melebihi Total Tagihan. Jika ingin melunasi, silakan simpan dulu lalu masuk ke menu Pelunasan.'
-            ]);
-        }
-
 
         try {
-            DB::transaction(function () use ($request, $transaction, $newGrandTotal, $dpMin, $inputDP) {
+            DB::transaction(function () use ($request, $transaction, $subTotal, $taxPercentage, $taxAmount, $newGrandTotal, $inputDP, $paymentType) {
                 // Update Header
                 $transaction->update([
                     'invoice'        => $request['invoice'],
                     'customer_id'    => $request['customer_id'],
-                    'grand_total'    => $newGrandTotal,
                     'status'           => 'payment',
+
+                    'sub_total'        => $subTotal,
+                    'tax_percentage'   => $taxPercentage,
+                    'tax_amount'       => $taxAmount,
+                    'grand_total'      => $newGrandTotal,
                 ]);
 
                 // B. RESET ITEMS (Wipe & Replace)
@@ -324,25 +358,29 @@ class TransactionController extends Controller
 
                 $itemsData = [];
                 foreach ($request->items as $item) {
+                    $grossItemPrice = $item['price_original'] * $item['quantity']; // Harga Kotor
+                    $discountPct = $item['discount_percentage'] ?? 0; // Hitung nominal diskon dari persentase
+                    $nominalDiscount = $grossItemPrice * ($discountPct / 100); // Hitung nominal aslinya
                     $itemsData[] = [
                         'created_by'      => auth()->id(),
                         'product_id'      => $item['product_id'],
                         'quantity'        => $item['quantity'],
                         'price_unit'      => $item['price_original'],
-                        'discount_amount' => $item['price_discount'] ?? 0,
-                        'subtotal'        => ($item['price_original'] * $item['quantity']) - ($item['price_discount'] ?? 0),
+                        'discount_amount' => $nominalDiscount,
+                        'subtotal'        => $grossItemPrice - $nominalDiscount,
                     ];
                 }
                 $transaction->items()->createMany($itemsData);
 
                 // C. UPDATE PEMBAYARAN
+                $payAmount = $paymentType === 'repayment' ? $newGrandTotal : $inputDP;
                 // Update satu-satunya record payment yang ada (DP) dengan nominal baru
                 $transaction->payments()->updateOrCreate(
                     ['transaction_id' => $transaction->transaction_id],
                     [
                         'created_by'     => auth()->id(),
                         'payment_date'   => now(), // Update tanggal bayar ke saat diedit (opsional)
-                        'amount'         => $inputDP, // Nominal DP Baru yang sudah divalidasi
+                        'amount'         => $payAmount, // Nominal DP Baru yang sudah divalidasi
                         'payment_type'   => 'payment', // Tetap payment
                         'payment_method' => $request->payment_method,
                     ]
@@ -354,7 +392,7 @@ class TransactionController extends Controller
             $this->transactionRepository->clearCache(auth()->id());
             app(DashboardRepository::class)->clearCache(auth()->id());
 
-            $message = "Transaksi invoice {$transaction->invoice} untuk pelanggan {$transaction->customer->customer_name} berhasil diperbarui.";
+            $message = "Transaksi dari invoice {$transaction->invoice} untuk pelanggan {$transaction->customer->customer_name} berhasil diperbarui.";
             return redirect()
                 ->route('transaction')
                 ->with('message', $message);
@@ -393,7 +431,6 @@ class TransactionController extends Controller
         $message = 'Transaksi tanggal ' . Carbon::parse($transaction->transaction_date)->format('d/m/Y') . ' pelanggan ' . $transaction->customer->customer_name . ' telah dihapus.';
         $this->transactionRepository->clearCache(auth()->id());
         app(DashboardRepository::class)->clearCache(auth()->id());
-
         if ($isDeveloper) {
             $message .= " (Dihapus paksa oleh Pengembang)";
         }
@@ -415,7 +452,7 @@ class TransactionController extends Controller
 
         $isDeveloper = auth()->user()->hasRole('developer');
         if (!$isDeveloper) {
-            // Optimasi: Cek langsung di database apakah ada salah satu transaksi 
+            // Optimasi: Cek langsung di database apakah ada salah satu transaksi
             // yang dipilih punya relasi ke payments
             $hasRestrictedTransaction = TransactionModel::query()
                 ->with(['creator', 'customer', 'items.product', 'payments'])

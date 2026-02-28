@@ -61,6 +61,44 @@ const reset = () => {
         onFinish: () => isLoading.value = false
     });
 }
+// Amankan Labels (Sumbu X) chart bar
+const chartLabels = computed(() => {
+    if (!props.chart_data?.labels) return [];
+    return props.chart_data.labels;
+});
+
+// 2. Amankan Values (Sumbu Y) -> Paksa jadi Number agar tidak blank/NaN
+const chartData = computed(() => {
+    if (!props.chart_data?.values) return [];
+
+    // Ubah setiap item menjadi angka, jika gagal jadikan 0
+    const countNumber = props.chart_data.values.map(val => Number(val) || 0);
+
+    const maxOmset = Math.max(...countNumber);
+    // Atur warna: Emas untuk omset tertinggi, Hijau Zamrud untuk sisanya
+    const backgroundColors = countNumber.map(nilai =>
+        nilai === maxOmset && maxOmset > 0
+            ? 'rgba(245, 158, 11, 0.9)'  // Warna Emas (Tertinggi)
+            : 'rgba(16, 185, 129, 0.7)'  // Warna Hijau Zamrud (Sisanya)
+    );
+    const hoverColors = countNumber.map(nilai =>
+        nilai === maxOmset && maxOmset > 0
+            ? 'rgba(217, 119, 6, 1)'     // Emas Gelap (Hover)
+            : 'rgba(5, 150, 105, 1)'     // Hijau Gelap (Hover)
+    );
+
+    return [
+        {
+            label: 'Total Omset (Rp)',
+            data: countNumber,
+            backgroundColor: backgroundColors,
+            hoverBackgroundColor: hoverColors,
+            borderRadius: 6,       // Ujung membulat yang modern
+            borderSkipped: false,
+            barPercentage: 0.55,   // Proporsi batang agar rapi
+        }
+    ];
+});
 </script>
 <template>
 
@@ -108,7 +146,7 @@ const reset = () => {
                                             <p class="text-muted small mb-0">
                                                 <i class="bi bi-calendar3 me-1"></i> Periode:
                                                 <span class="fw-semibold text-primary">{{ stats.current_month_name
-                                                    }}</span>
+                                                }}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -120,7 +158,7 @@ const reset = () => {
                                         class="form-select form-select-sm border-0 focus-none fw-semibold">
                                         <option v-for="month in months" :key="month.value" :value="month.value">{{
                                             month.label
-                                            }}
+                                        }}
                                         </option>
                                     </select>
                                     <div class="vr my-1"></div>
@@ -265,9 +303,8 @@ const reset = () => {
                                             </div>
                                             <div class="card-body px-4 pb-4">
                                                 <div class="chart-wrapper">
-                                                    <chart-bar type="bar" :height="300"
-                                                        :labels="props.chart_data.labels"
-                                                        :data="props.chart_data.values" label="Total Omset (Rp)" />
+                                                    <chart-bar type="doughnut" :height="400" :labels="chartLabels"
+                                                        :datasets="chartData" />
                                                 </div>
                                             </div>
                                         </div>
@@ -340,7 +377,7 @@ const reset = () => {
                                                                         <div class="rank-circle me-3">{{ index + 1 }}
                                                                         </div>
                                                                         <span class="fw-semibold text-dark">{{ prod.name
-                                                                            }}</span>
+                                                                        }}</span>
                                                                     </div>
                                                                 </td>
                                                                 <td class="text-end pe-4 py-3">

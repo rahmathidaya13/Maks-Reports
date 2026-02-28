@@ -188,7 +188,8 @@ const jobTitle = page.props.auth.user.profile.job_title;
 
 
 
-                    <Link @click.prevent="navigateTo('logout')" class="nav-link" :href="route('logout')">
+                    <Link @click.prevent="navigateTo('logout', {}, 'Keluar dari sistem...')" class="nav-link"
+                        :href="route('logout')">
                         <div class="sb-nav-link-icon">
                             <i class="fas fa-sign-out-alt"></i>
                         </div>

@@ -14,7 +14,7 @@ class AdminController extends Controller
     public function __construct(AdminRequestProduct $adminRequestProduct)
     {
         $this->adminRequestProductRepo = $adminRequestProduct;
-        $this->middleware(['role:developer|role:admin']);
+        $this->middleware(['role:developer|`role:admin']);
     }
     public function index(Request $request)
     {

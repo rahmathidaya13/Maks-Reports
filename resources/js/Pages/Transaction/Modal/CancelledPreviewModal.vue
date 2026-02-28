@@ -41,6 +41,14 @@ const remainingBalance = computed(() => {
     if (!props.transaction) return 0;
     return Number(props.transaction.grand_total) - totalPaid.value;
 });
+
+// ==========================================
+// DATA PAJAK (Diambil dari Backend)
+// ==========================================
+const subTotalNet = computed(() => Number(props.transaction?.sub_total ?? 0));
+const taxPercentage = computed(() => Number(props.transaction?.tax_percentage ?? 0));
+const taxAmount = computed(() => Number(props.transaction?.tax_amount ?? 0));
+
 </script>
 <template>
     <div class="row" v-if="props.show">
@@ -185,7 +193,7 @@ const remainingBalance = computed(() => {
                                                     </span>
                                                     <span class="text-xs text-muted">{{
                                                         formatDate(pay.payment_date)
-                                                        }}</span>
+                                                    }}</span>
                                                 </td>
                                                 <td class="py-3">
                                                     <span class="text-sm text-dark text-capitalize">
@@ -208,7 +216,7 @@ const remainingBalance = computed(() => {
                                         <tfoot class="bg-light border-top">
                                             <tr>
                                                 <td colspan="2" class="ps-4 py-2 text-end text-muted text-sm">
-                                                    Total Subtotal
+                                                    Total Harga Barang
                                                 </td>
                                                 <td class="pe-4 py-2 text-end fw-bold text-dark">
                                                     {{ formatCurrency(transaction.grand_total) }}

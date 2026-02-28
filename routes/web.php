@@ -48,6 +48,8 @@ use App\Http\Controllers\Transaction\TransactionExportController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+// Akun yang belum diverfikasi
 Route::middleware(['guest'])->group(function () {
     Route::controller(LoginController::class)->group(function () {
         Route::get('/login', 'login')->name('login');
@@ -178,9 +180,7 @@ Route::middleware(['auth', 'verified', 'profile.completed', 'check.status.active
     //     Route::get('/product/reset', 'reset')->name('admin.request.reset');
     // });
 
-    Route::controller(AdminDashboardController::class)->prefix('admin')->group(function () {
-        Route::get('/dashboard/information', 'index')->name('admin.dashboard.index');
-    });
+
 
 
 
@@ -227,7 +227,13 @@ Route::middleware(['auth', 'verified', 'profile.completed', 'check.status.active
     //     Route::put('/product/update/product-requests/{id}', 'update')->name('product.request.update');
     // });
 
+    // arahkan jika yang masuk kedalam sistem adalah admin atau developer
+    Route::controller(AdminDashboardController::class)->prefix('admin')->group(function () {
+        Route::get('/dashboard/information', 'index')->name('admin.dashboard.index');
+        Route::get('/dashboard/reset', 'reset')->name('admin.dashboard.reset');
+    });
 });
+
 
 Route::middleware(['auth', 'check.status.active'])->group(function () {
     Route::controller(ProfileController::class)->group(function () {

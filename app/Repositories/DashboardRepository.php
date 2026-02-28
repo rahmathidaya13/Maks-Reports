@@ -170,7 +170,7 @@ class DashboardRepository extends BaseCacheRepository
                 $trx->grand_total - $trx->payments_sum_amount),
             ],
             'chart_data' => [
-                'labels' => $dailyStats->pluck('date'),
+                'labels' => $dailyStats->pluck('date')->map(fn($date) => Carbon::parse($date)->translatedFormat('d-M-Y')),
                 'values' => $dailyStats->pluck('total'),
             ],
             'top_products' => $topProducts,

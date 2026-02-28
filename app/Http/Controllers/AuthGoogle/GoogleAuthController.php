@@ -69,7 +69,11 @@ class GoogleAuthController extends Controller
 
             Auth::login($user, true);
 
-            return redirect()->intended('/dashboard/analitics')->with('message', 'Berhasil login menggunakan akun Google.');
+            if ($user->hasAnyRole(['admin', 'developer'])) {
+                return redirect()->intended(route('admin.dashboard.index'));
+            }
+
+            return redirect()->intended(route('home'))->with('message', 'Berhasil login menggunakan akun Google.');
         } catch (\Exception $e) {
             // Log error untuk debugging
             Log::error('Google Login Error: ' . $e->getMessage());

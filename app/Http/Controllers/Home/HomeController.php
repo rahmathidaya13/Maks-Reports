@@ -13,7 +13,7 @@ class HomeController extends Controller
 
     public function __construct()
     {
-        $this->middleware('role:developer|admin|user');
+        $this->middleware(['user.access']);
     }
     public function index(Request $request, DashboardRepository $dashboardRepository)
     {

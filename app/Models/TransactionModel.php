@@ -20,18 +20,16 @@ class TransactionModel extends Model
         'invoice',
         'transaction_date',
         'customer_id',
-        // 'product_id',
-        // 'price_original',
-        // 'price_discount',
-        // 'price_final',
-        // 'quantity',
         'status',
+        'sub_total',
+        'tax_percentage',
+        'tax_amount',
         'grand_total',
         'cancel_reason',
         'cancelled_at',
         'cancelled_by'
     ];
-
+    protected $dates    = ["deleted_at"];
     // Relasi ke CREATOR (User) pembuat transaksi
     public function creator()
     {
@@ -55,5 +53,4 @@ class TransactionModel extends Model
     {
         return $this->belongsTo(CustomerModel::class, 'customer_id', 'customer_id');
     }
-
 }

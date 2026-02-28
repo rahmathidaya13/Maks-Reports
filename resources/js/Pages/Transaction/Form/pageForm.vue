@@ -15,17 +15,24 @@ const props = defineProps({
 const form = useForm({
     invoice: props.transaction?.invoice ?? '',
     customer_id: props.transaction?.customer?.customer_id ?? '',
-    items: props.transaction?.items?.map((item) => ({
-        product_id: item.product_id,
-        price_original: Number(item.price_unit),
-        price_discount: Number(item.discount_amount),
-        quantity: Number(item.quantity),
-        product_name: item.product?.name,
-    })) ?? [],
+    items: props.transaction?.items?.map((item) => {
+        const gross = Number(item.price_unit) * Number(item.quantity); // Harga Bruto/ Kotor
+        const nominalDisc = Number(item.discount_amount); // Nominal Diskon
+        const percentage = gross > 0 ? (nominalDisc / gross) * 100 : 0; // Persentase Diskon
+
+        return {
+            product_id: item.product_id,
+            price_original: Number(item.price_unit),
+            discount_percentage: Number(percentage),
+            quantity: Number(item.quantity),
+            product_name: item.product?.name,
+        }
+    }) ?? [],
+
     payment_type: props.transaction?.payments[0].payment_type ?? null,
     payment_method: props.transaction?.payments[0].payment_method ?? null,
     amount: Number(props.transaction?.payments[0].amount ?? 0),
-
+    tax_percentage: Number(props.transaction?.tax_percentage ?? 0),
 });
 
 // STATE UNTUK INPUT BARANG SEMENTARA
@@ -33,14 +40,14 @@ const form = useForm({
 const tempItem = reactive({
     product_id: '',
     price_original: 0,
-    price_discount: 0,
+    discount_percentage: 0,
     quantity: 1
 })
 
 watch(() => tempItem.product_id, () => {
     tempItem.price_original = 0;
     tempItem.quantity = 1;
-    tempItem.price_discount = 0
+    tempItem.discount_percentage = 0
 })
 
 const addItem = () => {
@@ -59,13 +66,14 @@ const addItem = () => {
     if (existingIndex !== -1) {
         form.items[existingIndex].quantity += parseInt(tempItem.quantity);
         form.items[existingIndex].price_original = tempItem.price_original;
+        form.items[existingIndex].discount_percentage = tempItem.discount_percentage;
     } else {
         const selected = props.product.find(p => p.product_id === tempItem.product_id);
         form.items.push({
             product_id: tempItem.product_id,
             price_original: tempItem.price_original, // Ambil dari input manual
             quantity: tempItem.quantity,
-            price_discount: 0,
+            discount_percentage: tempItem.discount_percentage,
             product_name: selected?.name || 'Unknown Product',
         });
     }
@@ -73,7 +81,7 @@ const addItem = () => {
     // Reset input sementara
     tempItem.product_id = '';
     tempItem.price_original = 0;
-    tempItem.price_discount = 0
+    tempItem.discount_percentage = 0
     tempItem.quantity = 1;
 };
 
@@ -82,13 +90,23 @@ const removeItem = (index) => {
     form.items.splice(index, 1);
 };
 
-const grandTotal = computed(() => {
+// kalkulasi uang
+const subTotal = computed(() => {
     return form.items.reduce((total, item) => {
-        const subtotal = (item.price_original * item.quantity) - item.price_discount;
-        return total + subtotal;
+        const gross = item.price_original * item.quantity;
+        const nominalDisc = gross * (Number(item.discount_percentage) / 100);
+        return total + (gross - nominalDisc);
     }, 0);
 });
-
+// Hitung Pratinjau Nominal Pajak
+const taxAmountPreview = computed(() => {
+    const percentage = Number(form.tax_percentage) || 0;
+    return subTotal.value * (percentage / 100);
+});
+// Hitung Grand Total (Sub Total + Pajak)
+const grandTotal = computed(() => {
+    return subTotal.value + taxAmountPreview.value;
+});
 // minimal dana pertama
 const dpAmount = computed(() => {
     return grandTotal.value * 0.5
@@ -158,7 +176,6 @@ const pageMeta = computed(() => {
 const breadcrumbItems = computed(() => {
     const items = [
         { text: "Daftar Transaksi", url: route("transaction") },
-        { text: "Buat Transaksi Baru", url: route("transaction.create") }
     ];
     items.push({
         text: pageMeta.value.title,
@@ -177,8 +194,6 @@ const goBack = () => {
     });
 }
 // splash loader screen end
-
-
 function formatCurrency(value) {
     if (!value) return "0";
     return new Intl.NumberFormat('id-ID', {
@@ -291,7 +306,7 @@ function formatCurrency(value) {
                                                 <th style="width: 30%">Produk</th>
                                                 <th style="width: 10%">Qty</th>
                                                 <th style="width: 20%">Harga Satuan</th>
-                                                <th style="width: 15%">Diskon</th>
+                                                <th style="width: 15%">Diskon(%)</th>
                                                 <th style="width: 20%">Subtotal</th>
                                                 <th style="width: 5%">Aksi</th>
                                             </tr>
@@ -315,12 +330,15 @@ function formatCurrency(value) {
                                                         v-model="item.price_original" class="form-control-sm" />
                                                 </td>
                                                 <td>
-                                                    <currency-input :isValid="false" :decimals="0"
-                                                        v-model="item.price_discount" class="form-control-sm" />
+                                                    <input-number input-class="form-control-sm" :isValid="false"
+                                                        placeholder="0" v-model="item.discount_percentage"
+                                                        name="discount_percentage" />
                                                 </td>
                                                 <td class="text-end fw-bold text-dark pe-3">
                                                     {{ formatCurrency((item.price_original * item.quantity) -
-                                                        item.price_discount) }}
+                                                        ((item.price_original * item.quantity) * (item.discount_percentage /
+                                                            100)))
+                                                    }}
                                                 </td>
                                                 <td class="text-center">
                                                     <button type="button" @click="removeItem(index)"
@@ -345,11 +363,11 @@ function formatCurrency(value) {
 
                                 <hr class="border-dashed my-3 opacity-50">
                                 <h6 class="text-primary fw-bold mb-3 small text-uppercase">
-                                    <i class="fas fa-wallet me-1"></i> Pembayaran
+                                    <i class="fas fa-wallet me-1"></i> Pembayaran & Pajak
                                 </h6>
 
                                 <div class="row g-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <input-label class="fw-bold small" value="Jenis Pembayaran" />
                                         <select-input :disabled="props.transaction?.transaction_id" name="payment_type"
                                             :options="[
@@ -361,7 +379,7 @@ function formatCurrency(value) {
                                             v-model="form.payment_type">
                                         <input-error :message="form.errors.payment_type" />
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <input-label class="fw-bold small" value="Metode" />
                                         <select-input name="payment_method" :options="[
                                             { value: null, label: '— Pilih Metode —' },
@@ -371,6 +389,13 @@ function formatCurrency(value) {
                                             { value: 'qris', label: '𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃 QRIS' },
                                         ]" v-model="form.payment_method" />
                                         <input-error :message="form.errors.payment_method" />
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <input-label class="fw-bold small" value="Pajak PPN (%)" />
+                                        <input-number placeholder="0" v-model="form.tax_percentage"
+                                            name="tax_percentage" />
+                                        <input-error :message="form.errors.tax_percentage" />
                                     </div>
 
                                     <div class="col-12" v-if="form.payment_type === 'payment'">
@@ -388,7 +413,7 @@ function formatCurrency(value) {
                                             <div class="mt-2 small text-muted">
                                                 <i class="fas fa-info-circle me-1"></i>
                                                 Minimal DP yang disarankan: <strong>{{ formatCurrency(dpAmount)
-                                                }}</strong>
+                                                    }}</strong>
                                             </div>
                                         </div>
                                     </div>
@@ -406,6 +431,16 @@ function formatCurrency(value) {
                                 <h6 class="fw-bold text-dark mb-4 text-uppercase ls-1 border-bottom pb-2">
                                     Ringkasan Biaya
                                 </h6>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold">Subtotal Barang</span>
+                                    <span class="text-dark fw-bold">{{ formatCurrency(subTotal) }}</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted small fw-bold">PPN ({{ form.tax_percentage || 0 }}%)</span>
+                                    <span class="text-danger fw-bold">+ {{ formatCurrency(taxAmountPreview) }}</span>
+                                </div>
 
                                 <div class="bg-white p-3 rounded-3 shadow-sm border mb-4">
                                     <div class="text-center">
