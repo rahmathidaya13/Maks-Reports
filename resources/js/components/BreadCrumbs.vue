@@ -30,7 +30,7 @@ defineProps({
             <div class="d-flex align-items-center">
                 <div v-if="icon"
                     class="bg-white text-primary shadow-sm rounded-3 d-flex align-items-center justify-content-center me-2"
-                    style="width: 50px; height: 50px; font-size: 1.5rem;">
+                    style="width: 50px; height: 50px; font-size: 1.7rem;">
                     <i :class="icon"></i>
                 </div>
                 <div class="w-90">

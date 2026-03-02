@@ -188,7 +188,7 @@ onMounted(async () => {
 
 /* Valid State */
 .filter-card .input-group:has(.is-valid) {
-    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.25);
     border-radius: 0.375rem;
 }
 
@@ -200,7 +200,7 @@ onMounted(async () => {
 
 /* PRIORITY HANDLING invalid > valid > focus */
 .filter-card .input-group:has(.is-invalid):focus-within {
-    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.35);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.35);
 }
 
 /* Efek Focus: Border input group menyala */
@@ -213,12 +213,6 @@ onMounted(async () => {
     box-shadow: none;
 }
 
-
-.filter-card .input-group:focus-within {
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    border-radius: 0.375rem;
-}
-
 /* Label Styling (Konsisten dengan halaman lain) */
 .form-label-custom {
     font-size: 0.75rem;
@@ -229,7 +223,7 @@ onMounted(async () => {
 }
 
 .filter-card .input-group:focus-within {
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 0.20rem rgba(13, 110, 253, 0.25);
     border-radius: 0.375rem;
 }
 </style>

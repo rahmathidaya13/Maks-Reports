@@ -416,7 +416,7 @@ class TransactionController extends Controller
             if ($transaction->status === 'payment') {
                 return redirect()
                     ->route('transaction')
-                    ->with('warning', 'Transaksi ini sedang berjalan tidak dapat dihapus');
+                    ->with('warning', 'Transaksi dari invoice ' . $transaction->invoice . ' sedang berjalan tidak dapat dihapus');
             }
 
             if (in_array($transaction->status, ['cancelled', 'repayment'])) {

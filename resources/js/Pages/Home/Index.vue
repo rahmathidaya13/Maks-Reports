@@ -8,9 +8,9 @@ const props = defineProps({
     top_products: Array,
     filters: Object,
 })
+const isLoading = ref(false);
 const selectedMonth = ref(props.filters?.month || new Date().getMonth() + 1);
 const selectedYear = ref(props.filters?.year || new Date().getFullYear());
-const isLoading = ref(false);
 
 
 // List bulan untuk dropdown
@@ -74,17 +74,32 @@ const chartData = computed(() => {
     // Ubah setiap item menjadi angka, jika gagal jadikan 0
     const countNumber = props.chart_data.values.map(val => Number(val) || 0);
 
-    const maxOmset = Math.max(...countNumber);
-    // Atur warna: Emas untuk omset tertinggi, Hijau Zamrud untuk sisanya
-    const backgroundColors = countNumber.map(nilai =>
-        nilai === maxOmset && maxOmset > 0
-            ? 'rgba(245, 158, 11, 0.9)'  // Warna Emas (Tertinggi)
-            : 'rgba(16, 185, 129, 0.7)'  // Warna Hijau Zamrud (Sisanya)
+    const colorPalette = [
+        'rgba(59, 130, 246, 0.8)',   // Biru
+        'rgba(16, 185, 129, 0.8)',   // Hijau
+        'rgba(245, 158, 11, 0.8)',   // Oranye
+        'rgba(239, 68, 68, 0.8)',    // Merah
+        'rgba(139, 92, 246, 0.8)',   // Ungu
+        'rgba(236, 72, 153, 0.8)',   // Pink
+        'rgba(20, 184, 166, 0.8)',   // Teal
+    ];
+
+    const hoverPalette = [
+        'rgba(37, 99, 235, 1)',
+        'rgba(5, 150, 105, 1)',
+        'rgba(217, 119, 6, 1)',
+        'rgba(220, 38, 38, 1)',
+        'rgba(124, 58, 237, 1)',
+        'rgba(219, 39, 119, 1)',
+        'rgba(13, 148, 136, 1)',
+    ];
+
+    const backgroundColors = countNumber.map((_, index) =>
+        colorPalette[index % colorPalette.length]
     );
-    const hoverColors = countNumber.map(nilai =>
-        nilai === maxOmset && maxOmset > 0
-            ? 'rgba(217, 119, 6, 1)'     // Emas Gelap (Hover)
-            : 'rgba(5, 150, 105, 1)'     // Hijau Gelap (Hover)
+
+    const hoverColors = countNumber.map((_, index) =>
+        hoverPalette[index % hoverPalette.length]
     );
 
     return [
@@ -93,9 +108,9 @@ const chartData = computed(() => {
             data: countNumber,
             backgroundColor: backgroundColors,
             hoverBackgroundColor: hoverColors,
-            borderRadius: 6,       // Ujung membulat yang modern
+            borderRadius: 10,       // Ujung membulat yang modern
             borderSkipped: false,
-            barPercentage: 0.55,   // Proporsi batang agar rapi
+            barPercentage: 0.6,   // Proporsi batang agar rapi
         }
     ];
 });
@@ -108,26 +123,6 @@ const chartData = computed(() => {
             <bread-crumbs :home="false" icon="fas fa-tachometer-alt" title="Dashboard Penjualan"
                 :items="[{ text: 'Dashboard' }]" />
             <callout />
-
-            <div v-if="$page.props.pending_request_count > 0" class="col-12 mb-4">
-                <div class="alert alert-warning border-warning border-opacity-25 d-flex align-items-center shadow-sm rounded-4"
-                    role="alert">
-                    <div class="bg-warning bg-opacity-25 text-warning rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
-                        style="width: 45px; height: 45px;">
-                        <i class="fas fa-bell fs-4"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="fw-bold text-dark mb-1">Ada Permintaan Baru!</h6>
-                        <p class="mb-0 small text-dark text-opacity-75">
-                            Terdapat <strong>{{ $page.props.pending_request_count }}</strong> permintaan harga/stok
-                            dari cabang yang menunggu persetujuan Anda.
-                        </p>
-                    </div>
-                    <Link :href="route('admin.request.index')" class="btn btn-warning btn-sm fw-bold px-3 ms-3">
-                        Cek Sekarang <i class="fas fa-arrow-right ms-1"></i>
-                    </Link>
-                </div>
-            </div>
 
             <div class="row pb-5">
                 <div class="col-12">
@@ -146,7 +141,7 @@ const chartData = computed(() => {
                                             <p class="text-muted small mb-0">
                                                 <i class="bi bi-calendar3 me-1"></i> Periode:
                                                 <span class="fw-semibold text-primary">{{ stats.current_month_name
-                                                }}</span>
+                                                    }}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -158,7 +153,7 @@ const chartData = computed(() => {
                                         class="form-select form-select-sm border-0 focus-none fw-semibold">
                                         <option v-for="month in months" :key="month.value" :value="month.value">{{
                                             month.label
-                                        }}
+                                            }}
                                         </option>
                                     </select>
                                     <div class="vr my-1"></div>
@@ -244,7 +239,7 @@ const chartData = computed(() => {
                                                                 {{ props.stats.products_sold_dp
                                                                     ?? 0 }} Unit dari {{
                                                                     props.stats.transactions_count_dp_inv
-                                                                }} Invoice</span>
+                                                                }} Transaksi</span>
                                                             <p class="text-muted small mb-0"
                                                                 title="Terhitung dari transaksi yang melakukan pembayaran dengan DP (Down Payment)">
                                                                 <i class="bi bi-info-circle me-1"></i>
@@ -277,7 +272,7 @@ const chartData = computed(() => {
                                                                 class="mb-1 badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill">
                                                                 {{ stats.products_sold
                                                                     ?? 0 }} Unit dari {{ props.stats.transactions_count_inv
-                                                                }} Invoice </span>
+                                                                }} Transaksi </span>
                                                             <p class="text-muted small mb-0"
                                                                 title="Terhitung dari transaksi yang sudah lunas atau yang sudah melunasi transaksi pembayaran">
                                                                 <i class="bi bi-info-circle me-1"></i>
@@ -303,7 +298,7 @@ const chartData = computed(() => {
                                             </div>
                                             <div class="card-body px-4 pb-4">
                                                 <div class="chart-wrapper">
-                                                    <chart-bar type="doughnut" :height="400" :labels="chartLabels"
+                                                    <chart-bar type="pie" :height="400" :labels="chartLabels"
                                                         :datasets="chartData" />
                                                 </div>
                                             </div>
@@ -377,7 +372,7 @@ const chartData = computed(() => {
                                                                         <div class="rank-circle me-3">{{ index + 1 }}
                                                                         </div>
                                                                         <span class="fw-semibold text-dark">{{ prod.name
-                                                                        }}</span>
+                                                                            }}</span>
                                                                     </div>
                                                                 </td>
                                                                 <td class="text-end pe-4 py-3">

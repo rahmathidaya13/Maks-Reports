@@ -180,10 +180,6 @@ Route::middleware(['auth', 'verified', 'profile.completed', 'check.status.active
     //     Route::get('/product/reset', 'reset')->name('admin.request.reset');
     // });
 
-
-
-
-
     // cetak laporan
     Route::controller(ProductExportController::class)->group(function () {
         Route::get('/product/export', 'export')->name('product.export');
@@ -231,6 +227,7 @@ Route::middleware(['auth', 'verified', 'profile.completed', 'check.status.active
     Route::controller(AdminDashboardController::class)->prefix('admin')->group(function () {
         Route::get('/dashboard/information', 'index')->name('admin.dashboard.index');
         Route::get('/dashboard/reset', 'reset')->name('admin.dashboard.reset');
+        Route::get('/dashboard/export', 'export')->name('admin.dashboard.export');
     });
 });
 

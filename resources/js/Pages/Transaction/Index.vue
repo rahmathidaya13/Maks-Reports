@@ -83,7 +83,7 @@ const header = [
         label: "Pelanggan",
         key: "customers",
         attrs: {
-            class: "text-center"
+            class: "text-start"
         }
     },
     {
@@ -97,7 +97,7 @@ const header = [
         label: "Total Tagihan",
         key: "payment",
         attrs: {
-            class: "text-center"
+            class: "text-end"
         }
     },
     {
@@ -108,7 +108,7 @@ const header = [
         }
     },
     {
-        label: "Aksi",
+        label: "",
         key: "-",
         attrs: {
             class: "text-center",
@@ -569,8 +569,7 @@ const toolbarActions = computed(() => [
                                         </div>
                                     </td>
 
-
-                                    <td class="text-start fw-bold">
+                                    <td class="text-end fw-bold">
                                         {{ formatCurrency(item.grand_total) }}
                                     </td>
 

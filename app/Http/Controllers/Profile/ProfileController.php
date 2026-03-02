@@ -104,10 +104,29 @@ class ProfileController extends Controller
     public function modifyAfterUpdate(Request $request, ProfileModel $profileModel, string $id)
     {
         $this->validationText($request->all(), $id);
+        $isDeveloper = auth()->user()->hasRole(['developer', 'admin']);
         $profile = $profileModel::with(['user', 'branch', 'jobTitle'])
             ->where('users_id', $id)
             ->first();
 
+        // VALIDASI OTORISASI PINDAH CABANG
+        $newBranchId = $request->input('branches');
+        // Cek apakah user mengganti cabangnya
+        if (!$isDeveloper) {
+            if ($newBranchId && $newBranchId != $profile->branches_id) {
+                $inputCode = $request->input('branch_code');
+                // Cari data cabang yang baru di database
+                $targetBranch = BranchesModel::find($newBranchId);
+                // Cek apakah cabang ditemukan DAN kodenya cocok
+                if (!$targetBranch || $targetBranch->branch_code !== $inputCode) {
+                    return back()->withErrors([
+                        'branch_code' => 'Kode Otorisasi tidak sesuai dengan kode cabang yang dipilih.',
+                    ])->withInput(); // withInput mengembalikan isian form user agar tidak hilang
+                }
+            }
+        }
+
+        // cek apakah ada gambar baru atau tidak
         if ($request->hasFile('images')) {
             // Hapus gambar lama
             if ($profile->images && Storage::disk('public')->exists($profile->images)) {
@@ -120,11 +139,12 @@ class ProfileController extends Controller
         } else {
             unset($profile->images);
         }
+
         $profile->users_id = auth()->user()->id;
         $profile->employee_id_number = $request->input('employee_id_number');
         $profile->national_id_number = $request->input('national_id_number');
         $profile->job_title_id = $request->input('jobTitle');
-        $profile->branches_id = $request->input('branches');
+        $profile->branches_id = $newBranchId;
         $profile->date_of_entry = $request->input('date_of_entry');
         $profile->employee_status = $request->input('employee_status');
         $profile->birthplace = $request->input('birthplace');

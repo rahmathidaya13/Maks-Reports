@@ -1,19 +1,25 @@
 <script setup>
 import { useForm, Head, Link, usePage, router } from '@inertiajs/vue3';
 import moment from 'moment';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import { hasRole, hasPermission } from "@/composables/useAuth";
 const props = defineProps({
     profile: Object,
     branches: Object,
     jobTitle: Object
 })
-const message = computed(() => usePage().props.flash.message);
+
+import { useConfirm } from "@/helpers/useConfirm.js"
+const confirm = useConfirm(); // alert
+
+const originalBranchId = props.profile?.branches_id; // ID cabang awal sebelum diganti
 const form = useForm({
     name: props.profile.user.name ?? "",
     email: props.profile.user.email ?? "",
     employee_id_number: props.profile.employee_id_number ?? "",
     jobTitle: props.profile.job_title_id ?? "",
-    branches: props.profile.branches_id ?? "",
+    branches: originalBranchId ?? "",
+    branch_code: "",
     date_of_entry: props.profile.date_of_entry ?? "",
     birthdate: props.profile.birthdate ?? "",
     education: props.profile.education ?? "",
@@ -30,6 +36,45 @@ const form = useForm({
     entry_year: props.profile?.entry_year ?? "",
     graduation_year: props.profile?.graduation_year ?? "",
 });
+
+
+const showCodeInput = ref(false); // State untuk menampilkan form input kode
+const nameBranch = ref('');
+const branchOptions = computed(() => {
+    return props.branches?.map(item => {
+        return {
+            value: item.branches_id,
+            label: (item.name).replace(/\b\w/g, l => l.toUpperCase())
+        }
+    })
+})
+// Fungsi untuk menangani perubahan pada form branches
+watch(() => form.branches, (newValue, oldValue) => {
+    if (newValue === originalBranchId) {
+        showCodeInput.value = false;
+        form.branch_code = '';
+        return;
+    }
+    if (newValue !== originalBranchId) {
+        const branch = props.branches.find(item => item.branches_id === newValue);
+        showCodeInput.value = true;
+        nameBranch.value = branch.name;
+    } else {
+        // Jika batal, kembalikan pilihan dropdown dan sembunyikan input
+        showCodeInput.value = false;
+        form.branch_code = '';
+        form.branches = oldValue;
+    }
+})
+const jobTitleOptions = computed(() => {
+    return props.jobTitle?.map(item => {
+        return {
+            value: item.job_title_id,
+            label: (item.title).replace(/\b\w/g, l => l.toUpperCase())
+        }
+    })
+})
+
 const submit = () => {
     form.post(route("profile.after.update", props.profile?.users_id), {
         _method: 'put',
@@ -40,22 +85,6 @@ const submit = () => {
     });
 };
 
-const branchOptions = computed(() => {
-    return props.branches?.map(item => {
-        return {
-            value: item.branches_id,
-            label: (item.name).replace(/\b\w/g, l => l.toUpperCase())
-        }
-    })
-})
-const jobTitleOptions = computed(() => {
-    return props.jobTitle?.map(item => {
-        return {
-            value: item.job_title_id,
-            label: (item.title).replace(/\b\w/g, l => l.toUpperCase())
-        }
-    })
-})
 const previewImage = ref(null)
 
 // menerima event preview dari child
@@ -69,6 +98,8 @@ const goToBack = (id) => {
         onFinish: () => loaderActive.value?.hide()
     });
 }
+
+
 
 </script>
 <template>
@@ -114,8 +145,7 @@ const goToBack = (id) => {
                         <div class="row g-4">
 
                             <div class="col-xl-4 col-lg-5">
-                                <div class="card profile-card border-0 shadow-sm rounded-4 text-center overflow-hidden position-sticky"
-                                    style="top: 100px;">
+                                <div class="card profile-card border-0 shadow-sm rounded-4 text-center overflow-hidden">
                                     <div class="card-body p-4">
                                         <h6 class="text-uppercase fw-bold text-muted small mb-3">Foto Profil</h6>
 
@@ -312,6 +342,30 @@ const goToBack = (id) => {
                                                             v-model="form.branches" :options="branchOptions" />
                                                         <input-error :message="form.errors.branches" />
                                                     </div>
+                                                    <div class="col-md-12"
+                                                        v-if="showCodeInput && !hasRole(['admin', 'developer'])">
+                                                        <div
+                                                            class="p-3 bg-warning bg-opacity-10 border border-warning rounded-3 shadow-sm transition-all">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="fas fa-key text-warning me-2"></i>
+                                                                <span
+                                                                    class="fw-bold text-dark small text-uppercase">Otorisasi
+                                                                    Diperlukan</span>
+                                                            </div>
+
+                                                            <text-input type="text" v-model="form.branch_code"
+                                                                name="branch_code"
+                                                                :placeholder="`Masukkan kode cabang ${nameBranch}...`"
+                                                                class="w-100 border-warning" />
+
+                                                            <div class="form-text text-muted text-xs mt-1">
+                                                                Hubungi Admin untuk mendapatkan kode cabang tujuan.
+                                                            </div>
+
+                                                            <input-error :message="form.errors.branch_code" />
+                                                        </div>
+
+                                                    </div>
                                                     <div class="col-md-12">
                                                         <input-label class="form-label-custom" for="employee_status"
                                                             value="STATUS PEGAWAI" />
@@ -332,7 +386,10 @@ const goToBack = (id) => {
                                                         <input-error :message="form.errors.employee_status" />
                                                     </div>
                                                 </div>
+
+
                                             </div>
+
                                         </div>
 
                                         <div class="d-flex justify-content-end mt-5 pt-3">

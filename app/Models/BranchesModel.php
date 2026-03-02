@@ -37,10 +37,9 @@ class BranchesModel extends Model
     }
     public static function generateUniqueCode()
     {
-        $prefix = "BR-";
         do {
-            $randomNumber = str_pad(mt_rand(0, 9999999), 7, '0', STR_PAD_LEFT);
-            $code = $prefix . $randomNumber;
+            $randomNumber = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $code = $randomNumber;
         } while (self::where('branch_code', $code)->exists());
         // Kembalikan kode yang sudah dipastikan unik
         return $code;

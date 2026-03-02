@@ -40,52 +40,52 @@ class AdminDashboardRepository extends BaseCacheRepository
     protected function buildDashboardData($userId,  $startOfMonth, $endOfMonth)
     {
         // Total Penjualan Keseluruhan Bulan Ini (Lunas + DP)
-        $totalSales = TransactionModel::whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        $totalSales = TransactionModel::whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
             ->count();
 
         // Total Uang Masuk (Lunas)
-        $totalRevenueLunas = TransactionModel::whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        $totalRevenueLunas = TransactionModel::whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
             ->where('status', 'repayment') // Sesuaikan nama kolom status Anda
             ->sum('grand_total');
 
         // Total Uang Menggantung (DP / Belum Lunas)
-        $totalRevenueBelumLunas = TransactionModel::whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        $totalRevenueBelumLunas = TransactionModel::whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
             ->where('status', 'payment')
             ->sum('grand_total');
 
         // Total Transaksi yang dibatalkan
-        $totalRevenueBatal = TransactionModel::whereBetween('created_at', [$startOfMonth, $endOfMonth])
+        $totalRevenueBatal = TransactionModel::whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
             ->where('status', 'cancelled')
             ->sum('grand_total');
 
         // Top 5 Cabang Terbaik (Berdasarkan jumlah transaksi bulan ini)
         $topBranches = BranchesModel::withCount(['transactions' => function ($query) use ($startOfMonth, $endOfMonth) {
-            // Jangan lupa tambahkan nama tabel agar tidak ambigu (contoh: transactions.created_at)
-            $query->whereBetween('transactions.created_at', [$startOfMonth, $endOfMonth]);
+            // Jangan lupa tambahkan nama tabel agar tidak ambigu (contoh: transactions.transaction_date)
+            $query->whereBetween('transactions.transaction_date', [$startOfMonth, $endOfMonth]);
         }])
             // 1. Hitung Total Lunas
             ->withSum(['transactions as total_lunas' => function ($query) use ($startOfMonth, $endOfMonth) {
-                $query->whereBetween('transactions.created_at', [$startOfMonth, $endOfMonth])
+                $query->whereBetween('transactions.transaction_date', [$startOfMonth, $endOfMonth])
                     ->where('transactions.status', 'repayment'); // Sesuaikan status
             }], 'grand_total')
             // 2. Hitung Total DP
             ->withSum(['transactions as total_dp' => function ($query) use ($startOfMonth, $endOfMonth) {
-                $query->whereBetween('transactions.created_at', [$startOfMonth, $endOfMonth])
+                $query->whereBetween('transactions.transaction_date', [$startOfMonth, $endOfMonth])
                     ->where('transactions.status', 'payment'); // Sesuaikan status
             }], 'grand_total')
             ->withSum(['transactions as total_batal' => function ($query) use ($startOfMonth, $endOfMonth) {
-                $query->whereBetween('transactions.created_at', [$startOfMonth, $endOfMonth])
+                $query->whereBetween('transactions.transaction_date', [$startOfMonth, $endOfMonth])
                     ->where('transactions.status', 'cancelled'); // Sesuaikan status
             }], 'grand_total')
             ->orderByDesc('transactions_count')
             ->take(10)
             ->get(['branches_id', 'name']); // Ambil nama cabang dan id-nya saja
 
-        // Top 5 Produk Terlaris Bulan Ini
+        // Top 10 Produk Terlaris Bulan Ini
         // Asumsi: Transaksi berelasi dengan Product melalui transactions
         $topProducts = ProductModel::withSum(['transactions' => function ($query) use ($startOfMonth, $endOfMonth) {
             $query->whereHas('transactions', function ($q) use ($startOfMonth, $endOfMonth) {
-                $q->whereBetween('transactions.created_at', [$startOfMonth, $endOfMonth]);
+                $q->whereBetween('transactions.transaction_date', [$startOfMonth, $endOfMonth]);
             });
         }], 'quantity')
             ->orderByDesc('transactions_sum_quantity')
@@ -96,11 +96,11 @@ class AdminDashboardRepository extends BaseCacheRepository
         $now = now();
         $last7Days = $now->copy()->subDays(6)->startOfDay();
         $transactions = TransactionModel::select(
-            DB::raw('DATE(created_at) as date'),
+            DB::raw('DATE(transaction_date) as date'),
             DB::raw('COUNT(transaction_id) as total_trx'),
             DB::raw('SUM(grand_total) as total_revenue')
         )
-            ->where('created_at', '>=', $last7Days)
+            ->where('transaction_date', '>=', $last7Days)
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
